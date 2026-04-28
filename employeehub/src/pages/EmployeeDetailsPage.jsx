@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  getEmployee, updateEmployee, updateEmployeePhoto, deleteContact,
+  getEmployee, updateEmployee, updateEmployeePhoto, deleteEmployee,
   getDepartments, getTeams,
 } from '../api/EmployeeService';
 import { isHrOrAdmin } from '../api/AuthService';
@@ -143,7 +143,7 @@ const EmployeeDetailsPage = () => {
 
   const handleDelete = async () => {
     try {
-      await deleteContact(id);
+      await deleteEmployee(id);
       navigate('/employees');
     } catch {
       setError('Failed to delete employee.');

@@ -22,7 +22,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         return employeeRepository.findByEmail(email)
                 .map(emp -> new User(
                         emp.getEmail(),
-                        emp.getPassword(),
+                        emp.getPassword() != null ? emp.getPassword() : "",
                         List.of(new SimpleGrantedAuthority("ROLE_" + emp.getRole().name()))
                 ))
                 .orElseThrow(() -> new UsernameNotFoundException("Employee not found: " + email));

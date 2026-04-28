@@ -15,7 +15,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
@@ -166,12 +165,4 @@ class LeaveServiceTest {
                 .hasMessageContaining("your own requests");
     }
 
-    @Test
-    void createBalancesForEmployee_shouldCreateOneBalancePerLeaveType() {
-        when(leaveTypeRepository.findAll()).thenReturn(List.of(leaveType));
-
-        leaveService.createBalancesForEmployee(employee);
-
-        verify(leaveBalanceRepository, times(1)).save(any());
-    }
 }

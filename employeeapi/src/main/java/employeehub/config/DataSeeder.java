@@ -82,13 +82,18 @@ public class DataSeeder implements ApplicationRunner {
     }
 
     /**
-     * Any employee whose password is null or blank gets a default password of
-     * "Employee@1234" so they can log in immediately.
+     * Any employee whose password is null, blank, or shorter than 20 chars
+     * (i.e. not a real BCrypt hash) gets the default password "Employee@1234".
+     * Admin account is skipped.
      */
     private void ensureAllEmployeesHavePasswords() {
         String defaultEncoded = passwordEncoder.encode("Employee@1234");
         employeeRepository.findAll().forEach(emp -> {
-            if (emp.getPassword() == null || emp.getPassword().isBlank()) {
+            if (ADMIN_EMAIL.equals(emp.getEmail())) return;
+            String pw = emp.getPassword();
+            boolean missing = pw == null || pw.isBlank();
+            boolean notBcrypt = pw != null && !pw.startsWith("$2a$") && !pw.startsWith("$2b$");
+            if (missing || notBcrypt) {
                 emp.setPassword(defaultEncoded);
                 employeeRepository.save(emp);
                 log.info("Set default password for: {}", emp.getEmail());

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import TopBar from '../components/TopBar';
-import { getMyPaySlips } from '../api/ContactService';
+import { getMyPaySlips } from '../api/EmployeeService';
 
 const fmt = n => `R ${Number(n).toLocaleString('en-ZA', { minimumFractionDigits: 2 })}`;
 

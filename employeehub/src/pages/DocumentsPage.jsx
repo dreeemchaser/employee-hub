@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import TopBar from '../components/TopBar';
-import { getMyDocuments, uploadDocument } from '../api/ContactService';
+import { getMyDocuments, uploadDocument } from '../api/EmployeeService';
 
 const DOC_TYPES = ['ID_DOCUMENT', 'CONTRACT', 'CERTIFICATE', 'PAYSLIP', 'OTHER'];
 const DOC_LABELS = { ID_DOCUMENT: 'ID Document', CONTRACT: 'Contract', CERTIFICATE: 'Certificate', PAYSLIP: 'Payslip', OTHER: 'Other' };

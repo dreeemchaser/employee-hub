@@ -51,9 +51,9 @@ export default function AuditLogsPage() {
                       <td style={{ fontFamily: 'monospace', fontSize: '0.78rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
                         {log.timestamp ? new Date(log.timestamp).toLocaleString() : '—'}
                       </td>
-                      <td>{log.actorEmail ?? log.actor ?? '—'}</td>
+                      <td>{log.performedBy?.email ?? log.performedBy?.firstName ?? '—'}</td>
                       <td><span style={{ fontFamily: 'monospace', fontSize: '0.78rem' }}>{log.action}</span></td>
-                      <td style={{ color: 'var(--text-secondary)' }}>{log.entityType ?? log.entity ?? '—'}</td>
+                      <td style={{ color: 'var(--text-secondary)' }}>{log.entityType ?? '—'}</td>
                       <td style={{ fontFamily: 'monospace', fontSize: '0.78rem', color: 'var(--text-muted)' }}>{log.entityId ?? '—'}</td>
                     </tr>
                   ))}

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import TopBar from '../components/TopBar';
-import { getBenefitTypes, getMyBenefits, applyForBenefit } from '../api/ContactService';
+import { getBenefitTypes, getMyBenefits, applyForBenefit } from '../api/EmployeeService';
 
 export default function BenefitsPage() {
   const [available, setAvailable] = useState([]);

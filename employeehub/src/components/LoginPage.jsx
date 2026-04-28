@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { login } from '../api/AuthService';
 
 const LoginPage = ({ onLogin }) => {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -12,7 +12,7 @@ const LoginPage = ({ onLogin }) => {
     setLoading(true);
     setError('');
     try {
-      await login(username, password);
+      await login(email, password);
       onLogin();
     } catch {
       setError('Invalid username or password.');
@@ -43,8 +43,8 @@ const LoginPage = ({ onLogin }) => {
             <input
               className='form-control'
               type='email'
-              value={username}
-              onChange={e => setUsername(e.target.value)}
+              value={email}
+              onChange={e => setEmail(e.target.value)}
               required
               autoFocus
             />

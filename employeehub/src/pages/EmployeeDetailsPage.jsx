@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
   getEmployee, updateEmployee, updateEmployeePhoto, deleteContact,
   getDepartments, getTeams,
-} from '../api/ContactService';
+} from '../api/EmployeeService';
 import { isHrOrAdmin } from '../api/AuthService';
 import Spinner from '../components/Spinner';
 import TopBar from '../components/TopBar';

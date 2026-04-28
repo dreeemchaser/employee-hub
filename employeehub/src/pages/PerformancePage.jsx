@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import TopBar from '../components/TopBar';
-import { getMyGoals, getMyReviews } from '../api/ContactService';
+import { getMyGoals, getMyReviews } from '../api/EmployeeService';
 
 const RATING_LABELS = { 1: 'Poor', 2: 'Below Average', 3: 'Meets Expectations', 4: 'Exceeds Expectations', 5: 'Outstanding' };
 const STATUS_COLORS  = { COMPLETED: 'active', IN_PROGRESS: 'pending', NOT_STARTED: 'inactive', MISSED: 'inactive' };

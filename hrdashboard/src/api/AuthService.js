@@ -19,3 +19,19 @@ export function getToken() {
 export function isLoggedIn() {
   return !!getToken();
 }
+
+export function getRole() {
+  const token = getToken();
+  if (!token) return null;
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload.role ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export function isHrOrAdmin() {
+  const role = getRole();
+  return role === 'HR_ADMIN' || role === 'SUPER_ADMIN' || role === 'PAYROLL_ADMIN';
+}

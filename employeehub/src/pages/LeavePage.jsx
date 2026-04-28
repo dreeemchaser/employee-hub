@@ -3,7 +3,7 @@ import TopBar from '../components/TopBar';
 import {
   getMyLeaveBalances, getMyLeaveRequests,
   submitLeaveRequest, cancelLeaveRequest,
-} from '../api/ContactService';
+} from '../api/EmployeeService';
 
 const EMPTY_FORM = { leaveTypeId: '', startDate: '', endDate: '', reason: '' };
 

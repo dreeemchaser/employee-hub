@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import TopBar from '../components/TopBar';
 import Spinner from '../components/Spinner';
-import { getAllTimesheets, approveTimesheet } from '../api/HrService';
+import { getAllTimesheets, approveTimesheet, rejectTimesheet } from '../api/HrService';
 
 const STATUS_COLOR = { APPROVED: 'approved', REJECTED: 'rejected', SUBMITTED: 'submitted', DRAFT: 'pending' };
 
@@ -22,11 +22,11 @@ export default function TimesheetApprovalsPage() {
 
   useEffect(() => { load(); }, [load]);
 
-  const handleApprove = async (id) => {
+  const handle = async (id, action, newStatus) => {
     setActing(id);
     try {
-      await approveTimesheet(id);
-      setTimesheets(prev => prev.map(t => t.id === id ? { ...t, status: 'APPROVED' } : t));
+      await action(id);
+      setTimesheets(prev => prev.map(t => t.id === id ? { ...t, status: newStatus } : t));
     } finally {
       setActing(null);
     }
@@ -47,6 +47,7 @@ export default function TimesheetApprovalsPage() {
                   <tr>
                     <th>Employee</th>
                     <th>Week Starting</th>
+                    <th>Week Ending</th>
                     <th>Total Hours</th>
                     <th>Status</th>
                     <th></th>
@@ -54,22 +55,32 @@ export default function TimesheetApprovalsPage() {
                 </thead>
                 <tbody>
                   {timesheets.length === 0 ? (
-                    <tr><td colSpan={5} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>No timesheets found.</td></tr>
+                    <tr><td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>No timesheets found.</td></tr>
                   ) : timesheets.map(t => (
                     <tr key={t.id}>
                       <td>{t.employee?.firstName} {t.employee?.lastName}</td>
-                      <td>{t.weekStarting}</td>
+                      <td>{t.weekStartDate}</td>
+                      <td>{t.weekEndDate}</td>
                       <td>{t.totalHours ?? '—'}</td>
                       <td><span className={`badge badge--${STATUS_COLOR[t.status] ?? 'pending'}`}>{t.status}</span></td>
                       <td>
                         {t.status === 'SUBMITTED' && (
-                          <button
-                            className='btn btn-success btn-sm'
-                            disabled={acting === t.id}
-                            onClick={() => handleApprove(t.id)}
-                          >
-                            <i className='bi bi-check-lg'></i> Approve
-                          </button>
+                          <div style={{ display: 'flex', gap: '0.4rem' }}>
+                            <button
+                              className='btn btn-success btn-sm'
+                              disabled={acting === t.id}
+                              onClick={() => handle(t.id, approveTimesheet, 'APPROVED')}
+                            >
+                              <i className='bi bi-check-lg'></i> Approve
+                            </button>
+                            <button
+                              className='btn btn-danger btn-sm'
+                              disabled={acting === t.id}
+                              onClick={() => handle(t.id, rejectTimesheet, 'REJECTED')}
+                            >
+                              <i className='bi bi-x-lg'></i> Reject
+                            </button>
+                          </div>
                         )}
                       </td>
                     </tr>

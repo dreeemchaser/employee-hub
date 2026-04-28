@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -127,23 +126,6 @@ public class LeaveService {
 
     public List<LeaveBalance> getMyBalances(String employeeId) {
         return leaveBalanceRepository.findByEmployeeId(employeeId);
-    }
-
-    @Transactional
-    public void createBalancesForEmployee(Employee employee) {
-        List<LeaveType> leaveTypes = leaveTypeRepository.findAll();
-        LocalDate now = LocalDate.now();
-        for (LeaveType type : leaveTypes) {
-            LeaveBalance balance = new LeaveBalance();
-            balance.setEmployee(employee);
-            balance.setLeaveType(type);
-            balance.setTotalDays(BigDecimal.valueOf(type.getDefaultDays()));
-            balance.setUsedDays(BigDecimal.ZERO);
-            balance.setRemainingDays(BigDecimal.valueOf(type.getDefaultDays()));
-            balance.setCycleStartDate(now);
-            balance.setCycleEndDate(now.plusYears(type.getCycleYears()));
-            leaveBalanceRepository.save(balance);
-        }
     }
 
     // ── Helpers ──────────────────────────────────────────────────────

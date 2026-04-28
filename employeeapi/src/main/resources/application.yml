@@ -18,19 +18,25 @@ spring:
   servlet:
     multipart:
       enabled: true
-      max-file-size: ${SPRING_SERVLET_MULTIPART_MAX_FILE_SIZE:100MB}
-      max-request-size: ${SPRING_SERVLET_MULTIPART_MAX_REQUEST_SIZE:100MB}
+      max-file-size: ${SPRING_SERVLET_MULTIPART_MAX_FILE_SIZE:10MB}
+      max-request-size: ${SPRING_SERVLET_MULTIPART_MAX_REQUEST_SIZE:12MB}
   mvc:
     async:
-      request-timeout: 3600000
+      request-timeout: 30000
 
 server:
   port: ${SERVER_PORT:8080}
   error:
-    path: /user/error
+    path: /error
     whitelabel:
       enabled: false
 
 jwt:
   secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
   expiration: ${JWT_EXPIRATION:86400000}
+
+app:
+  upload:
+    directory: ${UPLOAD_DIRECTORY:${user.home}/employeehub/uploads/}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:3001}

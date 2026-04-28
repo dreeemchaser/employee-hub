@@ -2,8 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import EmployeeCard from '../components/EmployeeCard';
 import Spinner from '../components/Spinner';
 import TopBar from '../components/TopBar';
-import NewContactModal from '../components/NewContactModal';
-import { getContacts } from '../api/ContactService';
+import NewEmployeeModal from '../components/NewEmployeeModal';
+import { getEmployees } from '../api/EmployeeService';
 
 const EmployeesPage = () => {
   const [data, setData]           = useState({});
@@ -13,7 +13,7 @@ const EmployeesPage = () => {
   const load = useCallback(async (page = 0) => {
     setLoading(true);
     try {
-      const res = await getContacts(page);
+      const res = await getEmployees(page);
       setData(res.data);
       setCurrentPage(page);
     } finally {
@@ -29,7 +29,7 @@ const EmployeesPage = () => {
   return (
     <>
       <TopBar title='Employees' breadcrumb='Employee Hub / Employees'>
-        <NewContactModal onContactSaved={() => load(currentPage)} />
+        <NewEmployeeModal onEmployeeSaved={() => load(currentPage)} />
       </TopBar>
 
       <div className='page'>
@@ -46,7 +46,7 @@ const EmployeesPage = () => {
 
             <div className='contact__list'>
               {content.map(contact => (
-                <EmployeeCard contact={contact} key={contact.id} />
+                <EmployeeCard employee={contact} key={contact.id} />
               ))}
             </div>
 

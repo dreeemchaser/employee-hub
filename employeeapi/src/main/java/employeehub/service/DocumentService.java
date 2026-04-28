@@ -10,6 +10,7 @@ import employeehub.repository.DocumentRepository;
 import employeehub.repository.EmployeeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
@@ -57,6 +58,7 @@ public class DocumentService {
         return findDocument(documentId);
     }
 
+    @Transactional
     public Document verify(String documentId, String verifierId) {
         Document doc = findDocument(documentId);
         Employee verifier = findEmployee(verifierId);
@@ -73,6 +75,7 @@ public class DocumentService {
         return saved;
     }
 
+    @Transactional
     public Document reject(String documentId, String verifierId) {
         Document doc = findDocument(documentId);
         Employee verifier = findEmployee(verifierId);

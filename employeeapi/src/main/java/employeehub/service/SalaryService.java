@@ -151,6 +151,7 @@ public class SalaryService {
         return saved;
     }
 
+    @Transactional
     public SalaryIncreaseRequest rejectIncreaseRequest(String id, String reviewerId, String reason) {
         SalaryIncreaseRequest request = findIncreaseRequest(id);
         request.setStatus(SalaryIncreaseStatus.REJECTED);

@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import TopBar from '../components/TopBar';
-import { getEmployees, getMyLeaveRequests, getMyTimesheets, getMyDocuments, getMyNotifications, markNotificationRead } from '../api/ContactService';
+import { getEmployees, getMyLeaveRequests, getMyTimesheets, getMyDocuments, getMyNotifications, markNotificationRead } from '../api/EmployeeService';
 import { isHrOrAdmin } from '../api/AuthService';
 
 export default function DashboardPage() {

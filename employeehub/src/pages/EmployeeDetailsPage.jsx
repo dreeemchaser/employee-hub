@@ -48,7 +48,7 @@ const EmployeeDetailsPage = () => {
   const load = useCallback(async () => {
     try {
       const res = await getEmployee(id);
-      const emp = res.data?.data;
+      const emp = res.data?.data ?? res.data;
       setEmployee(emp);
       setForm({
         firstName:        emp.firstName ?? '',

@@ -5,7 +5,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -27,6 +26,7 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        var provider = daoAuthenticationProvider();
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> {})
@@ -37,52 +37,32 @@ public class SecurityConfig {
                                 "/v3/api-docs/**", "/actuator/health",
                                 "/employees/photo/**"
                         ).permitAll()
-
-                        // Departments & Teams — HR_ADMIN / SUPER_ADMIN manage, others read
                         .requestMatchers(HttpMethod.GET, "/departments/**", "/teams/**").authenticated()
-                        .requestMatchers("/departments/**", "/teams/**")
-                                .hasAnyRole("HR_ADMIN", "SUPER_ADMIN")
-
-                        // Employees — HR_ADMIN / SUPER_ADMIN manage, all authenticated can GET own
+                        .requestMatchers("/departments/**", "/teams/**").hasAnyRole("HR_ADMIN", "SUPER_ADMIN")
                         .requestMatchers(HttpMethod.GET, "/employees/**").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/employees/**").hasAnyRole("HR_ADMIN", "SUPER_ADMIN")
                         .requestMatchers(HttpMethod.POST, "/employees").hasAnyRole("HR_ADMIN", "SUPER_ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/employees/**").hasAnyRole("HR_ADMIN", "SUPER_ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/employees/**").hasAnyRole("HR_ADMIN", "SUPER_ADMIN")
-
-                        // Leave — employees manage own, HR sees all
                         .requestMatchers(HttpMethod.GET, "/leave/requests").hasAnyRole("HR_ADMIN", "SUPER_ADMIN", "MANAGER")
-                        .requestMatchers(HttpMethod.PATCH, "/leave/requests/*/approve", "/leave/requests/*/reject")
-                                .hasAnyRole("HR_ADMIN", "SUPER_ADMIN", "MANAGER")
-
-                        // Timesheets — employees manage own, HR sees all
+                        .requestMatchers(HttpMethod.PATCH, "/leave/requests/*/approve", "/leave/requests/*/reject").hasAnyRole("HR_ADMIN", "SUPER_ADMIN", "MANAGER")
                         .requestMatchers(HttpMethod.GET, "/timesheets").hasAnyRole("HR_ADMIN", "SUPER_ADMIN", "MANAGER")
                         .requestMatchers(HttpMethod.PATCH, "/timesheets/*/approve").hasAnyRole("HR_ADMIN", "SUPER_ADMIN", "MANAGER")
-
-                        // Documents — HR_ADMIN manages, employees upload/view own
                         .requestMatchers(HttpMethod.GET, "/documents").hasAnyRole("HR_ADMIN", "SUPER_ADMIN")
-                        .requestMatchers("/documents/{id}/verify", "/documents/{id}/reject")
-                                .hasAnyRole("HR_ADMIN", "SUPER_ADMIN")
-
-                        // Audit logs — HR_ADMIN / SUPER_ADMIN only
-                        .requestMatchers("/audit-logs/**")
-                                .hasAnyRole("HR_ADMIN", "SUPER_ADMIN")
-
-                        // Salary — employees view own payslips, admins manage
+                        .requestMatchers("/documents/{id}/verify", "/documents/{id}/reject").hasAnyRole("HR_ADMIN", "SUPER_ADMIN")
+                        .requestMatchers("/audit-logs/**").hasAnyRole("HR_ADMIN", "SUPER_ADMIN")
                         .requestMatchers(HttpMethod.GET, "/salary/payslips/my").authenticated()
-                        .requestMatchers("/salary/**")
-                                .hasAnyRole("PAYROLL_ADMIN", "HR_ADMIN", "SUPER_ADMIN")
-
+                        .requestMatchers("/salary/**").hasAnyRole("PAYROLL_ADMIN", "HR_ADMIN", "SUPER_ADMIN")
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authenticationProvider(authenticationProvider())
+                .authenticationProvider(provider)
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
 
-    @Bean
-    public AuthenticationProvider authenticationProvider() {
+    // NOT a @Bean — keeps it out of Spring's global AuthenticationManager auto-config
+    private DaoAuthenticationProvider daoAuthenticationProvider() {
         var provider = new DaoAuthenticationProvider();
         provider.setUserDetailsService(userDetailsService);
         provider.setPasswordEncoder(passwordEncoder());
@@ -91,7 +71,7 @@ public class SecurityConfig {
 
     @Bean
     public AuthenticationManager authenticationManager() {
-        return new ProviderManager(authenticationProvider());
+        return new ProviderManager(daoAuthenticationProvider());
     }
 
     @Bean

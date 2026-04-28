@@ -39,6 +39,7 @@ public class DataSeeder implements ApplicationRunner {
         seedLeaveTypes();
         seedTaxBrackets();
         seedBenefitTypes();
+        ensureAllEmployeesHavePasswords();
     }
 
     private Department seedDepartment() {
@@ -78,6 +79,21 @@ public class DataSeeder implements ApplicationRunner {
         admin.setEmployeeNumber("EMP-001");
         employeeRepository.save(admin);
         log.info("Seeded default admin user: {}", ADMIN_EMAIL);
+    }
+
+    /**
+     * Any employee whose password is null or blank gets a default password of
+     * "Employee@1234" so they can log in immediately.
+     */
+    private void ensureAllEmployeesHavePasswords() {
+        String defaultEncoded = passwordEncoder.encode("Employee@1234");
+        employeeRepository.findAll().forEach(emp -> {
+            if (emp.getPassword() == null || emp.getPassword().isBlank()) {
+                emp.setPassword(defaultEncoded);
+                employeeRepository.save(emp);
+                log.info("Set default password for: {}", emp.getEmail());
+            }
+        });
     }
 
     private void seedLeaveTypes() {

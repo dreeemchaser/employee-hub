@@ -1,5 +1,6 @@
 package employeehub.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import employeehub.domain.enums.EmploymentStatus;
 import employeehub.domain.enums.EmploymentType;
@@ -39,6 +40,7 @@ public class Employee {
     @Column(unique = true, nullable = false)
     private String email;
 
+    @JsonIgnore
     private String password;
 
     private String phone;

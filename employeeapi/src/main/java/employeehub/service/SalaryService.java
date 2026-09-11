@@ -106,14 +106,25 @@ public class SalaryService {
                 .orElseThrow(() -> new ResourceNotFoundException("Payslip not found: " + id));
     }
 
+    public List<SalaryIncreaseRequest> getMyIncreaseRequests(String employeeId) {
+        return increaseRequestRepository.findByEmployeeId(employeeId);
+    }
+
+    public List<SalaryIncreaseRequest> getAllIncreaseRequests() {
+        return increaseRequestRepository.findAll();
+    }
+
     // ── Salary Increase Requests ─────────────────────────────────────
 
     public SalaryIncreaseRequest submitIncreaseRequest(SalaryIncreaseRequestDto dto, String requestedById) {
-        Employee employee = findEmployee(dto.getEmployeeId());
+        // If no target employeeId provided, request is for self
+        String targetEmployeeId = (dto.getEmployeeId() != null && !dto.getEmployeeId().isBlank())
+                ? dto.getEmployeeId() : requestedById;
+        Employee employee = findEmployee(targetEmployeeId);
         Employee requestedBy = findEmployee(requestedById);
 
         BigDecimal current = salaryRecordRepository
-                .findFirstByEmployeeIdOrderByEffectiveDateDesc(dto.getEmployeeId())
+                .findFirstByEmployeeIdOrderByEffectiveDateDesc(targetEmployeeId)
                 .map(SalaryRecord::getBasicSalary)
                 .orElse(BigDecimal.ZERO);
 

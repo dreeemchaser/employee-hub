@@ -72,8 +72,22 @@ public class SalaryController {
 
     // ── Salary Increase Requests ─────────────────────────────────────
 
+    @GetMapping("/increase-requests/my")
+    @Operation(summary = "Get current employee's salary increase requests")
+    public ResponseEntity<ApiResponse<List<SalaryIncreaseRequest>>> getMyIncreaseRequests(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        var employee = employeeService.getByEmail(userDetails.getUsername());
+        return ResponseEntity.ok(ApiResponse.ok(salaryService.getMyIncreaseRequests(employee.getId())));
+    }
+
+    @GetMapping("/increase-requests")
+    @Operation(summary = "Get all salary increase requests (HR/Payroll)")
+    public ResponseEntity<ApiResponse<List<SalaryIncreaseRequest>>> getAllIncreaseRequests() {
+        return ResponseEntity.ok(ApiResponse.ok(salaryService.getAllIncreaseRequests()));
+    }
+
     @PostMapping("/increase-requests")
-    @Operation(summary = "Submit a salary increase request (Manager)")
+    @Operation(summary = "Submit a salary increase request")
     public ResponseEntity<ApiResponse<SalaryIncreaseRequest>> submitIncreaseRequest(
             @RequestBody SalaryIncreaseRequestDto request,
             @AuthenticationPrincipal UserDetails userDetails) {

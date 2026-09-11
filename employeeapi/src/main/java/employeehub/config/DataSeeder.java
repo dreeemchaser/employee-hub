@@ -22,6 +22,7 @@ import java.util.List;
 public class DataSeeder implements ApplicationRunner {
 
     private final LeaveTypeRepository leaveTypeRepository;
+    private final LeaveBalanceRepository leaveBalanceRepository;
     private final TaxBracketRepository taxBracketRepository;
     private final BenefitTypeRepository benefitTypeRepository;
     private final DepartmentRepository departmentRepository;
@@ -30,12 +31,14 @@ public class DataSeeder implements ApplicationRunner {
     private final PasswordEncoder passwordEncoder;
 
     private static final String ADMIN_EMAIL = "admin@employeehub.com";
+    private static final String TEST_EMPLOYEE_EMAIL = "jane.doe@employeehub.com";
 
     @Override
     public void run(ApplicationArguments args) {
         Department department = seedDepartment();
         Team team = seedTeam(department);
         seedAdminUser(department, team);
+        seedTestEmployee(department, team);
         seedLeaveTypes();
         seedTaxBrackets();
         seedBenefitTypes();
@@ -79,6 +82,47 @@ public class DataSeeder implements ApplicationRunner {
         admin.setEmployeeNumber("EMP-001");
         employeeRepository.save(admin);
         log.info("Seeded default admin user: {}", ADMIN_EMAIL);
+    }
+
+    private void seedTestEmployee(Department department, Team team) {
+        if (employeeRepository.existsByEmail(TEST_EMPLOYEE_EMAIL)) return;
+
+        int next = employeeRepository.findMaxEmployeeSequence()
+                .map(max -> max + 1)
+                .orElse(2);
+        String employeeNumber = String.format("EMP-%03d", next);
+
+        Employee emp = new Employee();
+        emp.setFirstName("Jane");
+        emp.setLastName("Doe");
+        emp.setEmail(TEST_EMPLOYEE_EMAIL);
+        emp.setPassword(passwordEncoder.encode("Employee@1234"));
+        emp.setJobTitle("Software Engineer");
+        emp.setEmploymentType(EmploymentType.FULL_TIME);
+        emp.setEmploymentStatus(EmploymentStatus.ACTIVE);
+        emp.setStartDate(LocalDate.now());
+        emp.setRole(Role.EMPLOYEE);
+        emp.setDepartment(department);
+        emp.setTeam(team);
+        emp.setEmployeeNumber(employeeNumber);
+        Employee saved = employeeRepository.save(emp);
+        createLeaveBalances(saved);
+        log.info("Seeded test employee: {} ({})", TEST_EMPLOYEE_EMAIL, employeeNumber);
+    }
+
+    private void createLeaveBalances(Employee employee) {
+        LocalDate now = LocalDate.now();
+        leaveTypeRepository.findAll().forEach(type -> {
+            LeaveBalance balance = new LeaveBalance();
+            balance.setEmployee(employee);
+            balance.setLeaveType(type);
+            balance.setTotalDays(BigDecimal.valueOf(type.getDefaultDays()));
+            balance.setUsedDays(BigDecimal.ZERO);
+            balance.setRemainingDays(BigDecimal.valueOf(type.getDefaultDays()));
+            balance.setCycleStartDate(now);
+            balance.setCycleEndDate(now.plusYears(type.getCycleYears()));
+            leaveBalanceRepository.save(balance);
+        });
     }
 
     /**

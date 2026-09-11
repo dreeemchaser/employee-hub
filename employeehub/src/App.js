@@ -13,6 +13,8 @@ import DocumentsPage from './pages/DocumentsPage';
 import PerformancePage from './pages/PerformancePage';
 import SalaryPage from './pages/SalaryPage';
 import BenefitsPage from './pages/BenefitsPage';
+import ProfilePage from './pages/ProfilePage';
+import NotificationsPage from './pages/NotificationsPage';
 
 function App() {
   const [loggedIn, setLoggedIn] = useState(isLoggedIn());
@@ -38,6 +40,8 @@ function App() {
           <Route path='/performance' element={<PerformancePage />} />
           <Route path='/salary' element={<SalaryPage />} />
           <Route path='/benefits' element={<BenefitsPage />} />
+          <Route path='/notifications' element={<NotificationsPage />} />
+          <Route path='/profile' element={<ProfilePage />} />
           <Route path='*' element={<Navigate to='/dashboard' />} />
         </Routes>
       </div>

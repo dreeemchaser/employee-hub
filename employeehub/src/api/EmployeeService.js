@@ -19,6 +19,20 @@ function normaliseEmployee(emp) {
     };
 }
 
+// ── Profile ──────────────────────────────────────────────────────────────────
+
+export async function getMe() {
+    return axios.get(`${BASE_URL}/auth/me`, authHeaders());
+}
+
+export async function updateMe(dto) {
+    return axios.patch(`${BASE_URL}/auth/me`, dto, authHeaders());
+}
+
+export async function changePassword(dto) {
+    return axios.post(`${BASE_URL}/auth/change-password`, dto, authHeaders());
+}
+
 // ── Departments & Teams ─────────────────────────────────────────────────────
 
 export async function getDepartments() {
@@ -160,4 +174,30 @@ export async function getMyNotifications() {
 
 export async function markNotificationRead(id) {
     return axios.patch(`${BASE_URL}/notifications/${id}/read`, {}, authHeaders());
+}
+
+export async function markAllNotificationsRead() {
+    return axios.patch(`${BASE_URL}/notifications/read-all`, {}, authHeaders());
+}
+
+// ── Leave Calendar ────────────────────────────────────────────────────────────
+
+export async function getLeaveCalendar(year, month) {
+    return axios.get(`${BASE_URL}/leave/calendar?year=${year}&month=${month}`, authHeaders());
+}
+
+// ── Salary Increase Requests ──────────────────────────────────────────────────
+
+export async function getMyIncreaseRequests() {
+    return axios.get(`${BASE_URL}/salary/increase-requests/my`, authHeaders());
+}
+
+export async function submitIncreaseRequest(dto) {
+    return axios.post(`${BASE_URL}/salary/increase-requests`, dto, authHeaders());
+}
+
+// ── Timesheet entry delete ────────────────────────────────────────────────────
+
+export async function deleteTimesheetEntry(timesheetId, entryId) {
+    return axios.delete(`${BASE_URL}/timesheets/${timesheetId}/entries/${entryId}`, authHeaders());
 }

@@ -43,11 +43,18 @@ const Sidebar = ({ onLogout }) => {
             { to: '/performance',  icon: 'bi-graph-up-arrow',  label: 'Performance' },
             { to: '/salary',       icon: 'bi-cash-coin',       label: 'Salary' },
             { to: '/benefits',     icon: 'bi-shield-check',    label: 'Benefits' },
+            { to: '/notifications',icon: 'bi-bell',            label: 'Notifications' },
           ].map(({ to, icon, label }) => (
             <NavLink key={to} to={to} className={({ isActive }) => `sidebar__link${isActive ? ' active' : ''}`}>
               <i className={`bi ${icon}`}></i> {label}
             </NavLink>
           ))}
+        </div>
+        <div>
+          <div className='sidebar__section-label'>Account</div>
+          <NavLink to='/profile' className={({ isActive }) => `sidebar__link${isActive ? ' active' : ''}`}>
+            <i className='bi bi-person-circle'></i> My Profile
+          </NavLink>
         </div>
       </nav>
 

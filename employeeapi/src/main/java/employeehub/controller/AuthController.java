@@ -1,8 +1,7 @@
 package employeehub.controller;
 
 import employeehub.domain.Employee;
-import employeehub.dto.ApiResponse;
-import employeehub.dto.MeResponse;
+import employeehub.dto.*;
 import employeehub.security.JwtUtil;
 import employeehub.service.EmployeeService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -43,5 +42,25 @@ public class AuthController {
     public ResponseEntity<ApiResponse<MeResponse>> me(@AuthenticationPrincipal UserDetails userDetails) {
         Employee employee = employeeService.getByEmail(userDetails.getUsername());
         return ResponseEntity.ok(ApiResponse.ok(new MeResponse(employee)));
+    }
+
+    @PatchMapping("/me")
+    @Operation(summary = "Update own profile (name, phone, address, nationality, gender)")
+    public ResponseEntity<ApiResponse<MeResponse>> updateMe(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestBody UpdateMeRequest request) {
+        Employee employee = employeeService.getByEmail(userDetails.getUsername());
+        Employee updated = employeeService.updateMe(employee.getId(), request);
+        return ResponseEntity.ok(ApiResponse.ok(new MeResponse(updated)));
+    }
+
+    @PostMapping("/change-password")
+    @Operation(summary = "Change own password")
+    public ResponseEntity<ApiResponse<Void>> changePassword(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestBody ChangePasswordRequest request) {
+        Employee employee = employeeService.getByEmail(userDetails.getUsername());
+        employeeService.changePassword(employee.getId(), request);
+        return ResponseEntity.ok(ApiResponse.ok("Password changed successfully", null));
     }
 }

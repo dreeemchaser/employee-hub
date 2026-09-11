@@ -6,7 +6,9 @@ import employeehub.domain.LeaveBalance;
 import employeehub.domain.LeaveType;
 import employeehub.domain.Team;
 import employeehub.domain.enums.EmploymentStatus;
+import employeehub.dto.ChangePasswordRequest;
 import employeehub.dto.EmployeeRequest;
+import employeehub.dto.UpdateMeRequest;
 import employeehub.exception.ResourceNotFoundException;
 import employeehub.repository.*;
 
@@ -92,6 +94,31 @@ public class EmployeeService {
         leaveRequestRepository.deleteByEmployeeId(id);
         notificationRepository.deleteByRecipientId(id);
         employeeRepository.delete(employee);
+    }
+
+    @Transactional
+    public Employee updateMe(String id, UpdateMeRequest req) {
+        Employee employee = getById(id);
+        if (req.getFirstName() != null && !req.getFirstName().isBlank()) employee.setFirstName(req.getFirstName());
+        if (req.getLastName()  != null && !req.getLastName().isBlank())  employee.setLastName(req.getLastName());
+        if (req.getPhone()     != null) employee.setPhone(req.getPhone());
+        if (req.getAddress()   != null) employee.setAddress(req.getAddress());
+        if (req.getNationality() != null) employee.setNationality(req.getNationality());
+        if (req.getGender()    != null) employee.setGender(req.getGender());
+        return employeeRepository.save(employee);
+    }
+
+    @Transactional
+    public void changePassword(String id, ChangePasswordRequest req) {
+        Employee employee = getById(id);
+        if (!passwordEncoder.matches(req.getCurrentPassword(), employee.getPassword())) {
+            throw new IllegalArgumentException("Current password is incorrect");
+        }
+        if (req.getNewPassword() == null || req.getNewPassword().length() < 8) {
+            throw new IllegalArgumentException("New password must be at least 8 characters");
+        }
+        employee.setPassword(passwordEncoder.encode(req.getNewPassword()));
+        employeeRepository.save(employee);
     }
 
     private Employee mapToEmployee(Employee employee, EmployeeRequest req) {

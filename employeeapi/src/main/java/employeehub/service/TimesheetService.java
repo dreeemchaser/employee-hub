@@ -11,6 +11,7 @@ import employeehub.dto.TimesheetRequest;
 import employeehub.exception.ResourceNotFoundException;
 import employeehub.repository.EmployeeRepository;
 import employeehub.repository.TimesheetRepository;
+import employeehub.repository.TimesheetEntryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +25,7 @@ public class TimesheetService {
 
     private final TimesheetRepository timesheetRepository;
     private final EmployeeRepository employeeRepository;
+    private final TimesheetEntryRepository timesheetEntryRepository;
     private final NotificationService notificationService;
 
     public Timesheet create(String employeeId, TimesheetRequest req) {
@@ -105,6 +107,28 @@ public class TimesheetService {
     }
 
     // ── Helpers ──────────────────────────────────────────────────────
+
+    @Transactional
+    public Timesheet deleteEntry(String timesheetId, Long entryId, String employeeId) {
+        Timesheet timesheet = findTimesheet(timesheetId);
+        validateOwner(timesheet, employeeId);
+        validateDraft(timesheet);
+
+        TimesheetEntry entry = timesheetEntryRepository.findById(entryId)
+                .orElseThrow(() -> new ResourceNotFoundException("Entry not found: " + entryId));
+        if (!entry.getTimesheet().getId().equals(timesheetId)) {
+            throw new IllegalArgumentException("Entry does not belong to this timesheet");
+        }
+        timesheet.getEntries().remove(entry);
+        timesheetEntryRepository.delete(entry);
+
+        timesheet.setTotalHours(
+                timesheet.getEntries().stream()
+                        .map(TimesheetEntry::getHoursWorked)
+                        .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add)
+        );
+        return timesheetRepository.save(timesheet);
+    }
 
     private void validateOwner(Timesheet timesheet, String employeeId) {
         if (!timesheet.getEmployee().getId().equals(employeeId)) {

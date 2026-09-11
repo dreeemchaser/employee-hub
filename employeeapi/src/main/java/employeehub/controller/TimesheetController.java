@@ -89,4 +89,14 @@ public class TimesheetController {
         var approver = employeeService.getByEmail(userDetails.getUsername());
         return ResponseEntity.ok(ApiResponse.ok(timesheetService.reject(id, approver.getId(), body.get("reason"))));
     }
+
+    @DeleteMapping("/{id}/entries/{entryId}")
+    @Operation(summary = "Delete an entry from a DRAFT timesheet")
+    public ResponseEntity<ApiResponse<Timesheet>> deleteEntry(
+            @PathVariable String id,
+            @PathVariable Long entryId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        var employee = employeeService.getByEmail(userDetails.getUsername());
+        return ResponseEntity.ok(ApiResponse.ok(timesheetService.deleteEntry(id, entryId, employee.getId())));
+    }
 }

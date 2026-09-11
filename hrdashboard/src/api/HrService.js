@@ -55,6 +55,24 @@ export async function getAuditLogs(page = 0, size = 20) {
   return axios.get(`${BASE_URL}/audit-logs?page=${page}&size=${size}`, auth());
 }
 
+// ── Salary ────────────────────────────────────────────────────────────────────
+
+export async function getAllIncreaseRequests() {
+  return axios.get(`${BASE_URL}/salary/increase-requests`, auth());
+}
+
+export async function approveIncreaseRequest(id) {
+  return axios.patch(`${BASE_URL}/salary/increase-requests/${id}/approve`, {}, auth());
+}
+
+export async function rejectIncreaseRequest(id, reason) {
+  return axios.patch(`${BASE_URL}/salary/increase-requests/${id}/reject`, { reason }, auth());
+}
+
+export async function getAllSalaryRecords(employeeId) {
+  return axios.get(`${BASE_URL}/salary/records/${employeeId}`, auth());
+}
+
 // ── Dashboard Stats ───────────────────────────────────────────────────────────
 
 export async function getDashboardStats() {

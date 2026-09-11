@@ -6,10 +6,11 @@ const NAV = [
     { to: '/dashboard', icon: 'bi-grid-1x2', label: 'Dashboard' },
   ]},
   { section: 'HR Management', links: [
-    { to: '/employees',            icon: 'bi-people',         label: 'Employees' },
-    { to: '/leave-approvals',      icon: 'bi-calendar-check', label: 'Leave Approvals' },
-    { to: '/timesheet-approvals',  icon: 'bi-clock-history',  label: 'Timesheet Approvals' },
-    { to: '/documents',            icon: 'bi-folder2-open',   label: 'Documents' },
+    { to: '/employees',           icon: 'bi-people',         label: 'Employees' },
+    { to: '/leave-approvals',     icon: 'bi-calendar-check', label: 'Leave Approvals' },
+    { to: '/timesheet-approvals', icon: 'bi-clock-history',  label: 'Timesheet Approvals' },
+    { to: '/documents',           icon: 'bi-folder2-open',   label: 'Documents' },
+    { to: '/salary',              icon: 'bi-cash-coin',      label: 'Salary' },
   ]},
   { section: 'System', links: [
     { to: '/audit-logs', icon: 'bi-journal-text', label: 'Audit Logs' },

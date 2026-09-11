@@ -2,11 +2,11 @@ package employeehub.repository;
 
 import employeehub.domain.LeaveRequest;
 import employeehub.domain.enums.LeaveStatus;
-import employeehub.domain.enums.Role;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, String> {
@@ -20,4 +20,10 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Stri
     List<LeaveRequest> findAllFiltered(
             @Param("managerId") String managerId,
             @Param("status") LeaveStatus status);
+
+    @Query("SELECT lr FROM LeaveRequest lr WHERE lr.status = 'APPROVED' AND " +
+           "(lr.startDate <= :lastDay AND lr.endDate >= :firstDay)")
+    List<LeaveRequest> findApprovedInMonth(
+            @Param("firstDay") LocalDate firstDay,
+            @Param("lastDay") LocalDate lastDay);
 }

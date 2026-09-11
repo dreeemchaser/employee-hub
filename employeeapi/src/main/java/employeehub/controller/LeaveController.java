@@ -86,4 +86,12 @@ public class LeaveController {
         var employee = employeeService.getByEmail(userDetails.getUsername());
         return ResponseEntity.ok(ApiResponse.ok(leaveService.getMyBalances(employee.getId())));
     }
+
+    @GetMapping("/calendar")
+    @Operation(summary = "Get approved leaves for a given month (team calendar)")
+    public ResponseEntity<ApiResponse<List<LeaveRequest>>> getCalendar(
+            @RequestParam int year,
+            @RequestParam int month) {
+        return ResponseEntity.ok(ApiResponse.ok(leaveService.getCalendar(year, month)));
+    }
 }

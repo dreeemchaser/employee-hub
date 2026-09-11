@@ -129,6 +129,14 @@ public class LeaveService {
         return leaveBalanceRepository.findByEmployeeId(employeeId);
     }
 
+    // ── Leave Calendar ───────────────────────────────────────────────
+
+    public List<LeaveRequest> getCalendar(int year, int month) {
+        LocalDate firstDay = LocalDate.of(year, month, 1);
+        LocalDate lastDay  = firstDay.withDayOfMonth(firstDay.lengthOfMonth());
+        return leaveRequestRepository.findApprovedInMonth(firstDay, lastDay);
+    }
+
     // ── Helpers ──────────────────────────────────────────────────────
 
     private void validateApprover(LeaveRequest request, Employee approver) {

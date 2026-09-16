@@ -1,6 +1,6 @@
 # EmployeeHub Next-Generation Features
 
-**Document Version:** 1.1  
+**Document Version:** 1.2  
 **Date:** September 2026  
 **Status:** Feature Planning & Roadmap
 
@@ -33,7 +33,7 @@ Version 1.1 adds a [Gap Analysis](#gap-analysis) section based on a direct audit
 
 ## Gap Analysis
 
-**Added in v1.1.** This section is grounded in a direct read of the backend (`employeeapi`) and the employee frontend (`employeehub`), not the README alone. It is the most accurate view of where the product actually stands.
+**Added in v1.1; corrected in v1.2.** This section is grounded in a direct read of all three apps — the backend (`employeeapi`), the employee frontend (`employeehub`), and the HR dashboard (`hrdashboard`). v1.2 corrects the approvals gap after auditing `hrdashboard`, which the v1.1 analysis had not examined.
 
 ### A. Already Built — Needs Exposing, Not Building
 
@@ -45,16 +45,18 @@ Several roadmap items below propose features that already exist in the backend. 
 | Feature 15 — Team Organization & Structure | `Team`, `TeamService`, `Department`, `DepartmentService` already exist. Gap is the org-chart visualization and team assignment in the employee UI. |
 | Feature 12 — Configurable Tax Tables | `TaxBracket` entity already exists and drives PAYE calculations. Gap is an admin interface to edit brackets, not the data model. |
 | Feature 17 — Intelligent Notification Center | `Notification` entity + `NotificationService` + `NotificationController` already exist. Gap is delivery channels and preferences, not the core. |
+| Approval workflows (leave, timesheet, salary) | Fully built in the **`hrdashboard`** app: `LeaveApprovalsPage`, `TimesheetApprovalsPage`, and a salary `SalaryPage` with approve/reject + reject-reason modals, wired to backend endpoints. Not a greenfield gap — see B.1 for the real remaining issue. |
 
 ### B. Genuinely Missing — Grounded in the Code
 
 These gaps were found by reading the code and are not adequately covered by the roadmap above. They are ordered by impact.
 
-1. **No manager/approver experience in the employee frontend.**
-   The entire `employeehub` app is self-service. Employees submit leave, timesheets, salary-increase requests, and documents — all landing in a `PENDING` / `SUBMITTED` state — but there is no approve/reject UI anywhere in `employeehub`. A manager who is not full HR has nowhere to action their team's pending requests. This is the single largest functional hole.
-   - Add a "My Team" / "Approvals" area gated by `MANAGER` role.
-   - Surface pending items per approver with approve/reject + reason.
-   - Wire to the existing backend approval endpoints (leave, timesheet, salary).
+1. **The `MANAGER` role has backend approval rights but no frontend that surfaces them.**
+   *(Corrected in v1.2 after auditing the `hrdashboard` app — the earlier claim that "no approval UI exists" was wrong.)*
+   Approval UI **does** exist, but only in the `hrdashboard` app (`LeaveApprovalsPage`, `TimesheetApprovalsPage`, salary approvals), and that app's login is gated by `isHrOrAdmin()` = `HR_ADMIN | SUPER_ADMIN | PAYROLL_ADMIN`. Meanwhile `SecurityConfig` grants `MANAGER` the right to approve/reject leave (`PATCH /leave/requests/*/approve|reject`) and approve timesheets (`PATCH /timesheets/*/approve`). So a line `MANAGER` is authorised by the backend but has nowhere to act: `employeehub` has no approval UI, and `hrdashboard` does not admit the `MANAGER` role. This is the real gap.
+   - Either admit `MANAGER` into `hrdashboard` with a team-scoped approvals view, or add a manager approvals area to `employeehub`.
+   - Scope visible requests to the manager's own team (backend currently returns all requests to any authorised approver — verify and constrain).
+   - Note: salary, documents, audit logs, and `/dashboard/**` remain HR/admin-only by design — do not expose those to `MANAGER`.
 
 2. **Zero automated tests.**
    There is no `src/test` directory in the backend and no frontend tests beyond CRA defaults. Given the system performs SA PAYE/UIF tax math with `BigDecimal`, this is a correctness risk. The new `coding-best-practices.md` steering file mandates patterns that should be enforced by tests.
@@ -83,7 +85,7 @@ These gaps were found by reading the code and are not adequately covered by the 
 
 Independent of the longer roadmap, these deliver the most value relative to effort:
 
-1. Manager approvals UI (B.1) — closes the biggest functional hole.
+1. Manager approvals access (B.1) — connect the `MANAGER` role to an approvals UI it is already authorised to use.
 2. Test suite for `SalaryService` and approval flows (B.2) — protects financial correctness.
 3. CI pipeline (B.3) — enforces the new coding standards automatically.
 4. Password reset + refresh tokens (B.5) — table-stakes auth hygiene.

@@ -20,6 +20,12 @@ import java.util.List;
 @RequiredArgsConstructor
 public class LeaveService {
 
+    // Annual leave requires at least this many days advance notice
+    private static final int ANNUAL_LEAVE_NOTICE_DAYS = 14;
+
+    // Sick leave beyond this threshold flags a documentation requirement
+    private static final int SICK_LEAVE_DOC_THRESHOLD = 3;
+
     private final LeaveRequestRepository leaveRequestRepository;
     private final LeaveBalanceRepository leaveBalanceRepository;
     private final LeaveTypeRepository leaveTypeRepository;
@@ -29,26 +35,79 @@ public class LeaveService {
 
     // ── Leave Requests ──────────────────────────────────────────────
 
+    @Transactional
     public LeaveRequest submit(String employeeId, LeaveRequestDto dto) {
         Employee employee = findEmployee(employeeId);
         LeaveType leaveType = leaveTypeRepository.findById(dto.getLeaveTypeId())
                 .orElseThrow(() -> new ResourceNotFoundException("Leave type not found: " + dto.getLeaveTypeId()));
 
-        BigDecimal days = calculateDays(dto.getStartDate(), dto.getEndDate());
+        LocalDate start = dto.getStartDate();
+        LocalDate end   = dto.getEndDate();
 
-        LeaveBalance balance = leaveBalanceRepository
-                .findByEmployeeIdAndLeaveTypeId(employeeId, dto.getLeaveTypeId())
-                .orElseThrow(() -> new ResourceNotFoundException("No leave balance found for this leave type"));
-
-        if (balance.getRemainingDays().compareTo(days) < 0) {
-            throw new IllegalArgumentException("Insufficient leave balance");
+        // ── Date order ───────────────────────────────────────────────
+        if (end.isBefore(start)) {
+            throw new IllegalArgumentException("End date cannot be before start date");
         }
 
+        // ── Weekday count (excludes weekends) ────────────────────────
+        BigDecimal days = calculateDays(start, end);
+        if (days.compareTo(BigDecimal.ZERO) == 0) {
+            throw new IllegalArgumentException(
+                "The selected date range contains no working days. Please choose weekdays.");
+        }
+
+        // ── Annual leave: 14-day advance notice ──────────────────────
+        if (leaveType.getName().equalsIgnoreCase("Annual Leave")) {
+            long daysUntilStart = LocalDate.now().until(start).getDays() +
+                    (long) LocalDate.now().until(start).getMonths() * 30 +
+                    (long) LocalDate.now().until(start).getYears() * 365;
+            if (daysUntilStart < ANNUAL_LEAVE_NOTICE_DAYS) {
+                throw new IllegalArgumentException(
+                    "Annual leave requires at least " + ANNUAL_LEAVE_NOTICE_DAYS +
+                    " days advance notice. Please plan ahead or speak to your manager.");
+            }
+        }
+
+        // ── Sick leave > 3 days requires documentation ───────────────
+        if (leaveType.getName().equalsIgnoreCase("Sick Leave")
+                && days.compareTo(BigDecimal.valueOf(SICK_LEAVE_DOC_THRESHOLD)) > 0) {
+            throw new IllegalArgumentException(
+                "REQUIRES_DOCUMENTATION: Sick leave exceeding " + SICK_LEAVE_DOC_THRESHOLD +
+                " days requires a doctor's note. Please email your manager with supporting documentation before submitting.");
+        }
+
+        // ── requiresDocumentation flag on other leave types ──────────
+        if (Boolean.TRUE.equals(leaveType.getRequiresDocumentation())
+                && !leaveType.getName().equalsIgnoreCase("Sick Leave")) {
+            // For other doc-required types (e.g. Maternity, Study), pass through but flag
+            // The frontend already warns the user; we allow submission
+        }
+
+        // ── Overlap check ────────────────────────────────────────────
+        List<LeaveRequest> overlapping = leaveRequestRepository.findOverlapping(employeeId, start, end);
+        if (!overlapping.isEmpty()) {
+            throw new IllegalArgumentException(
+                "You already have a pending or approved leave request that overlaps with these dates.");
+        }
+
+        // ── Balance check ────────────────────────────────────────────
+        LeaveBalance balance = leaveBalanceRepository
+                .findByEmployeeIdAndLeaveTypeId(employeeId, dto.getLeaveTypeId())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                    "No leave balance found for this leave type. Please contact HR."));
+
+        if (balance.getRemainingDays().compareTo(days) < 0) {
+            throw new IllegalArgumentException(
+                "Insufficient leave balance. You have " + balance.getRemainingDays() +
+                " day(s) remaining but requested " + days + " day(s).");
+        }
+
+        // ── Persist ──────────────────────────────────────────────────
         LeaveRequest request = new LeaveRequest();
         request.setEmployee(employee);
         request.setLeaveType(leaveType);
-        request.setStartDate(dto.getStartDate());
-        request.setEndDate(dto.getEndDate());
+        request.setStartDate(start);
+        request.setEndDate(end);
         request.setTotalDays(days);
         request.setReason(dto.getReason());
         LeaveRequest saved = leaveRequestRepository.save(request);
@@ -117,7 +176,7 @@ public class LeaveService {
             throw new IllegalArgumentException("You can only cancel your own requests");
         }
         if (request.getStatus() != LeaveStatus.PENDING) {
-            throw new IllegalArgumentException("Only PENDING requests can be cancelled");
+            throw new IllegalArgumentException("Only pending requests can be cancelled");
         }
         request.setStatus(LeaveStatus.CANCELLED);
         leaveRequestRepository.save(request);
@@ -147,7 +206,6 @@ public class LeaveService {
         if (role != Role.MANAGER && role != Role.HR_ADMIN && role != Role.SUPER_ADMIN) {
             throw new IllegalArgumentException("You are not authorised to approve leave requests");
         }
-        // MANAGER can only approve their own team's requests
         if (role == Role.MANAGER && !approver.getId().equals(request.getEmployee().getManager() != null
                 ? request.getEmployee().getManager().getId() : null)) {
             throw new IllegalArgumentException("You can only approve requests for your direct reports");
@@ -166,6 +224,9 @@ public class LeaveService {
                 });
     }
 
+    /**
+     * Counts working days (Mon–Fri) between start and end dates inclusive.
+     */
     private BigDecimal calculateDays(LocalDate start, LocalDate end) {
         long days = start.datesUntil(end.plusDays(1))
                 .filter(d -> d.getDayOfWeek().getValue() < 6)

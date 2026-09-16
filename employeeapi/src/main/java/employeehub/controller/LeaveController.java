@@ -8,6 +8,7 @@ import employeehub.service.EmployeeService;
 import employeehub.service.LeaveService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -45,7 +46,7 @@ public class LeaveController {
     @Operation(summary = "Submit a leave request")
     public ResponseEntity<ApiResponse<LeaveRequest>> submit(
             @AuthenticationPrincipal UserDetails userDetails,
-            @RequestBody LeaveRequestDto dto) {
+            @Valid @RequestBody LeaveRequestDto dto) {
         var employee = employeeService.getByEmail(userDetails.getUsername());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.ok(leaveService.submit(employee.getId(), dto)));

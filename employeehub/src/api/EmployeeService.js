@@ -201,3 +201,32 @@ export async function submitIncreaseRequest(dto) {
 export async function deleteTimesheetEntry(timesheetId, entryId) {
     return axios.delete(`${BASE_URL}/timesheets/${timesheetId}/entries/${entryId}`, authHeaders());
 }
+
+// ── Manager: Team Approvals ───────────────────────────────────────────────────
+// These call the same backend endpoints the HR dashboard uses. The backend
+// scopes results to the manager's direct reports and enforces that a MANAGER
+// may only approve/reject their own team's requests.
+
+export async function getTeamLeaveRequests() {
+    return axios.get(`${BASE_URL}/leave/requests`, authHeaders());
+}
+
+export async function approveTeamLeave(id) {
+    return axios.patch(`${BASE_URL}/leave/requests/${id}/approve`, {}, authHeaders());
+}
+
+export async function rejectTeamLeave(id, reason) {
+    return axios.patch(`${BASE_URL}/leave/requests/${id}/reject`, { reason }, authHeaders());
+}
+
+export async function getTeamTimesheets() {
+    return axios.get(`${BASE_URL}/timesheets`, authHeaders());
+}
+
+export async function approveTeamTimesheet(id) {
+    return axios.patch(`${BASE_URL}/timesheets/${id}/approve`, {}, authHeaders());
+}
+
+export async function rejectTeamTimesheet(id, reason) {
+    return axios.patch(`${BASE_URL}/timesheets/${id}/reject`, { reason }, authHeaders());
+}

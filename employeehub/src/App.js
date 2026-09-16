@@ -1,7 +1,7 @@
 import './index.css';
 import { useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { isLoggedIn, isHrOrAdmin } from './api/AuthService';
+import { isLoggedIn, isHrOrAdmin, isManager } from './api/AuthService';
 import LoginPage from './components/LoginPage';
 import Sidebar from './components/Sidebar';
 import DashboardPage from './pages/DashboardPage';
@@ -15,6 +15,7 @@ import SalaryPage from './pages/SalaryPage';
 import BenefitsPage from './pages/BenefitsPage';
 import ProfilePage from './pages/ProfilePage';
 import NotificationsPage from './pages/NotificationsPage';
+import TeamApprovalsPage from './pages/TeamApprovalsPage';
 
 function App() {
   const [loggedIn, setLoggedIn] = useState(isLoggedIn());
@@ -41,6 +42,9 @@ function App() {
           <Route path='/salary' element={<SalaryPage />} />
           <Route path='/benefits' element={<BenefitsPage />} />
           <Route path='/notifications' element={<NotificationsPage />} />
+          {isManager() && (
+            <Route path='/team-approvals' element={<TeamApprovalsPage />} />
+          )}
           <Route path='/profile' element={<ProfilePage />} />
           <Route path='*' element={<Navigate to='/dashboard' />} />
         </Routes>

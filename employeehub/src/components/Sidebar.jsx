@@ -1,9 +1,10 @@
-import { NavLink, useNavigate } from 'react-router-dom';
-import { logout, isHrOrAdmin } from '../api/AuthService';
+import { NavLink } from 'react-router-dom';
+import { logout, isHrOrAdmin, isManager } from '../api/AuthService';
 
 const Sidebar = ({ onLogout }) => {
 
   const hrOrAdmin = isHrOrAdmin();
+  const manager = isManager();
 
   const handleLogout = () => {
     logout();
@@ -50,6 +51,14 @@ const Sidebar = ({ onLogout }) => {
             </NavLink>
           ))}
         </div>
+        {manager && (
+          <div>
+            <div className='sidebar__section-label'>Management</div>
+            <NavLink to='/team-approvals' className={({ isActive }) => `sidebar__link${isActive ? ' active' : ''}`}>
+              <i className='bi bi-clipboard-check'></i> Team Approvals
+            </NavLink>
+          </div>
+        )}
         <div>
           <div className='sidebar__section-label'>Account</div>
           <NavLink to='/profile' className={({ isActive }) => `sidebar__link${isActive ? ' active' : ''}`}>

@@ -35,3 +35,7 @@ export function isHrOrAdmin() {
     const role = getRole();
     return role === 'HR_ADMIN' || role === 'SUPER_ADMIN' || role === 'PAYROLL_ADMIN';
 }
+
+export function isManager() {
+    return getRole() === 'MANAGER';
+}

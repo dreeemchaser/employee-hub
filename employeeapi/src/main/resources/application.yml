@@ -6,9 +6,13 @@ spring:
     username: ${SPRING_DATASOURCE_USERNAME:admin}
     password: ${SPRING_DATASOURCE_PASSWORD:administrator}
     driver-class-name: ${SPRING_DATASOURCE_DRIVER_CLASS_NAME:org.postgresql.Driver}
+  sql:
+    init:
+      mode: always
   jpa:
     generate-ddl: ${SPRING_JPA_GENERATE_DDL:true}
     show-sql: ${SPRING_JPA_SHOW_SQL:false}
+    defer-datasource-initialization: true
     hibernate:
       ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
     properties:

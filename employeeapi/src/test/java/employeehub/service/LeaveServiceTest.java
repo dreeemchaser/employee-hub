@@ -66,8 +66,9 @@ class LeaveServiceTest {
 
         dto = new LeaveRequestDto();
         dto.setLeaveTypeId(1L);
-        dto.setStartDate(LocalDate.now().plusDays(1));
-        dto.setEndDate(LocalDate.now().plusDays(3));
+        // Annual Leave requires >= 14 days advance notice; use dates well beyond that.
+        dto.setStartDate(LocalDate.now().plusDays(20));
+        dto.setEndDate(LocalDate.now().plusDays(22));
         dto.setReason("Holiday");
     }
 
@@ -76,6 +77,7 @@ class LeaveServiceTest {
         when(employeeRepository.findById("emp-1")).thenReturn(Optional.of(employee));
         when(leaveTypeRepository.findById(1L)).thenReturn(Optional.of(leaveType));
         when(leaveBalanceRepository.findByEmployeeIdAndLeaveTypeId("emp-1", 1L)).thenReturn(Optional.of(balance));
+        when(leaveRequestRepository.findOverlapping(eq("emp-1"), any(), any())).thenReturn(java.util.List.of());
         when(leaveRequestRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
         LeaveRequest result = leaveService.submit("emp-1", dto);
@@ -91,6 +93,7 @@ class LeaveServiceTest {
         when(employeeRepository.findById("emp-1")).thenReturn(Optional.of(employee));
         when(leaveTypeRepository.findById(1L)).thenReturn(Optional.of(leaveType));
         when(leaveBalanceRepository.findByEmployeeIdAndLeaveTypeId("emp-1", 1L)).thenReturn(Optional.of(balance));
+        when(leaveRequestRepository.findOverlapping(eq("emp-1"), any(), any())).thenReturn(java.util.List.of());
 
         assertThatThrownBy(() -> leaveService.submit("emp-1", dto))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -148,7 +151,7 @@ class LeaveServiceTest {
 
         assertThatThrownBy(() -> leaveService.cancel("req-1", "emp-1"))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Only PENDING requests can be cancelled");
+                .hasMessageContaining("Only pending requests can be cancelled");
     }
 
     @Test

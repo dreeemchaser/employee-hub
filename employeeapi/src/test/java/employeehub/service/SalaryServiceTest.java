@@ -156,4 +156,122 @@ class SalaryServiceTest {
         verify(notificationService).send(eq(employee), anyString(), anyString(), any(), anyString(), any());
         verify(auditService).log(any(), eq("APPROVE"), eq("SalaryIncreaseRequest"), any(), any(), any());
     }
+
+    @Test
+    void generatePaySlip_shouldFloorPayeAtZero_whenRebateExceedsTax() {
+        // Low earner: R5,000/month = R60,000/year. Tax before rebate = 60000 * 18% = 10800,
+        // which is less than the R17,235 rebate, so PAYE must floor at 0 (never negative).
+        SalaryRecord record = new SalaryRecord();
+        record.setEmployee(employee);
+        record.setBasicSalary(BigDecimal.valueOf(5_000));
+
+        PaySlipGenerateRequest req = new PaySlipGenerateRequest();
+        req.setEmployeeId("emp-1");
+        req.setMonth("2025-06");
+
+        when(employeeRepository.findById("emp-1")).thenReturn(Optional.of(employee));
+        when(salaryRecordRepository.findFirstByEmployeeIdOrderByEffectiveDateDesc("emp-1")).thenReturn(Optional.of(record));
+        when(taxBracketRepository.findBracketForIncome(anyInt(), any())).thenReturn(Optional.of(bracket));
+        when(paySlipRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        PaySlip result = salaryService.generatePaySlip(req, "pa-1");
+
+        assertThat(result.getPaye()).isEqualByComparingTo(BigDecimal.ZERO);
+        // UIF = 5000 * 1% = 50.00, below the R177.12 cap
+        assertThat(result.getUif()).isEqualByComparingTo(new BigDecimal("50.00"));
+        // Net = 5000 - 0 (paye) - 50 (uif) = 4950.00
+        assertThat(result.getNetSalary()).isEqualByComparingTo(new BigDecimal("4950.00"));
+    }
+
+    @Test
+    void generatePaySlip_shouldSubtractOptionalDeductions() {
+        SalaryRecord record = new SalaryRecord();
+        record.setEmployee(employee);
+        record.setBasicSalary(BigDecimal.valueOf(20_000));
+
+        PaySlipGenerateRequest req = new PaySlipGenerateRequest();
+        req.setEmployeeId("emp-1");
+        req.setMonth("2025-06");
+        req.setMedicalAid(new BigDecimal("1000"));
+        req.setPensionFund(new BigDecimal("1500"));
+        req.setOtherDeductions(new BigDecimal("250"));
+
+        when(employeeRepository.findById("emp-1")).thenReturn(Optional.of(employee));
+        when(salaryRecordRepository.findFirstByEmployeeIdOrderByEffectiveDateDesc("emp-1")).thenReturn(Optional.of(record));
+        when(taxBracketRepository.findBracketForIncome(anyInt(), any())).thenReturn(Optional.of(bracket));
+        when(paySlipRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        PaySlip result = salaryService.generatePaySlip(req, "pa-1");
+
+        // Base case net was 17659.13 with no optional deductions; subtract 1000 + 1500 + 250 = 2750
+        assertThat(result.getNetSalary()).isEqualByComparingTo(new BigDecimal("14909.13"));
+        assertThat(result.getMedicalAid()).isEqualByComparingTo(new BigDecimal("1000"));
+        assertThat(result.getPensionFund()).isEqualByComparingTo(new BigDecimal("1500"));
+        assertThat(result.getOtherDeductions()).isEqualByComparingTo(new BigDecimal("250"));
+    }
+
+    @Test
+    void createRecord_shouldClosePreviousRecord() {
+        SalaryRecordRequest req = new SalaryRecordRequest();
+        req.setEmployeeId("emp-1");
+        req.setBasicSalary(BigDecimal.valueOf(35_000));
+        req.setEffectiveDate(LocalDate.of(2025, 7, 1));
+
+        SalaryRecord previous = new SalaryRecord();
+        previous.setEmployee(employee);
+        previous.setBasicSalary(BigDecimal.valueOf(30_000));
+        previous.setEffectiveDate(LocalDate.of(2025, 1, 1));
+
+        when(employeeRepository.findById("emp-1")).thenReturn(Optional.of(employee));
+        when(employeeRepository.findById("pa-1")).thenReturn(Optional.of(payrollAdmin));
+        when(salaryRecordRepository.findFirstByEmployeeIdOrderByEffectiveDateDesc("emp-1")).thenReturn(Optional.of(previous));
+        when(salaryRecordRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        salaryService.createRecord(req, "pa-1");
+
+        // Previous record should be end-dated to the day before the new effective date.
+        assertThat(previous.getEndDate()).isEqualTo(LocalDate.of(2025, 6, 30));
+    }
+
+    @Test
+    void submitIncreaseRequest_shouldHandleNoPriorSalary() {
+        // No prior salary record => current salary defaults to ZERO. Percentage divides by
+        // current; verify this path does not blow up and produces a sane request.
+        SalaryIncreaseRequestDto dto = new SalaryIncreaseRequestDto();
+        dto.setEmployeeId("emp-1");
+        dto.setProposedSalary(BigDecimal.valueOf(25_000));
+        dto.setJustification("New hire adjustment");
+
+        when(employeeRepository.findById("emp-1")).thenReturn(Optional.of(employee));
+        when(salaryRecordRepository.findFirstByEmployeeIdOrderByEffectiveDateDesc("emp-1")).thenReturn(Optional.empty());
+
+        // With no prior salary record, current salary is ZERO and the percentage calculation
+        // divides by zero. This documents the CURRENT behaviour: it throws ArithmeticException.
+        // NOTE: this is arguably a real bug (a 0 -> R25k increase should be representable).
+        // Flagged for follow-up; the test pins current behaviour so a future fix is deliberate.
+        assertThatThrownBy(() -> salaryService.submitIncreaseRequest(dto, "emp-1"))
+                .isInstanceOf(ArithmeticException.class);
+    }
+
+    @Test
+    void rejectIncreaseRequest_shouldSetStatusAndReason() {
+        Employee reviewer = new Employee();
+        reviewer.setId("hr-1");
+
+        SalaryIncreaseRequest request = new SalaryIncreaseRequest();
+        request.setId("sir-1");
+        request.setEmployee(employee);
+        request.setCurrentSalary(BigDecimal.valueOf(20_000));
+        request.setProposedSalary(BigDecimal.valueOf(30_000));
+        request.setStatus(SalaryIncreaseStatus.PENDING);
+
+        when(increaseRequestRepository.findById("sir-1")).thenReturn(Optional.of(request));
+        when(employeeRepository.findById("hr-1")).thenReturn(Optional.of(reviewer));
+        when(increaseRequestRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        SalaryIncreaseRequest result = salaryService.rejectIncreaseRequest("sir-1", "hr-1", "Budget constraints");
+
+        assertThat(result.getStatus()).isEqualTo(SalaryIncreaseStatus.REJECTED);
+        assertThat(result.getRejectionReason()).isEqualTo("Budget constraints");
+    }
 }

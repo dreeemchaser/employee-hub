@@ -8,6 +8,7 @@ import employeehub.domain.enums.EmploymentStatus;
 import employeehub.domain.enums.EmploymentType;
 import employeehub.domain.enums.Role;
 import employeehub.dto.EmployeeRequest;
+import employeehub.dto.EmployeeResponse;
 import employeehub.exception.ResourceNotFoundException;
 import employeehub.repository.DepartmentRepository;
 import employeehub.repository.EmployeeRepository;
@@ -22,6 +23,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDate;
@@ -149,5 +154,63 @@ class EmployeeServiceTest {
         Employee result = employeeService.updatePhoto("emp-1", "photo.jpg");
 
         assertThat(result.getProfilePhoto()).isEqualTo("photo.jpg");
+    }
+
+    /**
+     * Regression test for the "HR dashboard shows no employees" bug.
+     *
+     * <p>Root cause: {@code getAll} returned raw {@link Employee} entities whose
+     * lazy {@code manager} association was serialized outside the Hibernate
+     * session, throwing mid-stream and corrupting the JSON response. The fix
+     * projects to {@link EmployeeResponse}, flattening the manager to a name/id
+     * so no lazy proxy reaches the serializer. This test pins that contract: a
+     * page containing a MANAGER and one of their reports maps cleanly, with the
+     * report's manager flattened to a display name.
+     */
+    @Test
+    void getAll_shouldReturnFlattenedResponses_forManagerAndReport() {
+        Employee manager = new Employee();
+        manager.setId("mgr-1");
+        manager.setFirstName("Alex");
+        manager.setLastName("Smith");
+        manager.setEmail("alex.smith@test.com");
+        manager.setJobTitle("Team Lead");
+        manager.setRole(Role.MANAGER);
+        manager.setEmploymentStatus(EmploymentStatus.ACTIVE);
+        manager.setDepartment(department);
+        manager.setTeam(team);
+
+        Employee report = new Employee();
+        report.setId("emp-2");
+        report.setFirstName("Kim");
+        report.setLastName("Lee");
+        report.setEmail("kim.lee@test.com");
+        report.setJobTitle("Engineer");
+        report.setRole(Role.EMPLOYEE);
+        report.setEmploymentStatus(EmploymentStatus.ACTIVE);
+        report.setDepartment(department);
+        report.setTeam(team);
+        report.setManager(manager);
+
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Employee> page = new PageImpl<>(List.of(manager, report), pageable, 2);
+        when(employeeRepository.findAllFiltered(null, null, null, pageable)).thenReturn(page);
+
+        Page<EmployeeResponse> result = employeeService.getAll(null, null, null, pageable);
+
+        assertThat(result.getTotalElements()).isEqualTo(2);
+        EmployeeResponse mgrDto = result.getContent().get(0);
+        EmployeeResponse reportDto = result.getContent().get(1);
+
+        // Manager has no manager of their own -> null, and department/team flattened to names.
+        assertThat(mgrDto.getRole()).isEqualTo(Role.MANAGER);
+        assertThat(mgrDto.getManager()).isNull();
+        assertThat(mgrDto.getDepartment()).isEqualTo("Engineering");
+        assertThat(mgrDto.getTeam()).isEqualTo("Backend");
+
+        // Report's manager is flattened to a display name + id, not an entity.
+        assertThat(reportDto.getManager()).isEqualTo("Alex Smith");
+        assertThat(reportDto.getManagerId()).isEqualTo("mgr-1");
+        assertThat(reportDto.getEmail()).isEqualTo("kim.lee@test.com");
     }
 }

@@ -8,6 +8,7 @@ import employeehub.domain.Team;
 import employeehub.domain.enums.EmploymentStatus;
 import employeehub.dto.ChangePasswordRequest;
 import employeehub.dto.EmployeeRequest;
+import employeehub.dto.EmployeeResponse;
 import employeehub.dto.UpdateMeRequest;
 import employeehub.exception.ResourceNotFoundException;
 import employeehub.repository.*;
@@ -61,8 +62,18 @@ public class EmployeeService {
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found for email: " + email));
     }
 
-    public Page<Employee> getAll(Long departmentId, Long teamId, EmploymentStatus status, Pageable pageable) {
-        return employeeRepository.findAllFiltered(departmentId, teamId, status, pageable);
+    /**
+     * Returns a page of employees as safe {@link EmployeeResponse} projections.
+     *
+     * <p>Marked {@code @Transactional(readOnly = true)} so lazy department/team/
+     * manager associations are resolved while the Hibernate session is still
+     * open — the mapping to EmployeeResponse happens inside this boundary, so no
+     * lazy proxy is ever handed to the JSON serializer.
+     */
+    @Transactional(readOnly = true)
+    public Page<EmployeeResponse> getAll(Long departmentId, Long teamId, EmploymentStatus status, Pageable pageable) {
+        return employeeRepository.findAllFiltered(departmentId, teamId, status, pageable)
+                .map(EmployeeResponse::new);
     }
 
     @Transactional

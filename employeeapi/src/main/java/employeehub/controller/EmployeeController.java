@@ -4,6 +4,7 @@ import employeehub.domain.Employee;
 import employeehub.domain.enums.EmploymentStatus;
 import employeehub.dto.ApiResponse;
 import employeehub.dto.EmployeeRequest;
+import employeehub.dto.EmployeeResponse;
 import employeehub.service.EmployeeService;
 import employeehub.service.PhotoService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,7 +31,7 @@ public class EmployeeController {
 
     @GetMapping
     @Operation(summary = "Get all employees (paginated, filterable)")
-    public ResponseEntity<ApiResponse<Page<Employee>>> getAll(
+    public ResponseEntity<ApiResponse<Page<EmployeeResponse>>> getAll(
             @RequestParam(required = false) Long departmentId,
             @RequestParam(required = false) Long teamId,
             @RequestParam(required = false) EmploymentStatus status,

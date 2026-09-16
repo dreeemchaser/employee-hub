@@ -929,6 +929,42 @@ Independent of the longer roadmap, these deliver the most value relative to effo
 
 ---
 
+### Feature 23: Dependency & Runtime Version Alignment
+
+**Current State:**  
+- Backend targets Java 21 (`<java.version>21</java.version>`) on Spring Boot 3.5.13, but local toolchains run newer JDKs (JDK 26 default, Maven on JDK 25) that fall outside Spring Boot 3.5.x's supported matrix (Java 17–24)
+- The two React apps drift on shared dependencies: `employeehub` uses `react-router-dom` ^7.14.0 while `hrdashboard` uses ^6.30.1 (a major-version gap with breaking API differences)
+- Both frontends are pinned to `react-scripts` 5.0.1 (Create React App), which is no longer maintained
+- No enforcement that local/CI build runtimes match the versions the project declares
+
+**Proposed Changes:**
+
+1. **Pin the JDK to the supported version**
+   - Implementation Steps:
+     - Add a Maven toolchains configuration (or `.sdkmanrc`) that resolves JDK 21 for the build
+     - Document the required JDK in `development.md` and enforce it in CI
+     - Avoid bumping `<java.version>` beyond what Spring Boot 3.5.x supports
+   - Keeps local and CI builds on a supported, reproducible runtime
+
+2. **Align frontend dependency versions**
+   - Reconcile `react-router-dom` to a single major across `employeehub` and `hrdashboard` (target v7), adjusting router code for the v6→v7 breaking changes
+   - Align shared libraries (`axios`, `web-vitals`) to matching ranges across both apps
+   - Add a dependency-drift check so the two apps do not diverge again
+
+3. **Plan the Create React App migration**
+   - Evaluate migrating both frontends off the unmaintained `react-scripts` (CRA) to Vite
+   - Stage the migration per app to limit blast radius
+
+4. **Automated version/currency checks**
+   - Add a scheduled dependency-audit job (backend `mvn versions:display-dependency-updates`, frontend `npm outdated`/audit) to surface available patch/minor bumps and CVEs
+   - Keep Spring Boot on the latest 3.5.x patch and pin transitive-critical libs (springdoc, jjwt) to compatible releases
+
+**Priority:** HIGH  
+**Effort:** 1-2 weeks  
+**Technical Stack:** Maven toolchains, SDKMAN, npm, GitHub Actions (scheduled dependency audit)
+
+---
+
 ## Implementation Roadmap
 
 ### Phase 1: Foundation (Months 1-2)

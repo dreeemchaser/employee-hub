@@ -68,8 +68,12 @@ Get all employees (paginated).
       "email": "jane@example.com",
       "jobTitle": "Software Engineer",
       "employmentStatus": "ACTIVE",
-      "departmentId": "uuid-string",
-      "teamId": "uuid-string"
+      "departmentId": 1,
+      "department": "Human Resources",
+      "teamId": 1,
+      "team": "Management",
+      "managerId": "uuid-string-or-null",
+      "manager": "Alex Smith"
     }
   ],
   "page": {

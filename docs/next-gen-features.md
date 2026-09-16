@@ -45,7 +45,7 @@ Chronological record of work shipped to `master` during this build cycle. ✅ = 
 | 2 | `SalaryService` tests + stale test fixes (B.2) | ✅ **DONE** | 78 backend tests green; 3 stale `LeaveServiceTest` expectations fixed |
 | 3 | Bugfix: `/employees` malformed JSON for managers | ✅ **DONE** | `EmployeeResponse` DTO projection; HR dashboard employee list restored |
 | 4 | Seed data: Technology dept, Cashier team, EMP-003..010 | ✅ **DONE** | Reproducible test data (manager + 5 reports) in `data.sql`; idempotent |
-| 5 | Manager approvals access (B.1) | 🟡 **IN PROGRESS** | Connect `MANAGER` role to an approvals UI it is already authorised to use |
+| 5 | Manager approvals access (B.1) | ✅ **DONE** | `TeamApprovalsPage` in `employeehub`: role-gated Leave + Timesheet approve/reject for the manager's own team |
 
 ---
 
@@ -67,7 +67,7 @@ These gaps were found by reading the code and are not adequately covered by the 
 
 > **Status legend:** ✅ **DONE** = built, tested, and merged to master · 🟡 **IN PROGRESS** = actively being worked · (no marker) = not started.
 
-1. 🟡 **IN PROGRESS — The `MANAGER` role has backend approval rights but no frontend that surfaces them.**
+1. ✅ **DONE — The `MANAGER` role now has a frontend for its backend approval rights.**
    *(Corrected in v1.2 after auditing the `hrdashboard` app — the earlier claim that "no approval UI exists" was wrong.)*
    Approval UI **does** exist, but only in the `hrdashboard` app (`LeaveApprovalsPage`, `TimesheetApprovalsPage`, salary approvals), and that app's login is gated by `isHrOrAdmin()` = `HR_ADMIN | SUPER_ADMIN | PAYROLL_ADMIN`. Meanwhile `SecurityConfig` grants `MANAGER` the right to approve/reject leave (`PATCH /leave/requests/*/approve|reject`) and approve timesheets (`PATCH /timesheets/*/approve`). So a line `MANAGER` is authorised by the backend but has nowhere to act: `employeehub` has no approval UI, and `hrdashboard` does not admit the `MANAGER` role. This is the real gap.
    - Either admit `MANAGER` into `hrdashboard` with a team-scoped approvals view, or add a manager approvals area to `employeehub`.
@@ -103,7 +103,7 @@ These gaps were found by reading the code and are not adequately covered by the 
 
 Independent of the longer roadmap, these deliver the most value relative to effort:
 
-1. 🟡 **IN PROGRESS** — Manager approvals access (B.1): connect the `MANAGER` role to an approvals UI it is already authorised to use.
+1. ✅ **DONE** — Manager approvals access (B.1): `MANAGER`s action their team's leave & timesheets from a role-gated Team Approvals page in the employee portal.
 2. ✅ **DONE** — Test suite for `SalaryService` (B.2): protects financial correctness (78 tests green).
 3. ✅ **DONE** — CI pipeline (B.3): enforces the coding standards automatically on every push/PR.
 4. Password reset + refresh tokens (B.5) — table-stakes auth hygiene.

@@ -11,6 +11,10 @@ INSERT INTO departments (name, description)
 SELECT 'Human Resources', 'HR and administration'
 WHERE NOT EXISTS (SELECT 1 FROM departments WHERE name = 'Human Resources');
 
+INSERT INTO departments (name, description)
+SELECT 'Technology', 'Software development and engineering'
+WHERE NOT EXISTS (SELECT 1 FROM departments WHERE name = 'Technology');
+
 -- -----------------------------------------------------------------------------
 -- Team
 -- -----------------------------------------------------------------------------
@@ -19,6 +23,12 @@ SELECT 'Management', 'Leadership and management', d.id
 FROM departments d
 WHERE d.name = 'Human Resources'
   AND NOT EXISTS (SELECT 1 FROM teams WHERE name = 'Management');
+
+INSERT INTO teams (name, description, department_id)
+SELECT 'Cashier', 'Cashier development team', d.id
+FROM departments d
+WHERE d.name = 'Technology'
+  AND NOT EXISTS (SELECT 1 FROM teams WHERE name = 'Cashier');
 
 -- -----------------------------------------------------------------------------
 -- Employees
@@ -72,6 +82,203 @@ JOIN teams t ON t.department_id = d.id
 WHERE d.name = 'Human Resources'
   AND NOT EXISTS (SELECT 1 FROM employees WHERE email = 'jane.doe@employeehub.com');
 
+-- EMP-003 Alex Smith (MANAGER)
+INSERT INTO employees (
+    id, employee_number, first_name, last_name, email, password,
+    job_title, employment_type, employment_status,
+    start_date, role, department_id, team_id, manager_id,
+    created_at, updated_at
+)
+SELECT
+    gen_random_uuid()::text,
+    'EMP-003',
+    'Alex', 'Smith',
+    'alex.smith@employeehub.com',
+    '$2b$10$3OLdSI13USc0PFba5M8q5uOr8Uh2ewh.IysU2bXdPJQptemKHBY0O',
+    'Engineering Manager',
+    'FULL_TIME', 'ACTIVE',
+    CURRENT_DATE,
+    'MANAGER',
+    d.id, t.id, NULL,
+    NOW(), NOW()
+FROM departments d
+JOIN teams t ON t.name = 'Cashier'
+WHERE d.name = 'Technology'
+  AND NOT EXISTS (SELECT 1 FROM employees WHERE email = 'alex.smith@employeehub.com');
+
+-- EMP-004 Kim Lee (EMPLOYEE)
+INSERT INTO employees (
+    id, employee_number, first_name, last_name, email, password,
+    job_title, employment_type, employment_status,
+    start_date, role, department_id, team_id, manager_id,
+    created_at, updated_at
+)
+SELECT
+    gen_random_uuid()::text,
+    'EMP-004',
+    'Kim', 'Lee',
+    'kim.lee@employeehub.com',
+    '$2b$10$3OLdSI13USc0PFba5M8q5uOr8Uh2ewh.IysU2bXdPJQptemKHBY0O',
+    'Team Lead',
+    'FULL_TIME', 'ACTIVE',
+    CURRENT_DATE,
+    'EMPLOYEE',
+    d.id, t.id, m.id,
+    NOW(), NOW()
+FROM departments d
+JOIN teams t ON t.name = 'Cashier'
+JOIN employees m ON m.email = 'alex.smith@employeehub.com'
+WHERE d.name = 'Technology'
+  AND NOT EXISTS (SELECT 1 FROM employees WHERE email = 'kim.lee@employeehub.com');
+
+-- EMP-005 Jake Turner (EMPLOYEE)
+INSERT INTO employees (
+    id, employee_number, first_name, last_name, email, password,
+    job_title, employment_type, employment_status,
+    start_date, role, department_id, team_id, manager_id,
+    created_at, updated_at
+)
+SELECT
+    gen_random_uuid()::text,
+    'EMP-005',
+    'Jake', 'Turner',
+    'jake.turner@employeehub.com',
+    '$2b$10$3OLdSI13USc0PFba5M8q5uOr8Uh2ewh.IysU2bXdPJQptemKHBY0O',
+    'Developer',
+    'FULL_TIME', 'ACTIVE',
+    CURRENT_DATE,
+    'EMPLOYEE',
+    d.id, t.id, m.id,
+    NOW(), NOW()
+FROM departments d
+JOIN teams t ON t.name = 'Cashier'
+JOIN employees m ON m.email = 'alex.smith@employeehub.com'
+WHERE d.name = 'Technology'
+  AND NOT EXISTS (SELECT 1 FROM employees WHERE email = 'jake.turner@employeehub.com');
+
+-- EMP-006 Mike Davis (EMPLOYEE)
+INSERT INTO employees (
+    id, employee_number, first_name, last_name, email, password,
+    job_title, employment_type, employment_status,
+    start_date, role, department_id, team_id, manager_id,
+    created_at, updated_at
+)
+SELECT
+    gen_random_uuid()::text,
+    'EMP-006',
+    'Mike', 'Davis',
+    'mike.davis@employeehub.com',
+    '$2b$10$3OLdSI13USc0PFba5M8q5uOr8Uh2ewh.IysU2bXdPJQptemKHBY0O',
+    'Developer',
+    'FULL_TIME', 'ACTIVE',
+    CURRENT_DATE,
+    'EMPLOYEE',
+    d.id, t.id, m.id,
+    NOW(), NOW()
+FROM departments d
+JOIN teams t ON t.name = 'Cashier'
+JOIN employees m ON m.email = 'alex.smith@employeehub.com'
+WHERE d.name = 'Technology'
+  AND NOT EXISTS (SELECT 1 FROM employees WHERE email = 'mike.davis@employeehub.com');
+
+-- EMP-007 Sandy Brooks (EMPLOYEE)
+INSERT INTO employees (
+    id, employee_number, first_name, last_name, email, password,
+    job_title, employment_type, employment_status,
+    start_date, role, department_id, team_id, manager_id,
+    created_at, updated_at
+)
+SELECT
+    gen_random_uuid()::text,
+    'EMP-007',
+    'Sandy', 'Brooks',
+    'sandy.brooks@employeehub.com',
+    '$2b$10$3OLdSI13USc0PFba5M8q5uOr8Uh2ewh.IysU2bXdPJQptemKHBY0O',
+    'Developer',
+    'FULL_TIME', 'ACTIVE',
+    CURRENT_DATE,
+    'EMPLOYEE',
+    d.id, t.id, m.id,
+    NOW(), NOW()
+FROM departments d
+JOIN teams t ON t.name = 'Cashier'
+JOIN employees m ON m.email = 'alex.smith@employeehub.com'
+WHERE d.name = 'Technology'
+  AND NOT EXISTS (SELECT 1 FROM employees WHERE email = 'sandy.brooks@employeehub.com');
+
+-- EMP-008 Joan Parker (EMPLOYEE)
+INSERT INTO employees (
+    id, employee_number, first_name, last_name, email, password,
+    job_title, employment_type, employment_status,
+    start_date, role, department_id, team_id, manager_id,
+    created_at, updated_at
+)
+SELECT
+    gen_random_uuid()::text,
+    'EMP-008',
+    'Joan', 'Parker',
+    'joan.parker@employeehub.com',
+    '$2b$10$3OLdSI13USc0PFba5M8q5uOr8Uh2ewh.IysU2bXdPJQptemKHBY0O',
+    'Developer',
+    'FULL_TIME', 'ACTIVE',
+    CURRENT_DATE,
+    'EMPLOYEE',
+    d.id, t.id, m.id,
+    NOW(), NOW()
+FROM departments d
+JOIN teams t ON t.name = 'Cashier'
+JOIN employees m ON m.email = 'alex.smith@employeehub.com'
+WHERE d.name = 'Technology'
+  AND NOT EXISTS (SELECT 1 FROM employees WHERE email = 'joan.parker@employeehub.com');
+
+-- EMP-009 Alexa Morgan (HR_ADMIN)
+INSERT INTO employees (
+    id, employee_number, first_name, last_name, email, password,
+    job_title, employment_type, employment_status,
+    start_date, role, department_id, team_id, manager_id,
+    created_at, updated_at
+)
+SELECT
+    gen_random_uuid()::text,
+    'EMP-009',
+    'Alexa', 'Morgan',
+    'alexa.morgan@employeehub.com',
+    '$2b$10$3OLdSI13USc0PFba5M8q5uOr8Uh2ewh.IysU2bXdPJQptemKHBY0O',
+    'HR Administrator',
+    'FULL_TIME', 'ACTIVE',
+    CURRENT_DATE,
+    'HR_ADMIN',
+    d.id, t.id, NULL,
+    NOW(), NOW()
+FROM departments d
+JOIN teams t ON t.name = 'Management'
+WHERE d.name = 'Human Resources'
+  AND NOT EXISTS (SELECT 1 FROM employees WHERE email = 'alexa.morgan@employeehub.com');
+
+-- EMP-010 Tania Wells (PAYROLL_ADMIN)
+INSERT INTO employees (
+    id, employee_number, first_name, last_name, email, password,
+    job_title, employment_type, employment_status,
+    start_date, role, department_id, team_id, manager_id,
+    created_at, updated_at
+)
+SELECT
+    gen_random_uuid()::text,
+    'EMP-010',
+    'Tania', 'Wells',
+    'tania.wells@employeehub.com',
+    '$2b$10$3OLdSI13USc0PFba5M8q5uOr8Uh2ewh.IysU2bXdPJQptemKHBY0O',
+    'Payroll Administrator',
+    'FULL_TIME', 'ACTIVE',
+    CURRENT_DATE,
+    'PAYROLL_ADMIN',
+    d.id, t.id, NULL,
+    NOW(), NOW()
+FROM departments d
+JOIN teams t ON t.name = 'Management'
+WHERE d.name = 'Human Resources'
+  AND NOT EXISTS (SELECT 1 FROM employees WHERE email = 'tania.wells@employeehub.com');
+
 -- -----------------------------------------------------------------------------
 -- Leave Types
 -- -----------------------------------------------------------------------------
@@ -88,7 +295,7 @@ FROM (VALUES
 WHERE NOT EXISTS (SELECT 1 FROM leave_types lt WHERE lt.name = v.name);
 
 -- -----------------------------------------------------------------------------
--- Leave Balances for Jane Doe (cycle: today → today + cycle_years)
+-- Leave Balances for all seeded employees (cycle: today → today + cycle_years)
 -- -----------------------------------------------------------------------------
 INSERT INTO leave_balances (
     employee_id, leave_type_id,
@@ -105,7 +312,17 @@ SELECT
     CURRENT_DATE + (lt.cycle_years || ' years')::interval
 FROM employees e
 JOIN leave_types lt ON true
-WHERE e.email = 'jane.doe@employeehub.com'
+WHERE e.email IN (
+        'jane.doe@employeehub.com',
+        'alex.smith@employeehub.com',
+        'kim.lee@employeehub.com',
+        'jake.turner@employeehub.com',
+        'mike.davis@employeehub.com',
+        'sandy.brooks@employeehub.com',
+        'joan.parker@employeehub.com',
+        'alexa.morgan@employeehub.com',
+        'tania.wells@employeehub.com'
+      )
   AND NOT EXISTS (
       SELECT 1 FROM leave_balances lb
       WHERE lb.employee_id = e.id AND lb.leave_type_id = lt.id

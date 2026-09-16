@@ -1,6 +1,6 @@
 # EmployeeHub Next-Generation Features
 
-**Document Version:** 1.2  
+**Document Version:** 1.3  
 **Date:** September 2026  
 **Status:** Feature Planning & Roadmap
 
@@ -33,7 +33,21 @@ Version 1.1 adds a [Gap Analysis](#gap-analysis) section based on a direct audit
 
 ## Gap Analysis
 
-**Added in v1.1; corrected in v1.2.** This section is grounded in a direct read of all three apps — the backend (`employeeapi`), the employee frontend (`employeehub`), and the HR dashboard (`hrdashboard`). v1.2 corrects the approvals gap after auditing `hrdashboard`, which the v1.1 analysis had not examined.
+**Added in v1.1; corrected in v1.2; progress tracked from v1.3.** This section is grounded in a direct read of all three apps — the backend (`employeeapi`), the employee frontend (`employeehub`), and the HR dashboard (`hrdashboard`). v1.2 corrects the approvals gap after auditing `hrdashboard`, which the v1.1 analysis had not examined.
+
+### Progress Log
+
+Chronological record of work shipped to `master` during this build cycle. ✅ = done and merged.
+
+| # | Item | Status | Notes |
+|---|------|--------|-------|
+| 1 | CI pipeline (B.3) | ✅ **DONE** | `.github/workflows/ci.yml` — backend + both frontends + gated Docker build |
+| 2 | `SalaryService` tests + stale test fixes (B.2) | ✅ **DONE** | 78 backend tests green; 3 stale `LeaveServiceTest` expectations fixed |
+| 3 | Bugfix: `/employees` malformed JSON for managers | ✅ **DONE** | `EmployeeResponse` DTO projection; HR dashboard employee list restored |
+| 4 | Seed data: Technology dept, Cashier team, EMP-003..010 | ✅ **DONE** | Reproducible test data (manager + 5 reports) in `data.sql`; idempotent |
+| 5 | Manager approvals access (B.1) | 🟡 **IN PROGRESS** | Connect `MANAGER` role to an approvals UI it is already authorised to use |
+
+---
 
 ### A. Already Built — Needs Exposing, Not Building
 
@@ -51,21 +65,25 @@ Several roadmap items below propose features that already exist in the backend. 
 
 These gaps were found by reading the code and are not adequately covered by the roadmap above. They are ordered by impact.
 
-1. **The `MANAGER` role has backend approval rights but no frontend that surfaces them.**
+> **Status legend:** ✅ **DONE** = built, tested, and merged to master · 🟡 **IN PROGRESS** = actively being worked · (no marker) = not started.
+
+1. 🟡 **IN PROGRESS — The `MANAGER` role has backend approval rights but no frontend that surfaces them.**
    *(Corrected in v1.2 after auditing the `hrdashboard` app — the earlier claim that "no approval UI exists" was wrong.)*
    Approval UI **does** exist, but only in the `hrdashboard` app (`LeaveApprovalsPage`, `TimesheetApprovalsPage`, salary approvals), and that app's login is gated by `isHrOrAdmin()` = `HR_ADMIN | SUPER_ADMIN | PAYROLL_ADMIN`. Meanwhile `SecurityConfig` grants `MANAGER` the right to approve/reject leave (`PATCH /leave/requests/*/approve|reject`) and approve timesheets (`PATCH /timesheets/*/approve`). So a line `MANAGER` is authorised by the backend but has nowhere to act: `employeehub` has no approval UI, and `hrdashboard` does not admit the `MANAGER` role. This is the real gap.
    - Either admit `MANAGER` into `hrdashboard` with a team-scoped approvals view, or add a manager approvals area to `employeehub`.
    - Scope visible requests to the manager's own team (backend currently returns all requests to any authorised approver — verify and constrain).
    - Note: salary, documents, audit logs, and `/dashboard/**` remain HR/admin-only by design — do not expose those to `MANAGER`.
 
-2. **Zero automated tests.**
-   There is no `src/test` directory in the backend and no frontend tests beyond CRA defaults. Given the system performs SA PAYE/UIF tax math with `BigDecimal`, this is a correctness risk. The new `coding-best-practices.md` steering file mandates patterns that should be enforced by tests.
+2. ✅ **DONE — Backend test coverage.** *(v1.3: the original "zero automated tests" claim was inaccurate — 72 backend tests already existed; the file search that reported none only matched `node_modules`.)*
+   Expanded `SalaryService` coverage (PAYE floor-at-zero, optional deductions, record close-out, no-prior-salary edge case, increase rejection) and fixed 3 stale `LeaveServiceTest` expectations. Full suite green: **78 tests, 0 failures**. Merged to master.
+   *Remaining (not yet done):* frontend tests beyond CRA defaults. Given the system performs SA PAYE/UIF tax math with `BigDecimal`, this is a correctness risk. The new `coding-best-practices.md` steering file mandates patterns that should be enforced by tests.
    - Backend: JUnit 5 + Spring Boot Test; prioritize `SalaryService` tax calculations and approval-state transitions.
    - Frontend: React Testing Library for the submission/approval flows.
    - Consider property-based tests for tax math (invariants: non-negative net pay, PAYE monotonic in gross).
 
-3. **No CI/CD pipeline.**
-   There is no `.github/workflows` (or equivalent) despite Docker already being configured. A build → test → image → deploy pipeline is a concrete, high-value gap.
+3. ✅ **DONE — CI pipeline.**
+   Added `.github/workflows/ci.yml`: parallel jobs build+test the backend (`mvnw verify`), build+test both React apps, and a gated `docker-build` job validates the full stack. Runs on push/PR to master. Merged to master.
+   *Remaining (not yet done):* the CD half — image publish + deploy.
 
 4. **No generated API client / contract enforcement across the three apps.**
    `employeehub` and `hrdashboard` both hand-write service files against the same API. There is no client generated from the OpenAPI spec, so frontend/backend drift is likely. Generating a typed client from the existing Swagger spec is more actionable than a generic integration platform.
@@ -85,9 +103,9 @@ These gaps were found by reading the code and are not adequately covered by the 
 
 Independent of the longer roadmap, these deliver the most value relative to effort:
 
-1. Manager approvals access (B.1) — connect the `MANAGER` role to an approvals UI it is already authorised to use.
-2. Test suite for `SalaryService` and approval flows (B.2) — protects financial correctness.
-3. CI pipeline (B.3) — enforces the new coding standards automatically.
+1. 🟡 **IN PROGRESS** — Manager approvals access (B.1): connect the `MANAGER` role to an approvals UI it is already authorised to use.
+2. ✅ **DONE** — Test suite for `SalaryService` (B.2): protects financial correctness (78 tests green).
+3. ✅ **DONE** — CI pipeline (B.3): enforces the coding standards automatically on every push/PR.
 4. Password reset + refresh tokens (B.5) — table-stakes auth hygiene.
 
 ---

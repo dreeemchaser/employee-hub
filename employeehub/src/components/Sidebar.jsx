@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { logout, isHrOrAdmin } from '../api/AuthService';
 
 const Sidebar = ({ onLogout }) => {
-  const navigate = useNavigate();
+
   const hrOrAdmin = isHrOrAdmin();
 
   const handleLogout = () => {

@@ -46,6 +46,7 @@ Chronological record of work shipped to `master` during this build cycle. ✅ = 
 | 3 | Bugfix: `/employees` malformed JSON for managers | ✅ **DONE** | `EmployeeResponse` DTO projection; HR dashboard employee list restored |
 | 4 | Seed data: Technology dept, Cashier team, EMP-003..010 | ✅ **DONE** | Reproducible test data (manager + 5 reports) in `data.sql`; idempotent |
 | 5 | Manager approvals access (B.1) | ✅ **DONE** | `TeamApprovalsPage` in `employeehub`: role-gated Leave + Timesheet approve/reject for the manager's own team |
+| 6 | CD pipeline (B.3) | ✅ **DONE** | `.github/workflows/cd.yml` — publishes all 3 images to GHCR on push to master + `v*` tags; env-gated SSH deploy via `docker-compose.prod.yml` (no-op until deploy secrets set) |
 
 ---
 
@@ -81,9 +82,10 @@ These gaps were found by reading the code and are not adequately covered by the 
    - Frontend: React Testing Library for the submission/approval flows.
    - Consider property-based tests for tax math (invariants: non-negative net pay, PAYE monotonic in gross).
 
-3. ✅ **DONE — CI pipeline.**
-   Added `.github/workflows/ci.yml`: parallel jobs build+test the backend (`mvnw verify`), build+test both React apps, and a gated `docker-build` job validates the full stack. Runs on push/PR to master. Merged to master.
-   *Remaining (not yet done):* the CD half — image publish + deploy.
+3. ✅ **DONE — CI/CD pipeline.**
+   **CI:** `.github/workflows/ci.yml` — parallel jobs build+test the backend (`mvnw verify`), build+test both React apps, and a gated `docker-build` job validates the full stack. Runs on push/PR to master. Merged to master.
+   **CD:** `.github/workflows/cd.yml` — on push to master and `v*.*.*` tags, a matrix `publish` job builds and pushes all three images (`api`, `employeehub`, `hrdashboard`) to GHCR (`ghcr.io/<owner>/<repo>/<component>`) using `docker/build-push-action` with `docker/metadata-action` tagging (branch, long SHA, semver, `edge` on master, `latest` on tags) and GHA layer caching. A downstream `deploy` job (environment `production`) then pulls those images onto a host over SSH and runs `docker compose -f docker-compose.prod.yml up -d`. The deploy job is a safe no-op until `DEPLOY_HOST`/`DEPLOY_SSH_KEY`/`DEPLOY_USER`/`DEPLOY_PATH` secrets are configured, so image publishing works out of the box while server deploy stays opt-in.
+   *Notes:* `docker-compose.prod.yml` pulls the published images (rather than building) and requires `POSTGRES_PASSWORD` + `JWT_SECRET` from the host environment. Image publishing needs no extra credentials — it uses the built-in `GITHUB_TOKEN` with `packages: write`.
 
 4. **No generated API client / contract enforcement across the three apps.**
    `employeehub` and `hrdashboard` both hand-write service files against the same API. There is no client generated from the OpenAPI spec, so frontend/backend drift is likely. Generating a typed client from the existing Swagger spec is more actionable than a generic integration platform.
@@ -105,7 +107,7 @@ Independent of the longer roadmap, these deliver the most value relative to effo
 
 1. ✅ **DONE** — Manager approvals access (B.1): `MANAGER`s action their team's leave & timesheets from a role-gated Team Approvals page in the employee portal.
 2. ✅ **DONE** — Test suite for `SalaryService` (B.2): protects financial correctness (78 tests green).
-3. ✅ **DONE** — CI pipeline (B.3): enforces the coding standards automatically on every push/PR.
+3. ✅ **DONE** — CI/CD pipeline (B.3): CI enforces the coding standards automatically on every push/PR; CD publishes all three images to GHCR and provides an opt-in, environment-gated deploy.
 4. Password reset + refresh tokens (B.5) — table-stakes auth hygiene.
 
 ---

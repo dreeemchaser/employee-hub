@@ -1,0 +1,113 @@
+# Production compose file used by the CD deploy job.
+#
+# Unlike docker-compose.yml (which BUILDS images locally), this file PULLS the
+# images published to GHCR by .github/workflows/cd.yml. It is copied to the
+# deploy host and run there with:
+#
+#   REGISTRY=ghcr.io IMAGE_PREFIX=<owner>/<repo> IMAGE_TAG=edge \
+#     docker compose -f docker-compose.prod.yml up -d
+#
+# Secrets (DB password, JWT secret) come from the host environment or a .env
+# file placed next to this compose file on the server — never committed here.
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: employeehub-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in the host .env}
+      POSTGRES_DB: ${POSTGRES_DB:-employeehub}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - docker-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-admin} -d ${POSTGRES_DB:-employeehub}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  api:
+    image: ${REGISTRY:-ghcr.io}/${IMAGE_PREFIX}/api:${IMAGE_TAG:-edge}
+    container_name: employeehub-api
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-employeehub}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-admin}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in the host .env}
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
+      SPRING_JPA_GENERATE_DDL: "true"
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.PostgreSQLDialect
+      SPRING_JPA_SHOW_SQL: "false"
+      SPRING_SERVLET_MULTIPART_MAX_FILE_SIZE: 10MB
+      SPRING_SERVLET_MULTIPART_MAX_REQUEST_SIZE: 12MB
+      SERVER_PORT: 8080
+      LOGGING_LEVEL_ROOT: INFO
+      UPLOAD_DIRECTORY: /app/photos/
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in the host .env}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:3001}
+    ports:
+      - "8080:8080"
+    volumes:
+      - employee_photos:/app/photos
+    networks:
+      - docker-net
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  frontend:
+    image: ${REGISTRY:-ghcr.io}/${IMAGE_PREFIX}/employeehub:${IMAGE_TAG:-edge}
+    container_name: employeehub-frontend
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    networks:
+      - docker-net
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+
+  dashboard:
+    image: ${REGISTRY:-ghcr.io}/${IMAGE_PREFIX}/hrdashboard:${IMAGE_TAG:-edge}
+    container_name: employeehub-hrdashboard
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "3001:3001"
+    networks:
+      - docker-net
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:3001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+
+networks:
+  docker-net:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  employee_photos:
+    driver: local

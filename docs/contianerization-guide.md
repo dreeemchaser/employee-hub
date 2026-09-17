@@ -61,7 +61,11 @@ Multi-stage build:
 
 ### HR Dashboard (`hrdashboard/Dockerfile`)
 
-Same pattern as the frontend build.
+Same pattern as the frontend build, with one addition: the build stage sets
+`DISABLE_ESLINT_PLUGIN=true` so `react-scripts build` does not fail on the
+`react-app/jest` ESLint config (which otherwise reports `Environment key
+"jest/globals" is unknown` under the Node 20 toolchain). Linting still runs in
+the CI test job.
 
 ## Key Configuration
 

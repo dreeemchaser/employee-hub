@@ -27,21 +27,25 @@ Register a new user.
 ```
 
 ### POST /auth/login `[PUBLIC]`
-Login and receive a JWT token.
+Login and receive an access token plus a refresh token.
 
 **Request Body:**
 ```json
 {
-  "username": "jane@example.com",
+  "email": "jane@example.com",
   "password": "password123"
 }
 ```
 
-**Response (200 OK):**
+**Response (200 OK):** the access token is short-lived (~15 min); the refresh
+token is long-lived (~7 days) and rotated on each use.
 ```json
 {
-  "token": "eyJhbGci...",
-  "username": "jane@example.com"
+  "success": true,
+  "data": {
+    "accessToken": "eyJhbGci...",
+    "refreshToken": "8xK3...opaque..."
+  }
 }
 ```
 
@@ -53,6 +57,51 @@ too many failed logins. Includes a `Retry-After` header (seconds) and:
   "message": "Account is temporarily locked due to repeated failed login attempts. Try again later.",
   "data": { "retryAfterSeconds": 900 }
 }
+```
+
+---
+
+### POST /auth/refresh `[PUBLIC]`
+Exchange a valid refresh token for a new access + refresh token pair. The
+presented refresh token is revoked (rotation). Presenting an already-revoked
+token is treated as compromise and revokes all of the user's active sessions.
+
+**Request Body:**
+```json
+{ "refreshToken": "8xK3...opaque..." }
+```
+
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "data": {
+    "accessToken": "eyJhbGci...",
+    "refreshToken": "9pL7...newOpaque..."
+  }
+}
+```
+
+**Response (401 Unauthorized):** the refresh token is unknown, expired, or
+revoked. The client should route to login.
+```json
+{ "success": false, "message": "Invalid or expired refresh token" }
+```
+
+---
+
+### POST /auth/logout `[PUBLIC]`
+Revoke a refresh token (logout). Idempotent — revoking an unknown or
+already-revoked token still returns success.
+
+**Request Body:**
+```json
+{ "refreshToken": "8xK3...opaque..." }
+```
+
+**Response (200 OK):**
+```json
+{ "success": true, "message": "Logged out successfully" }
 ```
 
 ---

@@ -46,19 +46,37 @@ test('getRole returns null for a malformed token instead of throwing', () => {
   expect(getRole()).toBeNull();
 });
 
-test('isLoggedIn reflects token presence, and logout clears it', () => {
+test('isLoggedIn reflects token presence, and logout clears it', async () => {
   expect(isLoggedIn()).toBe(false);
   localStorage.setItem('token', tokenWithRole('EMPLOYEE'));
   expect(isLoggedIn()).toBe(true);
-  logout();
+  await logout(); // no refresh token stored → clears locally without a network call
   expect(isLoggedIn()).toBe(false);
 });
 
-test('login stores the token on success', async () => {
-  axios.post.mockResolvedValueOnce({ data: { data: { token: 'abc.def.ghi' } } });
+test('logout revokes the refresh token server-side and clears both tokens', async () => {
+  localStorage.setItem('token', tokenWithRole('EMPLOYEE'));
+  localStorage.setItem('refreshToken', 'refresh-abc');
+  axios.post.mockResolvedValueOnce({ data: { message: 'Logged out successfully' } });
+
+  await logout();
+
+  expect(axios.post).toHaveBeenCalledWith(
+    expect.stringContaining('/auth/logout'),
+    { refreshToken: 'refresh-abc' }
+  );
+  expect(localStorage.getItem('token')).toBeNull();
+  expect(localStorage.getItem('refreshToken')).toBeNull();
+});
+
+test('login stores the access + refresh token pair on success', async () => {
+  axios.post.mockResolvedValueOnce({
+    data: { data: { accessToken: 'abc.def.ghi', refreshToken: 'refresh-xyz' } },
+  });
   const token = await login('user@test.com', 'pw');
   expect(token).toBe('abc.def.ghi');
   expect(localStorage.getItem('token')).toBe('abc.def.ghi');
+  expect(localStorage.getItem('refreshToken')).toBe('refresh-xyz');
 });
 
 test('login surfaces the lock message and retryAfterSeconds on a 423 response', async () => {

@@ -89,6 +89,16 @@ package "Employee" {
         usedAt : DateTime
         * createdAt : DateTime
     }
+
+    entity REFRESH_TOKEN {
+        * id : UUID <<PK>>
+        --
+        * tokenHash : String <<unique>>  ' SHA-256 of the raw token; raw value never stored
+        * employeeId : UUID <<FK>>
+        * expiresAt : DateTime
+        * revoked : Boolean
+        * createdAt : DateTime
+    }
 }
 
 ' ─────────────────────────────────────────

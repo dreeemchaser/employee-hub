@@ -155,11 +155,29 @@ Tokens are signed using a secret key stored in `application.yml`. The signature 
 ```yaml
 jwt:
   secret: <your-256-bit-secret-key>
-  expiration: 86400000
+  access-expiration: 900000     # 15 min — short-lived access token
+  refresh-expiration: 604800000 # 7 days — long-lived refresh token
 ```
 
 - `secret` — must be at least 256 bits (32 characters) for HMAC-SHA256. Use a long random string. Keep this private — anyone with this key can forge tokens.
-- `expiration` — token lifetime in milliseconds. `86400000` = 24 hours.
+- `access-expiration` — access-token lifetime in milliseconds. `900000` = 15 minutes. Falls back to the legacy `JWT_EXPIRATION` env override if set.
+- `refresh-expiration` — refresh-token lifetime in milliseconds. `604800000` = 7 days.
+
+### Refresh tokens (B.5b)
+
+The access token is deliberately short-lived; clients renew it silently using a
+**refresh token**:
+
+- On login, the API returns `{ accessToken, refreshToken }`. The refresh token is
+  an opaque, high-entropy random string — **not** a JWT.
+- Only the **SHA-256 hash** of the refresh token is stored (`refresh_tokens`
+  table). A database leak therefore does not expose usable tokens.
+- `POST /auth/refresh` validates the presented token, **revokes it, and issues a
+  new pair** (rotation). Presenting an already-revoked token is treated as
+  compromise and revokes all of that user's active tokens.
+- `POST /auth/logout` revokes the refresh token server-side.
+- Handled by `RefreshTokenService`; the raw token value only ever exists in the
+  login/refresh response body and is never logged.
 
 ---
 

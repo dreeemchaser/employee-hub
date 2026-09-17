@@ -6,6 +6,7 @@ import employeehub.security.JwtUtil;
 import employeehub.service.EmployeeService;
 import employeehub.service.LoginAttemptService;
 import employeehub.service.PasswordResetService;
+import employeehub.service.RefreshTokenService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -35,6 +36,7 @@ public class AuthController {
     private final JwtUtil jwtUtil;
     private final LoginAttemptService loginAttemptService;
     private final PasswordResetService passwordResetService;
+    private final RefreshTokenService refreshTokenService;
 
     // Dev/test convenience: when true, forgot-password echoes the token in the
     // response so the flow can be tested before the email channel exists.
@@ -70,8 +72,34 @@ public class AuthController {
 
         loginAttemptService.recordSuccess(email);
         Employee employee = employeeService.getByEmail(email);
-        String token = jwtUtil.generateToken(employee.getEmail(), employee.getRole().name());
-        return ResponseEntity.ok(ApiResponse.ok(Map.of("token", token)));
+        String accessToken = jwtUtil.generateToken(employee.getEmail(), employee.getRole().name());
+        String refreshToken = refreshTokenService.issue(employee);
+        return ResponseEntity.ok(ApiResponse.ok(Map.of(
+                "accessToken", accessToken,
+                "refreshToken", refreshToken)));
+    }
+
+    @PostMapping("/refresh")
+    @Operation(summary = "Exchange a refresh token for a new access + refresh token pair")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> refresh(
+            @Valid @RequestBody RefreshRequest request) {
+        // Rotation returns empty when the token is unknown, expired, or revoked
+        // (reuse). Surface that as 401 so the client routes to login; a fresh
+        // pair is returned on success. Mirrors the state-based return in login().
+        return refreshTokenService.rotate(request.getRefreshToken())
+                .<ResponseEntity<ApiResponse<Map<String, Object>>>>map(pair -> ResponseEntity.ok(ApiResponse.ok(Map.of(
+                        "accessToken", pair.accessToken(),
+                        "refreshToken", pair.refreshToken()))))
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.error("Invalid or expired refresh token")));
+    }
+
+    @PostMapping("/logout")
+    @Operation(summary = "Revoke a refresh token (logout)")
+    public ResponseEntity<ApiResponse<Void>> logout(@Valid @RequestBody RefreshRequest request) {
+        // Idempotent: revoking an unknown or already-revoked token still succeeds.
+        refreshTokenService.revoke(request.getRefreshToken());
+        return ResponseEntity.ok(ApiResponse.ok("Logged out successfully", null));
     }
 
     // Build the 423 Locked response with a Retry-After header (seconds) and a

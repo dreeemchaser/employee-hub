@@ -51,6 +51,9 @@ services:
       LOGGING_LEVEL_ROOT: INFO
       UPLOAD_DIRECTORY: /app/photos/
       JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in the host .env}
+      # Access token lifetime in ms (default 15 min); refresh token lifetime in ms (default 7 days).
+      JWT_ACCESS_EXPIRATION: ${JWT_ACCESS_EXPIRATION:-900000}
+      JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION:-604800000}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:3001}
     ports:
       - "8080:8080"

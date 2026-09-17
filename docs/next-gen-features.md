@@ -47,6 +47,8 @@ Chronological record of work shipped to `master` during this build cycle. ✅ = 
 | 4 | Seed data: Technology dept, Cashier team, EMP-003..010 | ✅ **DONE** | Reproducible test data (manager + 5 reports) in `data.sql`; idempotent |
 | 5 | Manager approvals access (B.1) | ✅ **DONE** | `TeamApprovalsPage` in `employeehub`: role-gated Leave + Timesheet approve/reject for the manager's own team |
 | 6 | CD pipeline (B.3) | ✅ **DONE** | `.github/workflows/cd.yml` — publishes all 3 images to GHCR on push to master + `v*` tags; env-gated SSH deploy via `docker-compose.prod.yml` (no-op until deploy secrets set) |
+| 7 | Password reset + email (B.5a) | ✅ **DONE** | `POST /auth/forgot-password` + `/auth/reset-password`; single-use TTL token; config-gated email delivery |
+| 8 | Refresh tokens (B.5b) | ✅ **DONE** | Short-lived access (15m) + rotating opaque refresh (7d, hashed at rest); `POST /auth/refresh` + `/auth/logout`; reuse-detection revoke-all; silent-refresh interceptor in both frontends. Completes the B.5 auth-hygiene epic. |
 
 ---
 
@@ -90,11 +92,11 @@ These gaps were found by reading the code and are not adequately covered by the 
 4. **No generated API client / contract enforcement across the three apps.**
    `employeehub` and `hrdashboard` both hand-write service files against the same API. There is no client generated from the OpenAPI spec, so frontend/backend drift is likely. Generating a typed client from the existing Swagger spec is more actionable than a generic integration platform.
 
-5. **Authentication operational gaps.**
-   - No forgot-password / password-reset flow.
-   - No account lockout after repeated failed logins.
-   - JWT is 24h with no refresh-token mechanism — a single long-lived token.
-   - Notifications exist as entities, but there is no evidence of an actual email/SMS delivery channel.
+5. ✅ **DONE — Authentication operational gaps (B.5).**
+   - ✅ Forgot-password / password-reset flow (B.5a): `POST /auth/forgot-password` issues a single-use, TTL-bound token; `POST /auth/reset-password` consumes it and clears any lockout.
+   - ✅ Account lockout after repeated failed logins (B.5a): configurable threshold/duration; login returns 423 with `Retry-After`.
+   - ✅ Refresh tokens (B.5b): access token is now short-lived (15m) and renewed via a rotating, server-tracked opaque refresh token (7d, SHA-256 hashed at rest). `POST /auth/refresh` rotates the pair; `POST /auth/logout` revokes it; presenting a revoked token triggers reuse-detection revoke-all. Both React apps silently refresh on 401 via a single-flight axios interceptor and fall back to login when refresh fails.
+   - ✅ Email delivery channel (B.5a): config-gated `EmailService` sends the reset link (off by default until SMTP configured).
 
 6. **Data-model gaps.**
    - No attendance / clock-in entity, despite timesheets being present.
@@ -108,7 +110,7 @@ Independent of the longer roadmap, these deliver the most value relative to effo
 1. ✅ **DONE** — Manager approvals access (B.1): `MANAGER`s action their team's leave & timesheets from a role-gated Team Approvals page in the employee portal.
 2. ✅ **DONE** — Test suite for `SalaryService` (B.2): protects financial correctness (78 tests green).
 3. ✅ **DONE** — CI/CD pipeline (B.3): CI enforces the coding standards automatically on every push/PR; CD publishes all three images to GHCR and provides an opt-in, environment-gated deploy.
-4. Password reset + refresh tokens (B.5) — table-stakes auth hygiene.
+4. ✅ **DONE** — Password reset + refresh tokens (B.5): lockout, password reset + email (B.5a) and short-lived access with rotating refresh tokens (B.5b). Table-stakes auth hygiene complete.
 
 ---
 

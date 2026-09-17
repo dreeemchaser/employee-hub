@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { login } from '../api/AuthService';
 
 // mm:ss for a countdown of whole seconds.
@@ -100,6 +101,10 @@ const LoginPage = ({ onLogin }) => {
             {loading ? 'Signing in...' : locked ? `Locked — ${formatCountdown(lockSeconds)}` : 'Sign In'}
           </button>
         </form>
+
+        <p style={{ marginTop: '1rem', textAlign: 'center' }}>
+          <Link to='/forgot-password'>Forgot your password?</Link>
+        </p>
       </div>
     </div>
   );

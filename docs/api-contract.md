@@ -29,6 +29,8 @@
 | POST | `/auth/logout` | ALL | Invalidate token |
 | POST | `/auth/refresh` | ALL | Refresh JWT token |
 | PUT | `/auth/change-password` | ALL | Change own password |
+| POST | `/auth/forgot-password` | PUBLIC | Request a password reset link (generic response, no enumeration) |
+| POST | `/auth/reset-password` | PUBLIC | Reset password with a single-use, expiring token |
 
 ---
 

@@ -5,9 +5,12 @@ import employeehub.dto.*;
 import employeehub.security.JwtUtil;
 import employeehub.service.EmployeeService;
 import employeehub.service.LoginAttemptService;
+import employeehub.service.PasswordResetService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +21,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -30,6 +34,13 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
     private final LoginAttemptService loginAttemptService;
+    private final PasswordResetService passwordResetService;
+
+    // Dev/test convenience: when true, forgot-password echoes the token in the
+    // response so the flow can be tested before the email channel exists.
+    // MUST remain false in production — the email delivers the token.
+    @Value("${app.security.password-reset.expose-token:false}")
+    private boolean exposeResetToken;
 
     @PostMapping("/login")
     @Operation(summary = "Login and receive a JWT token")
@@ -99,5 +110,30 @@ public class AuthController {
         Employee employee = employeeService.getByEmail(userDetails.getUsername());
         employeeService.changePassword(employee.getId(), request);
         return ResponseEntity.ok(ApiResponse.ok("Password changed successfully", null));
+    }
+
+    @PostMapping("/forgot-password")
+    @Operation(summary = "Request a password reset token for an email")
+    public ResponseEntity<ApiResponse<Map<String, String>>> forgotPassword(
+            @Valid @RequestBody ForgotPasswordRequest request) {
+        var token = passwordResetService.createResetToken(request.getEmail());
+
+        // Always respond the same way regardless of whether the account exists,
+        // to avoid revealing which emails are registered.
+        Map<String, String> data = new HashMap<>();
+        if (exposeResetToken) {
+            token.ifPresent(t -> data.put("resetToken", t));
+        }
+        return ResponseEntity.ok(ApiResponse.ok(
+                "If an account exists for that email, a password reset link has been sent.",
+                data.isEmpty() ? null : data));
+    }
+
+    @PostMapping("/reset-password")
+    @Operation(summary = "Reset a password using a valid reset token")
+    public ResponseEntity<ApiResponse<Void>> resetPassword(
+            @Valid @RequestBody ResetPasswordRequest request) {
+        passwordResetService.resetPassword(request);
+        return ResponseEntity.ok(ApiResponse.ok("Password has been reset successfully. You can now sign in.", null));
     }
 }

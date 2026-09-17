@@ -38,6 +38,19 @@ function lockRetrySeconds(err) {
   return Number.isFinite(fromHeader) ? fromHeader : 0;
 }
 
+// Request a password reset email for the given address. Resolves with the
+// server's generic message regardless of whether the account exists.
+export async function forgotPassword(email) {
+  const res = await axios.post(`${BASE_URL}/auth/forgot-password`, { email });
+  return res.data.message;
+}
+
+// Complete a password reset using the emailed token.
+export async function resetPassword(token, newPassword) {
+  const res = await axios.post(`${BASE_URL}/auth/reset-password`, { token, newPassword });
+  return res.data.message;
+}
+
 export function logout() {
   localStorage.removeItem('token');
 }

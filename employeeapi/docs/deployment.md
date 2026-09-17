@@ -118,6 +118,20 @@ Configured in `docker-compose.yml`. Key variables:
 | `JWT_SECRET` | (set in docker-compose or env) |
 | `REACT_APP_API_URL` | `http://localhost:8080` (build arg) |
 
+### Auth hardening (optional)
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `AUTH_LOCKOUT_MAX_ATTEMPTS` | 5 | Failed logins before lockout |
+| `AUTH_LOCKOUT_DURATION_MINUTES` | 15 | Lockout duration |
+| `AUTH_PASSWORD_RESET_TTL_MINUTES` | 30 | Reset token validity |
+| `AUTH_PASSWORD_RESET_URL` | `http://localhost:3000/reset-password` | Reset link base URL |
+| `MAIL_ENABLED` | false | Enable outbound email (reset links) |
+| `MAIL_FROM` | `no-reply@employeehub.local` | From address |
+| `SPRING_MAIL_HOST` / `SPRING_MAIL_PORT` / `SPRING_MAIL_USERNAME` / `SPRING_MAIL_PASSWORD` | (unset) | SMTP settings; required for email delivery |
+
+> Email delivery is a no-op unless `MAIL_ENABLED=true` and SMTP is configured, so the stack runs without a mail server.
+
 ---
 
 ## Local Development (Without Docker)

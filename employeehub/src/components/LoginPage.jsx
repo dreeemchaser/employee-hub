@@ -1,5 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { login } from '../api/AuthService';
+
+// mm:ss for a countdown of whole seconds.
+const formatCountdown = (totalSeconds) => {
+  const m = Math.floor(totalSeconds / 60);
+  const s = totalSeconds % 60;
+  return `${m}:${String(s).padStart(2, '0')}`;
+};
 
 const LoginPage = ({ onLogin }) => {
   const [email, setEmail]       = useState('');
@@ -7,6 +14,23 @@ const LoginPage = ({ onLogin }) => {
   const [showPw, setShowPw]     = useState(false);
   const [error, setError]       = useState('');
   const [loading, setLoading]   = useState(false);
+  const [lockSeconds, setLockSeconds] = useState(0);
+
+  // While locked out, tick the countdown down once per second and clear it
+  // (re-enabling the form) when it reaches zero.
+  useEffect(() => {
+    if (lockSeconds <= 0) return undefined;
+    const id = setInterval(() => {
+      setLockSeconds((s) => {
+        if (s <= 1) {
+          setError('');
+          return 0;
+        }
+        return s - 1;
+      });
+    }, 1000);
+    return () => clearInterval(id);
+  }, [lockSeconds]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -15,12 +39,15 @@ const LoginPage = ({ onLogin }) => {
     try {
       await login(email, password);
       onLogin();
-    } catch {
-      setError('Incorrect email or password. Please try again.');
+    } catch (err) {
+      setError(err.message || 'Incorrect email or password. Please try again.');
+      if (err.retryAfterSeconds > 0) setLockSeconds(err.retryAfterSeconds);
     } finally {
       setLoading(false);
     }
   };
+
+  const locked = lockSeconds > 0;
 
   return (
     <div className='lp-shell'>
@@ -113,14 +140,21 @@ const LoginPage = ({ onLogin }) => {
             {error && (
               <div className='lp-error'>
                 <i className='bi bi-exclamation-circle-fill'></i>
-                <span>{error}</span>
+                <span>
+                  {error}
+                  {locked && (
+                    <> You can try again in <strong>{formatCountdown(lockSeconds)}</strong>.</>
+                  )}
+                </span>
               </div>
             )}
 
-            <button type='submit' className='lp-submit' disabled={loading}>
+            <button type='submit' className='lp-submit' disabled={loading || locked}>
               {loading
                 ? <><span className='lp-submit__spinner'></span>Signing in…</>
-                : <><i className='bi bi-box-arrow-in-right'></i>Sign In</>
+                : locked
+                  ? <><i className='bi bi-lock-fill'></i>Locked — {formatCountdown(lockSeconds)}</>
+                  : <><i className='bi bi-box-arrow-in-right'></i>Sign In</>
               }
             </button>
 

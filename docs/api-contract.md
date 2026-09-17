@@ -25,7 +25,7 @@
 | Method | Endpoint | Access | Description |
 |--------|----------|--------|-------------|
 | POST | `/auth/register` | PUBLIC | Register new user |
-| POST | `/auth/login` | PUBLIC | Login, returns JWT |
+| POST | `/auth/login` | PUBLIC | Login, returns JWT. Returns `423 Locked` (with `Retry-After` + `retryAfterSeconds`) after repeated failed attempts |
 | POST | `/auth/logout` | ALL | Invalidate token |
 | POST | `/auth/refresh` | ALL | Refresh JWT token |
 | PUT | `/auth/change-password` | ALL | Change own password |

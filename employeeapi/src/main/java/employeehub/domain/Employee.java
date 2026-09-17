@@ -86,6 +86,18 @@ public class Employee {
     @Column(nullable = false)
     private Role role = Role.EMPLOYEE;
 
+    // Account lockout: number of consecutive failed login attempts; reset to 0 on
+    // a successful login. When it reaches the configured threshold the account is
+    // locked until {@link #lockedUntil}.
+    // columnDefinition supplies a DB default so the NOT NULL column can be added
+    // to an already-populated employees table under ddl-auto=update.
+    @Column(nullable = false, columnDefinition = "integer default 0")
+    private int failedLoginAttempts = 0;
+
+    // When set and in the future, the account is temporarily locked and login is
+    // refused regardless of credentials. Null (or in the past) means not locked.
+    private LocalDateTime lockedUntil;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 

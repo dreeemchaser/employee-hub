@@ -4,3 +4,5 @@
 node_modules/
 build/
 target/
+# Local-only Docker Compose override (developer testing; never committed)
+docker-compose.override.yml

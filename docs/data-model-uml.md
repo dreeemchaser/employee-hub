@@ -74,6 +74,8 @@ package "Employee" {
         * teamId : UUID <<FK>>
         managerId : UUID <<FK>>
         * role : Enum
+        * failedLoginAttempts : Integer
+        lockedUntil : DateTime
         * createdAt : DateTime
         * updatedAt : DateTime
     }

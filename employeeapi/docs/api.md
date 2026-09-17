@@ -57,6 +57,40 @@ too many failed logins. Includes a `Retry-After` header (seconds) and:
 
 ---
 
+### POST /auth/forgot-password `[PUBLIC]`
+Request a password reset link. Always returns the same generic message whether or
+not the account exists (no account enumeration). When configured, a reset email
+is sent to a known address.
+
+**Request Body:**
+```json
+{ "email": "jane@example.com" }
+```
+
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "message": "If an account exists for that email, a password reset link has been sent."
+}
+```
+
+---
+
+### POST /auth/reset-password `[PUBLIC]`
+Set a new password using a valid reset token from the reset email.
+
+**Request Body:**
+```json
+{ "token": "the-token-from-the-email", "newPassword": "MyNew@Pass1" }
+```
+
+**Response (200 OK):** `{ "success": true, "message": "Password has been reset successfully. You can now sign in." }`
+
+**Errors:** `404` unknown token; `400` expired/used token or password shorter than 8 characters.
+
+---
+
 ## Employees
 
 ### GET /employees

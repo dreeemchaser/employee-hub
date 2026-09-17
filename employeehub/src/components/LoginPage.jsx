@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { login } from '../api/AuthService';
 
 // mm:ss for a countdown of whole seconds.
@@ -161,7 +162,7 @@ const LoginPage = ({ onLogin }) => {
           </form>
 
           <p className='lp-form-box__footer'>
-            Contact HR if you need access or have forgotten your password.
+            <Link to='/forgot-password'>Forgot your password?</Link>
           </p>
         </div>
       </div>

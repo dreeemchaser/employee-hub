@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { isLoggedIn } from './api/AuthService';
 import LoginPage from './components/LoginPage';
+import ForgotPasswordPage from './components/ForgotPasswordPage';
+import ResetPasswordPage from './components/ResetPasswordPage';
 import Sidebar from './components/Sidebar';
 import DashboardPage from './pages/DashboardPage';
 import EmployeesPage from './pages/EmployeesPage';
@@ -15,7 +17,16 @@ import SalaryPage from './pages/SalaryPage';
 function App() {
   const [loggedIn, setLoggedIn] = useState(isLoggedIn());
 
-  if (!loggedIn) return <LoginPage onLogin={() => setLoggedIn(true)} />;
+  if (!loggedIn) {
+    return (
+      <Routes>
+        <Route path='/login' element={<LoginPage onLogin={() => setLoggedIn(true)} />} />
+        <Route path='/forgot-password' element={<ForgotPasswordPage />} />
+        <Route path='/reset-password' element={<ResetPasswordPage />} />
+        <Route path='*' element={<LoginPage onLogin={() => setLoggedIn(true)} />} />
+      </Routes>
+    );
+  }
 
   return (
     <div className='app-shell'>

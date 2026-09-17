@@ -44,6 +44,32 @@ Configuration (`application.yml` → `app.security.lockout`), overridable via en
 | `AUTH_LOCKOUT_MAX_ATTEMPTS` | 5 | Consecutive failures before lock |
 | `AUTH_LOCKOUT_DURATION_MINUTES` | 15 | Lock duration once triggered |
 
+## Password Reset
+
+Self-service password reset via single-use, time-limited tokens.
+
+- `POST /auth/forgot-password` `{email}` — always returns the same generic 200 message whether or not the account exists (no account enumeration). For a known account it issues a token, invalidates any previously active tokens, and emails a reset link.
+- `POST /auth/reset-password` `{token, newPassword}` — validates the token (exists, not expired, not used), sets the new password (BCrypt), consumes the token, and clears any account lockout so the user can sign in immediately.
+- Tokens are stored in `password_reset_tokens` (`PasswordResetToken` entity) with `expiresAt` and `usedAt`; validity requires both unused and unexpired.
+
+Configuration (`application.yml` → `app.security.password-reset`):
+
+| Env var | Default | Meaning |
+|---------|---------|---------|
+| `AUTH_PASSWORD_RESET_TTL_MINUTES` | 30 | Token validity window |
+| `AUTH_PASSWORD_RESET_URL` | `http://localhost:3000/reset-password` | Front-end reset link base (token appended as `?token=`) |
+| `AUTH_PASSWORD_RESET_EXPOSE_TOKEN` | false | Dev/test only: return the token in the API response. **Must stay false in production.** |
+
+## Email Delivery
+
+Transactional email (e.g. the reset link) is sent via `EmailService` (`JavaMailSender`). Delivery is **config-gated**: unless enabled and SMTP is configured, send calls are a safe no-op (logged, never thrown), so the app runs in CI and local development without an SMTP server.
+
+| Env var | Default | Meaning |
+|---------|---------|---------|
+| `MAIL_ENABLED` | false | Master switch for outbound email |
+| `MAIL_FROM` | `no-reply@employeehub.local` | From address |
+| `SPRING_MAIL_HOST` / `SPRING_MAIL_PORT` / `SPRING_MAIL_USERNAME` / `SPRING_MAIL_PASSWORD` | (unset) | Standard Spring SMTP settings; a `JavaMailSender` is auto-configured only when the host is set |
+
 ## Security Implementation
 
 See [security-implementation.md](security-implementation.md) for the full step-by-step implementation guide.
@@ -65,6 +91,7 @@ Key components:
 - ✅ Global exception handler (no internal details leaked)
 - ✅ Audit logging across all modules
 - ✅ Account lockout after repeated failed logins
+- ✅ Self-service password reset (single-use, expiring tokens)
 
 ### Pre-Production Recommendations
 - [ ] HTTPS/TLS configured

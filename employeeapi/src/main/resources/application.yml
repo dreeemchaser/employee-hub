@@ -57,3 +57,15 @@ app:
       max-attempts: ${AUTH_LOCKOUT_MAX_ATTEMPTS:5}
       # How long (minutes) an account stays locked once the threshold is hit.
       duration-minutes: ${AUTH_LOCKOUT_DURATION_MINUTES:15}
+    password-reset:
+      # How long (minutes) a password reset token stays valid.
+      token-ttl-minutes: ${AUTH_PASSWORD_RESET_TTL_MINUTES:30}
+      # Dev/test only: when true, /auth/forgot-password returns the token in the
+      # response body. MUST be false in production (the email delivers the token).
+      expose-token: ${AUTH_PASSWORD_RESET_EXPOSE_TOKEN:false}
+      # Front-end URL the reset link points to; the token is appended as ?token=.
+      reset-url: ${AUTH_PASSWORD_RESET_URL:http://localhost:3000/reset-password}
+  mail:
+    # Email delivery is off unless MAIL_ENABLED=true and SMTP is configured below.
+    enabled: ${MAIL_ENABLED:false}
+    from: ${MAIL_FROM:no-reply@employeehub.local}

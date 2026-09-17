@@ -79,6 +79,16 @@ package "Employee" {
         * createdAt : DateTime
         * updatedAt : DateTime
     }
+
+    entity PASSWORD_RESET_TOKEN {
+        * id : UUID <<PK>>
+        --
+        * token : String <<unique>>
+        * employeeId : UUID <<FK>>
+        * expiresAt : DateTime
+        usedAt : DateTime
+        * createdAt : DateTime
+    }
 }
 
 ' ─────────────────────────────────────────

@@ -120,6 +120,19 @@ docker exec -it employeehub-db psql -U admin -d employeehub
 docker exec -it employeehub-api sh
 ```
 
+## Production Compose (`docker-compose.prod.yml`)
+
+`docker-compose.yml` **builds** the images locally. For deployed environments, `docker-compose.prod.yml` instead **pulls** the images published to GHCR by the CD pipeline (`.github/workflows/cd.yml`):
+
+```bash
+REGISTRY=ghcr.io IMAGE_PREFIX=<owner>/<repo> IMAGE_TAG=edge \
+  docker compose -f docker-compose.prod.yml up -d
+```
+
+Differences from the build-based compose:
+- `api`, `frontend`, and `dashboard` use `image:` references (`${REGISTRY}/${IMAGE_PREFIX}/<component>:${IMAGE_TAG}`) instead of `build:`.
+- `POSTGRES_PASSWORD` and `JWT_SECRET` are required and read from the host environment or a `.env` file next to the compose file — the stack fails fast if they are missing (never hard-coded).
+
 ## Volumes
 
 | Volume | Purpose |

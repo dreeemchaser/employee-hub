@@ -6,6 +6,10 @@ RUN npm install
 COPY . .
 ARG REACT_APP_API_URL=http://localhost:8080
 ENV REACT_APP_API_URL=$REACT_APP_API_URL
+# Skip the CRA ESLint plugin during the production build. The `react-app/jest`
+# ESLint config trips an "Environment key jest/globals is unknown" error under
+# the Node 20 toolchain here; linting still runs in `npm test` (CI test job).
+ENV DISABLE_ESLINT_PLUGIN=true
 RUN npm run build
 
 # Serve stage

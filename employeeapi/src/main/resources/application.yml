@@ -44,7 +44,13 @@ logging:
 
 jwt:
   secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
-  expiration: ${JWT_EXPIRATION:86400000}
+  # Access token lifetime (ms). Short-lived — the client silently renews it via the
+  # refresh token. Default 15 min. Falls back to the legacy JWT_EXPIRATION override
+  # if set, so existing deployments keep working.
+  access-expiration: ${JWT_ACCESS_EXPIRATION:${JWT_EXPIRATION:900000}}
+  # Refresh token lifetime (ms). Long-lived, server-tracked, rotated on use.
+  # Default 7 days.
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000}
 
 app:
   upload:

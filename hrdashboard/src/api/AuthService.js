@@ -2,14 +2,23 @@ import axios from 'axios';
 
 const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
 
+const ACCESS_KEY = 'token';          // kept as 'token' so existing getToken() callers are unaffected
+const REFRESH_KEY = 'refreshToken';
+
 export async function login(email, password) {
   try {
     const res = await axios.post(`${BASE_URL}/auth/login`, { email, password });
-    localStorage.setItem('token', res.data.data.token);
-    return res.data.data.token;
+    storeTokens(res.data.data);
+    return getToken();
   } catch (err) {
     throw toLoginError(err);
   }
+}
+
+// Persist the access + refresh token pair returned by login/refresh.
+function storeTokens(data) {
+  localStorage.setItem(ACCESS_KEY, data.accessToken);
+  if (data.refreshToken) localStorage.setItem(REFRESH_KEY, data.refreshToken);
 }
 
 // Build a user-facing Error from an auth failure. A locked account (HTTP 423)
@@ -51,13 +60,86 @@ export async function resetPassword(token, newPassword) {
   return res.data.message;
 }
 
-export function logout() {
-  localStorage.removeItem('token');
+// Revoke the refresh token server-side (best-effort) and clear local tokens.
+export async function logout() {
+  const refreshToken = getRefreshToken();
+  if (refreshToken) {
+    try {
+      await axios.post(`${BASE_URL}/auth/logout`, { refreshToken });
+    } catch {
+      // Best-effort: even if revoke fails, clear locally below.
+    }
+  }
+  clearTokens();
+}
+
+function clearTokens() {
+  localStorage.removeItem(ACCESS_KEY);
+  localStorage.removeItem(REFRESH_KEY);
 }
 
 export function getToken() {
-  return localStorage.getItem('token');
+  return localStorage.getItem(ACCESS_KEY);
 }
+
+export function getRefreshToken() {
+  return localStorage.getItem(REFRESH_KEY);
+}
+
+// ── Silent refresh ───────────────────────────────────────────────────────────
+
+// Shared in-flight refresh so concurrent 401s trigger only one refresh call.
+let refreshPromise = null;
+
+// Exchange the stored refresh token for a new access + refresh pair. Returns the
+// new access token, or throws if refresh is not possible (caller routes to login).
+function refresh() {
+  if (refreshPromise) return refreshPromise;
+
+  const refreshToken = getRefreshToken();
+  if (!refreshToken) return Promise.reject(new Error('No refresh token'));
+
+  refreshPromise = axios
+    .post(`${BASE_URL}/auth/refresh`, { refreshToken })
+    .then((res) => {
+      storeTokens(res.data.data);
+      return getToken();
+    })
+    .finally(() => {
+      refreshPromise = null;
+    });
+
+  return refreshPromise;
+}
+
+// Register once at module load: on any 401 (other than the auth endpoints
+// themselves), attempt a single silent refresh and retry the original request
+// once. If refresh fails, clear tokens and send the user to login.
+axios.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const original = error.config;
+    const status = error.response?.status;
+    const url = original?.url ?? '';
+    const isAuthCall = url.includes('/auth/login')
+      || url.includes('/auth/refresh')
+      || url.includes('/auth/logout');
+
+    if (status === 401 && original && !original._retried && !isAuthCall) {
+      original._retried = true;
+      try {
+        const newToken = await refresh();
+        original.headers = { ...original.headers, Authorization: `Bearer ${newToken}` };
+        return axios(original);
+      } catch (refreshErr) {
+        clearTokens();
+        if (typeof window !== 'undefined') window.location.assign('/login');
+        return Promise.reject(refreshErr);
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 
 export function isLoggedIn() {
   return !!getToken();

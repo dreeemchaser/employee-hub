@@ -20,8 +20,8 @@ const NAV = [
 const Sidebar = ({ onLogout }) => {
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     onLogout();
     navigate('/');
   };

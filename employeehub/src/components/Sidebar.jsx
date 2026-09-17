@@ -6,8 +6,8 @@ const Sidebar = ({ onLogout }) => {
   const hrOrAdmin = isHrOrAdmin();
   const manager = isManager();
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     onLogout();
   };
 

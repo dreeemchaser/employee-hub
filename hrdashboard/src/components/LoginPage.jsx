@@ -1,11 +1,35 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { login } from '../api/AuthService';
+
+// mm:ss for a countdown of whole seconds.
+const formatCountdown = (totalSeconds) => {
+  const m = Math.floor(totalSeconds / 60);
+  const s = totalSeconds % 60;
+  return `${m}:${String(s).padStart(2, '0')}`;
+};
 
 const LoginPage = ({ onLogin }) => {
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
   const [error, setError]       = useState('');
   const [loading, setLoading]   = useState(false);
+  const [lockSeconds, setLockSeconds] = useState(0);
+
+  // While locked out, tick the countdown down once per second and clear it
+  // (re-enabling the form) when it reaches zero.
+  useEffect(() => {
+    if (lockSeconds <= 0) return undefined;
+    const id = setInterval(() => {
+      setLockSeconds((s) => {
+        if (s <= 1) {
+          setError('');
+          return 0;
+        }
+        return s - 1;
+      });
+    }, 1000);
+    return () => clearInterval(id);
+  }, [lockSeconds]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -14,12 +38,15 @@ const LoginPage = ({ onLogin }) => {
     try {
       await login(email, password);
       onLogin();
-    } catch {
-      setError('Invalid email or password.');
+    } catch (err) {
+      setError(err.message || 'Invalid email or password.');
+      if (err.retryAfterSeconds > 0) setLockSeconds(err.retryAfterSeconds);
     } finally {
       setLoading(false);
     }
   };
+
+  const locked = lockSeconds > 0;
 
   return (
     <div className='login-wrapper'>
@@ -63,11 +90,14 @@ const LoginPage = ({ onLogin }) => {
           {error && (
             <p className='login-error'>
               <i className='bi bi-exclamation-circle'></i> {error}
+              {locked && (
+                <> You can try again in <strong>{formatCountdown(lockSeconds)}</strong>.</>
+              )}
             </p>
           )}
 
-          <button type='submit' className='btn' disabled={loading}>
-            {loading ? 'Signing in...' : 'Sign In'}
+          <button type='submit' className='btn' disabled={loading || locked}>
+            {loading ? 'Signing in...' : locked ? `Locked — ${formatCountdown(lockSeconds)}` : 'Sign In'}
           </button>
         </form>
       </div>

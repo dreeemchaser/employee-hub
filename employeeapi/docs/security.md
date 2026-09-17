@@ -28,6 +28,22 @@ SecurityContextHolder stores authenticated employee
 Controller enforces role-based access
 ```
 
+## Account Lockout
+
+Repeated failed logins temporarily lock an account to slow brute-force attempts.
+
+- After a configurable number of consecutive failed logins (`AUTH_LOCKOUT_MAX_ATTEMPTS`, default **5**), the account is locked for a cooldown window (`AUTH_LOCKOUT_DURATION_MINUTES`, default **15**).
+- While locked, `POST /auth/login` returns **423 Locked** — even with the correct password — with a `Retry-After` header (seconds) and a `retryAfterSeconds` field in the response body.
+- A successful login resets the failed-attempt counter and clears any lock.
+- Tracking lives on the `Employee` entity (`failedLoginAttempts`, `lockedUntil`) and is applied only in the login flow (`LoginAttemptService`), so already-issued valid tokens are unaffected.
+
+Configuration (`application.yml` → `app.security.lockout`), overridable via environment:
+
+| Env var | Default | Meaning |
+|---------|---------|---------|
+| `AUTH_LOCKOUT_MAX_ATTEMPTS` | 5 | Consecutive failures before lock |
+| `AUTH_LOCKOUT_DURATION_MINUTES` | 15 | Lock duration once triggered |
+
 ## Security Implementation
 
 See [security-implementation.md](security-implementation.md) for the full step-by-step implementation guide.
@@ -48,6 +64,7 @@ Key components:
 - ✅ CORS configuration
 - ✅ Global exception handler (no internal details leaked)
 - ✅ Audit logging across all modules
+- ✅ Account lockout after repeated failed logins
 
 ### Pre-Production Recommendations
 - [ ] HTTPS/TLS configured

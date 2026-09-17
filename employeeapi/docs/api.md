@@ -45,6 +45,16 @@ Login and receive a JWT token.
 }
 ```
 
+**Response (423 Locked):** returned when the account is temporarily locked after
+too many failed logins. Includes a `Retry-After` header (seconds) and:
+```json
+{
+  "success": false,
+  "message": "Account is temporarily locked due to repeated failed login attempts. Try again later.",
+  "data": { "retryAfterSeconds": 900 }
+}
+```
+
 ---
 
 ## Employees

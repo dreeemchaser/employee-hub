@@ -51,6 +51,45 @@ docker-compose logs -f db
 
 ---
 
+## CI/CD
+
+### CI — `.github/workflows/ci.yml`
+
+Runs on every push and pull request to `master`: builds and tests the backend (`./mvnw verify`) and both React apps, then a gated `docker-build` job validates that the full stack builds.
+
+### CD — `.github/workflows/cd.yml`
+
+Runs on push to `master` and on `v*.*.*` tags.
+
+- **`publish`** builds and pushes all three images to GitHub Container Registry (GHCR) at `ghcr.io/<owner>/<repo>/<component>` for `api`, `employeehub`, and `hrdashboard`. Tags include the branch, long commit SHA, semver (on tags), `edge` (on master), and `latest` (on tags). Authentication uses the built-in `GITHUB_TOKEN` (`packages: write`) — no extra registry credentials are required.
+- **`deploy`** (GitHub environment `production`) pulls the published images onto a host over SSH and runs `docker compose -f docker-compose.prod.yml up -d`. It is a no-op until the deployment secrets are configured.
+
+### Production compose — `docker-compose.prod.yml`
+
+Unlike `docker-compose.yml` (which builds locally), this file **pulls** the images published to GHCR. It is copied to the deploy host and run with:
+
+```bash
+REGISTRY=ghcr.io IMAGE_PREFIX=<owner>/<repo> IMAGE_TAG=edge \
+  docker compose -f docker-compose.prod.yml up -d
+```
+
+`POSTGRES_PASSWORD` and `JWT_SECRET` are required at runtime (provided via the host environment or a `.env` file next to the compose file) — the compose file fails fast if they are missing.
+
+### Enabling server deploys
+
+Set these secrets (and a `production` environment) in the repository. Without them, CD only publishes images and skips the deploy step.
+
+| Secret | Purpose |
+|--------|---------|
+| `DEPLOY_HOST` | Target server hostname/IP |
+| `DEPLOY_USER` | SSH user |
+| `DEPLOY_SSH_KEY` | Private key for SSH access |
+| `DEPLOY_PATH` | Directory on the host where the compose file is placed |
+
+The frontend API URL baked into the published images can be set via the `DEPLOY_API_URL` repository variable (defaults to `http://localhost:8080`).
+
+---
+
 ## Service Architecture
 
 ```

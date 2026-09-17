@@ -1,0 +1,14 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Rebuild & Restart Stack (manual test)",
+      "trigger": "UserTriggered",
+      "action": {
+        "type": "command",
+        "command": "docker compose up -d --build"
+      },
+      "enabled": true
+    }
+  ]
+}

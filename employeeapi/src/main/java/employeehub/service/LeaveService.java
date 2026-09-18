@@ -69,8 +69,11 @@ public class LeaveService {
         }
 
         // ── Sick leave > 3 days requires documentation ───────────────
-        if (leaveType.getName().equalsIgnoreCase("Sick Leave")
-                && days.compareTo(BigDecimal.valueOf(SICK_LEAVE_DOC_THRESHOLD)) > 0) {
+        // The employee may proceed once they confirm (via the form checkbox)
+        // that they have emailed their manager the supporting documentation.
+        boolean requiresDocConfirmation = leaveType.getName().equalsIgnoreCase("Sick Leave")
+                && days.compareTo(BigDecimal.valueOf(SICK_LEAVE_DOC_THRESHOLD)) > 0;
+        if (requiresDocConfirmation && !dto.isDocumentationConfirmed()) {
             throw new IllegalArgumentException(
                 "REQUIRES_DOCUMENTATION: Sick leave exceeding " + SICK_LEAVE_DOC_THRESHOLD +
                 " days requires a doctor's note. Please email your manager with supporting documentation before submitting.");
@@ -111,6 +114,13 @@ public class LeaveService {
         request.setTotalDays(days);
         request.setReason(dto.getReason());
         LeaveRequest saved = leaveRequestRepository.save(request);
+
+        // Record the employee's attestation that they emailed their manager the
+        // required documentation, so the confirmation is auditable after the fact.
+        if (requiresDocConfirmation) {
+            auditService.log(employee, "SUBMIT_WITH_DOC_CONFIRMATION", "LeaveRequest",
+                    saved.getId(), null, "Employee confirmed documentation emailed to manager");
+        }
 
         if (employee.getManager() != null) {
             notificationService.send(employee.getManager(),

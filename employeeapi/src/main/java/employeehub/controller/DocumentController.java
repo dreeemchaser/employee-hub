@@ -3,6 +3,7 @@ package employeehub.controller;
 import employeehub.domain.Document;
 import employeehub.domain.enums.DocumentType;
 import employeehub.dto.ApiResponse;
+import employeehub.dto.DocumentResponse;
 import employeehub.service.EmployeeService;
 import employeehub.service.DocumentService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,26 +31,26 @@ public class DocumentController {
 
     @PostMapping("/upload")
     @Operation(summary = "Upload a document")
-    public ResponseEntity<ApiResponse<Document>> upload(
+    public ResponseEntity<ApiResponse<DocumentResponse>> upload(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam DocumentType type,
             @RequestParam("file") MultipartFile file) {
         var employee = employeeService.getByEmail(userDetails.getUsername());
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.ok(documentService.upload(employee.getId(), type, file)));
+                .body(ApiResponse.ok(new DocumentResponse(documentService.upload(employee.getId(), type, file))));
     }
 
     @GetMapping("/my")
     @Operation(summary = "Get current employee's documents")
-    public ResponseEntity<ApiResponse<List<Document>>> getMy(@AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<ApiResponse<List<DocumentResponse>>> getMy(@AuthenticationPrincipal UserDetails userDetails) {
         var employee = employeeService.getByEmail(userDetails.getUsername());
-        return ResponseEntity.ok(ApiResponse.ok(documentService.getMy(employee.getId())));
+        return ResponseEntity.ok(ApiResponse.ok(DocumentResponse.from(documentService.getMy(employee.getId()))));
     }
 
     @GetMapping
     @Operation(summary = "Get all documents (HR_ADMIN only)")
-    public ResponseEntity<ApiResponse<List<Document>>> getAll() {
-        return ResponseEntity.ok(ApiResponse.ok(documentService.getAll()));
+    public ResponseEntity<ApiResponse<List<DocumentResponse>>> getAll() {
+        return ResponseEntity.ok(ApiResponse.ok(DocumentResponse.from(documentService.getAll())));
     }
 
     @GetMapping("/{id}/download")
@@ -66,19 +67,19 @@ public class DocumentController {
 
     @PatchMapping("/{id}/verify")
     @Operation(summary = "Verify a document (HR only)")
-    public ResponseEntity<ApiResponse<Document>> verify(
+    public ResponseEntity<ApiResponse<DocumentResponse>> verify(
             @PathVariable String id,
             @AuthenticationPrincipal UserDetails userDetails) {
         var verifier = employeeService.getByEmail(userDetails.getUsername());
-        return ResponseEntity.ok(ApiResponse.ok(documentService.verify(id, verifier.getId())));
+        return ResponseEntity.ok(ApiResponse.ok(new DocumentResponse(documentService.verify(id, verifier.getId()))));
     }
 
     @PatchMapping("/{id}/reject")
     @Operation(summary = "Reject a document (HR only)")
-    public ResponseEntity<ApiResponse<Document>> reject(
+    public ResponseEntity<ApiResponse<DocumentResponse>> reject(
             @PathVariable String id,
             @AuthenticationPrincipal UserDetails userDetails) {
         var verifier = employeeService.getByEmail(userDetails.getUsername());
-        return ResponseEntity.ok(ApiResponse.ok(documentService.reject(id, verifier.getId())));
+        return ResponseEntity.ok(ApiResponse.ok(new DocumentResponse(documentService.reject(id, verifier.getId()))));
     }
 }

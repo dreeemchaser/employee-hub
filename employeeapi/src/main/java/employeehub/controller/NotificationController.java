@@ -1,7 +1,7 @@
 package employeehub.controller;
 
-import employeehub.domain.Notification;
 import employeehub.dto.ApiResponse;
+import employeehub.dto.NotificationResponse;
 import employeehub.service.EmployeeService;
 import employeehub.service.NotificationService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -25,18 +25,18 @@ public class NotificationController {
 
     @GetMapping("/my")
     @Operation(summary = "Get current employee's notifications")
-    public ResponseEntity<ApiResponse<List<Notification>>> getMy(@AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<ApiResponse<List<NotificationResponse>>> getMy(@AuthenticationPrincipal UserDetails userDetails) {
         var employee = employeeService.getByEmail(userDetails.getUsername());
-        return ResponseEntity.ok(ApiResponse.ok(notificationService.getMy(employee.getId())));
+        return ResponseEntity.ok(ApiResponse.ok(NotificationResponse.from(notificationService.getMy(employee.getId()))));
     }
 
     @PatchMapping("/{id}/read")
     @Operation(summary = "Mark a notification as read")
-    public ResponseEntity<ApiResponse<Notification>> markAsRead(
+    public ResponseEntity<ApiResponse<NotificationResponse>> markAsRead(
             @PathVariable String id,
             @AuthenticationPrincipal UserDetails userDetails) {
         var employee = employeeService.getByEmail(userDetails.getUsername());
-        return ResponseEntity.ok(ApiResponse.ok(notificationService.markAsRead(id, employee.getId())));
+        return ResponseEntity.ok(ApiResponse.ok(new NotificationResponse(notificationService.markAsRead(id, employee.getId()))));
     }
 
     @PatchMapping("/read-all")

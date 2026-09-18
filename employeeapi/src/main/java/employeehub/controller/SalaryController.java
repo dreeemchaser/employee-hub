@@ -1,7 +1,5 @@
 package employeehub.controller;
 
-import employeehub.domain.PaySlip;
-import employeehub.domain.SalaryRecord;
 import employeehub.dto.*;
 import employeehub.service.EmployeeService;
 import employeehub.service.SalaryService;
@@ -30,43 +28,43 @@ public class SalaryController {
 
     @PostMapping("/records")
     @Operation(summary = "Set employee salary (PAYROLL_ADMIN)")
-    public ResponseEntity<ApiResponse<SalaryRecord>> createRecord(
+    public ResponseEntity<ApiResponse<SalaryRecordResponse>> createRecord(
             @RequestBody SalaryRecordRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
         var creator = employeeService.getByEmail(userDetails.getUsername());
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.ok(salaryService.createRecord(request, creator.getId())));
+                .body(ApiResponse.ok(new SalaryRecordResponse(salaryService.createRecord(request, creator.getId()))));
     }
 
     @GetMapping("/records/{employeeId}")
     @Operation(summary = "Get salary history for an employee")
-    public ResponseEntity<ApiResponse<List<SalaryRecord>>> getSalaryHistory(@PathVariable String employeeId) {
-        return ResponseEntity.ok(ApiResponse.ok(salaryService.getSalaryHistory(employeeId)));
+    public ResponseEntity<ApiResponse<List<SalaryRecordResponse>>> getSalaryHistory(@PathVariable String employeeId) {
+        return ResponseEntity.ok(ApiResponse.ok(SalaryRecordResponse.from(salaryService.getSalaryHistory(employeeId))));
     }
 
     // ── Payslips ─────────────────────────────────────────────────────
 
     @PostMapping("/payslips/generate")
     @Operation(summary = "Generate monthly payslip with PAYE and UIF")
-    public ResponseEntity<ApiResponse<PaySlip>> generatePaySlip(
+    public ResponseEntity<ApiResponse<PaySlipResponse>> generatePaySlip(
             @RequestBody PaySlipGenerateRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
         var generator = employeeService.getByEmail(userDetails.getUsername());
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.ok(salaryService.generatePaySlip(request, generator.getId())));
+                .body(ApiResponse.ok(new PaySlipResponse(salaryService.generatePaySlip(request, generator.getId()))));
     }
 
     @GetMapping("/payslips/my")
     @Operation(summary = "Get current employee's payslips")
-    public ResponseEntity<ApiResponse<List<PaySlip>>> getMyPaySlips(@AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<ApiResponse<List<PaySlipResponse>>> getMyPaySlips(@AuthenticationPrincipal UserDetails userDetails) {
         var employee = employeeService.getByEmail(userDetails.getUsername());
-        return ResponseEntity.ok(ApiResponse.ok(salaryService.getMyPaySlips(employee.getId())));
+        return ResponseEntity.ok(ApiResponse.ok(PaySlipResponse.from(salaryService.getMyPaySlips(employee.getId()))));
     }
 
     @GetMapping("/payslips/{id}")
     @Operation(summary = "Get a single payslip")
-    public ResponseEntity<ApiResponse<PaySlip>> getPaySlip(@PathVariable String id) {
-        return ResponseEntity.ok(ApiResponse.ok(salaryService.getPaySlip(id)));
+    public ResponseEntity<ApiResponse<PaySlipResponse>> getPaySlip(@PathVariable String id) {
+        return ResponseEntity.ok(ApiResponse.ok(new PaySlipResponse(salaryService.getPaySlip(id))));
     }
 
     // ── Salary Increase Requests ─────────────────────────────────────

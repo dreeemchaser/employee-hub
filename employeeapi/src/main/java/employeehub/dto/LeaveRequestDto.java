@@ -20,4 +20,11 @@ public class LeaveRequestDto {
     private LocalDate endDate;
 
     private String reason;
+
+    /**
+     * Set by the employee to confirm they have emailed their manager the
+     * required supporting documentation. Gates leave types that require a
+     * doctor's note / documentation (e.g. sick leave beyond the threshold).
+     */
+    private boolean documentationConfirmed;
 }

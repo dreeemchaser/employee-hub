@@ -101,6 +101,76 @@ class LeaveServiceTest {
     }
 
     @Test
+    void submit_whenSickLeaveOverThreshold_andDocumentationNotConfirmed_throws() {
+        LeaveType sick = new LeaveType();
+        sick.setId(2L);
+        sick.setName("Sick Leave");
+        sick.setDefaultDays(30);
+
+        LeaveBalance sickBalance = new LeaveBalance();
+        sickBalance.setEmployee(employee);
+        sickBalance.setLeaveType(sick);
+        sickBalance.setTotalDays(BigDecimal.valueOf(30));
+        sickBalance.setUsedDays(BigDecimal.ZERO);
+        sickBalance.setRemainingDays(BigDecimal.valueOf(30));
+
+        // 5 working days (Mon–Fri), which exceeds the 3-day threshold.
+        LocalDate monday = LocalDate.now().with(java.time.temporal.TemporalAdjusters.next(java.time.DayOfWeek.MONDAY));
+        LeaveRequestDto sickDto = new LeaveRequestDto();
+        sickDto.setLeaveTypeId(2L);
+        sickDto.setStartDate(monday);
+        sickDto.setEndDate(monday.plusDays(4)); // Mon–Fri
+        sickDto.setReason("Flu");
+        sickDto.setDocumentationConfirmed(false);
+
+        when(employeeRepository.findById("emp-1")).thenReturn(Optional.of(employee));
+        when(leaveTypeRepository.findById(2L)).thenReturn(Optional.of(sick));
+
+        assertThatThrownBy(() -> leaveService.submit("emp-1", sickDto))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("REQUIRES_DOCUMENTATION");
+
+        verify(leaveRequestRepository, never()).save(any());
+    }
+
+    @Test
+    void submit_whenSickLeaveOverThreshold_andDocumentationConfirmed_createsRequestAndAudits() {
+        LeaveType sick = new LeaveType();
+        sick.setId(2L);
+        sick.setName("Sick Leave");
+        sick.setDefaultDays(30);
+
+        LeaveBalance sickBalance = new LeaveBalance();
+        sickBalance.setEmployee(employee);
+        sickBalance.setLeaveType(sick);
+        sickBalance.setTotalDays(BigDecimal.valueOf(30));
+        sickBalance.setUsedDays(BigDecimal.ZERO);
+        sickBalance.setRemainingDays(BigDecimal.valueOf(30));
+
+        LocalDate monday = LocalDate.now().with(java.time.temporal.TemporalAdjusters.next(java.time.DayOfWeek.MONDAY));
+        LeaveRequestDto sickDto = new LeaveRequestDto();
+        sickDto.setLeaveTypeId(2L);
+        sickDto.setStartDate(monday);
+        sickDto.setEndDate(monday.plusDays(4)); // Mon–Fri = 5 working days
+        sickDto.setReason("Flu");
+        sickDto.setDocumentationConfirmed(true);
+
+        when(employeeRepository.findById("emp-1")).thenReturn(Optional.of(employee));
+        when(leaveTypeRepository.findById(2L)).thenReturn(Optional.of(sick));
+        when(leaveBalanceRepository.findByEmployeeIdAndLeaveTypeId("emp-1", 2L)).thenReturn(Optional.of(sickBalance));
+        when(leaveRequestRepository.findOverlapping(eq("emp-1"), any(), any())).thenReturn(java.util.List.of());
+        when(leaveRequestRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        LeaveRequest result = leaveService.submit("emp-1", sickDto);
+
+        assertThat(result.getStatus()).isEqualTo(LeaveStatus.PENDING);
+        assertThat(result.getTotalDays()).isEqualByComparingTo(BigDecimal.valueOf(5));
+        verify(auditService).log(eq(employee), eq("SUBMIT_WITH_DOC_CONFIRMATION"),
+                eq("LeaveRequest"), any(), isNull(), anyString());
+        verify(notificationService).send(eq(manager), anyString(), anyString(), any(), anyString(), any());
+    }
+
+    @Test
     void approve_shouldUpdateStatusAndDeductBalance() {
         LeaveRequest request = new LeaveRequest();
         request.setId("req-1");

@@ -5,12 +5,28 @@ import {
   submitLeaveRequest, cancelLeaveRequest, getLeaveCalendar,
 } from '../api/EmployeeService';
 
-const EMPTY_FORM = { leaveTypeId: '', startDate: '', endDate: '', reason: '' };
+const EMPTY_FORM = { leaveTypeId: '', startDate: '', endDate: '', reason: '', documentationConfirmed: false };
 const STATUS_COLOR = { APPROVED: 'approved', REJECTED: 'rejected', PENDING: 'pending', CANCELLED: 'inactive' };
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const COLORS = ['var(--brand)','var(--red)','var(--amber)','var(--green)','hsl(270,60%,55%)','hsl(190,60%,40%)'];
 const ANNUAL_LEAVE_NOTICE_DAYS = 14;
 const SICK_LEAVE_DOC_THRESHOLD = 3;
+
+// Per-leave-type styling for the team calendar. Keyed by lowercased type name.
+// Each entry carries a colour (used for the chip) and an emoji (quick glance cue).
+const LEAVE_TYPE_STYLES = {
+  'annual leave':                { color: 'hsl(221, 83%, 53%)', emoji: '🌴' },
+  'sick leave':                  { color: 'hsl(351, 83%, 55%)', emoji: '🤒' },
+  'family responsibility leave': { color: 'hsl(38, 92%, 45%)',  emoji: '👪' },
+  'maternity leave':             { color: 'hsl(316, 70%, 55%)', emoji: '🤱' },
+  'parental leave':              { color: 'hsl(270, 60%, 55%)', emoji: '🍼' },
+  'study leave':                 { color: 'hsl(190, 65%, 42%)', emoji: '📚' },
+};
+const DEFAULT_LEAVE_STYLE = { color: 'hsl(215, 15%, 45%)', emoji: '📅' };
+
+function leaveStyle(typeName) {
+  return LEAVE_TYPE_STYLES[(typeName ?? '').toLowerCase()] ?? DEFAULT_LEAVE_STYLE;
+}
 
 // Count Mon–Fri days between two date strings (matches backend exactly)
 function countWorkingDays(startStr, endStr) {
@@ -85,6 +101,11 @@ export default function LeavePage() {
   const daysUntilStart   = daysFromToday(form.startDate);
   const remaining        = parseFloat(selectedBalance?.remainingDays ?? 0);
 
+  // Sick leave beyond the threshold requires the employee to confirm they have
+  // emailed their manager the supporting documentation before they can submit.
+  const requiresDocConfirmation =
+    selectedTypeName.toLowerCase() === 'sick leave' && workingDays > SICK_LEAVE_DOC_THRESHOLD;
+
   // ── Inline warnings (computed before submit) ───────────────────
   const warnings = useMemo(() => {
     const w = [];
@@ -118,11 +139,11 @@ export default function LeavePage() {
       });
     }
 
-    // Sick leave > 3 days — doctor's note required
+    // Sick leave > 3 days — doctor's note required (confirm via checkbox below)
     if (selectedTypeName.toLowerCase() === 'sick leave' && workingDays > SICK_LEAVE_DOC_THRESHOLD) {
       w.push({
         type: 'warning',
-        msg: `Sick leave exceeding ${SICK_LEAVE_DOC_THRESHOLD} days requires a doctor's note. Please email your manager with supporting documentation before submitting.`,
+        msg: `Sick leave exceeding ${SICK_LEAVE_DOC_THRESHOLD} days requires a doctor's note. Email your manager the supporting documentation, then confirm below to submit.`,
         icon: 'bi-envelope-exclamation',
       });
     }
@@ -142,21 +163,24 @@ export default function LeavePage() {
   const hasBlockingWarning = warnings.some(w => w.type === 'error');
 
   const set = e => {
-    setForm(f => ({ ...f, [e.target.name]: e.target.value }));
+    const { name, type, value, checked } = e.target;
+    setForm(f => ({ ...f, [name]: type === 'checkbox' ? checked : value }));
     setFeedback(null);
   };
 
   const handleSubmit = async e => {
     e.preventDefault();
     if (hasBlockingWarning) return;
+    if (requiresDocConfirmation && !form.documentationConfirmed) return;
     setSubmitting(true);
     setFeedback(null);
     try {
       await submitLeaveRequest({
-        leaveTypeId: form.leaveTypeId,
-        startDate:   form.startDate,
-        endDate:     form.endDate,
-        reason:      form.reason,
+        leaveTypeId:            form.leaveTypeId,
+        startDate:              form.startDate,
+        endDate:                form.endDate,
+        reason:                 form.reason,
+        documentationConfirmed: form.documentationConfirmed,
       });
       setFeedback({ type: 'success', msg: 'Leave request submitted successfully.' });
       setForm(EMPTY_FORM);
@@ -202,6 +226,10 @@ export default function LeavePage() {
       }
     }
   });
+
+  // Distinct leave-type names present this month, for the calendar legend.
+  const calLegend = [...new Set(calLeave.map(r => r.leaveType?.name).filter(Boolean))]
+    .sort((a, b) => a.localeCompare(b));
 
   const prevMonth = () => { if (calMonth === 1) { setCalYear(y => y-1); setCalMonth(12); } else setCalMonth(m => m-1); };
   const nextMonth = () => { if (calMonth === 12) { setCalYear(y => y+1); setCalMonth(1); } else setCalMonth(m => m+1); };
@@ -387,6 +415,31 @@ export default function LeavePage() {
                   </div>
                 )}
 
+                {/* Documentation confirmation gate (sick leave > threshold) */}
+                {requiresDocConfirmation && (
+                  <label
+                    htmlFor='documentationConfirmed'
+                    style={{
+                      display: 'flex', gap: '0.65rem', alignItems: 'flex-start',
+                      padding: '0.85rem 1rem', marginBottom: '1rem',
+                      borderRadius: 'var(--radius-sm)',
+                      background: 'var(--amber-bg)',
+                      border: '1px solid hsla(38,92%,40%,0.3)',
+                      cursor: 'pointer', fontSize: '0.85rem',
+                    }}
+                  >
+                    <input
+                      id='documentationConfirmed'
+                      type='checkbox'
+                      name='documentationConfirmed'
+                      checked={form.documentationConfirmed}
+                      onChange={set}
+                      style={{ marginTop: '0.15rem', flexShrink: 0 }}
+                    />
+                    <span>Did you email your manager with the relevant information and documents?</span>
+                  </label>
+                )}
+
                 {/* Reason */}
                 <div className='form-group' style={{ marginBottom: '1.25rem' }}>
                   <label className='form-label'>
@@ -409,7 +462,7 @@ export default function LeavePage() {
                   <button
                     type='submit'
                     className='btn'
-                    disabled={submitting || hasBlockingWarning || !form.leaveTypeId || !form.startDate || !form.endDate}
+                    disabled={submitting || hasBlockingWarning || !form.leaveTypeId || !form.startDate || !form.endDate || (requiresDocConfirmation && !form.documentationConfirmed)}
                   >
                     <i className='bi bi-send'></i> {submitting ? 'Submitting…' : 'Submit Request'}
                   </button>
@@ -480,6 +533,27 @@ export default function LeavePage() {
               </span>
             </div>
             <div className='card__body'>
+              {/* Legend — only the leave types present this month */}
+              {calLegend.length > 0 && (
+                <div style={{
+                  display: 'flex', flexWrap: 'wrap', gap: '0.75rem',
+                  padding: '0.6rem 0.75rem', marginBottom: '0.85rem',
+                  background: 'var(--surface)', border: '1px solid var(--border)',
+                  borderRadius: 'var(--radius-sm)', fontSize: '0.75rem',
+                }}>
+                  {calLegend.map(name => {
+                    const st = leaveStyle(name);
+                    return (
+                      <span key={name} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                        <span aria-hidden='true' style={{
+                          width: 11, height: 11, borderRadius: 3, background: st.color, flexShrink: 0,
+                        }} />
+                        <span>{st.emoji} {name}</span>
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 4, marginBottom: 4 }}>
                 {['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d => (
                   <div key={d} style={{ textAlign: 'center', fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)', padding: '0.3rem 0' }}>{d}</div>
@@ -502,14 +576,19 @@ export default function LeavePage() {
                         <>
                           <span style={{ fontSize: '0.72rem', fontWeight: isToday ? 700 : 400, color: isToday ? 'var(--brand)' : isWeekend ? 'var(--text-muted)' : 'var(--text-secondary)' }}>{day}</span>
                           <div style={{ marginTop: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
-                            {entries?.slice(0, 2).map((r, j) => (
-                              <div key={j} style={{
-                                fontSize: '0.65rem', background: 'var(--brand-light)', color: 'var(--brand)',
-                                borderRadius: 3, padding: '1px 4px', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis',
-                              }} title={`${r.employee?.firstName} ${r.employee?.lastName} — ${r.leaveType?.name}`}>
-                                {r.employee?.firstName}
-                              </div>
-                            ))}
+                            {entries?.slice(0, 2).map((r, j) => {
+                              const st = leaveStyle(r.leaveType?.name);
+                              return (
+                                <div key={j} style={{
+                                  fontSize: '0.65rem',
+                                  background: st.color, color: '#fff',
+                                  borderRadius: 3, padding: '1px 4px',
+                                  overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis',
+                                }} title={`${r.employee?.firstName} ${r.employee?.lastName} — ${r.leaveType?.name}`}>
+                                  {st.emoji} {r.employee?.firstName}
+                                </div>
+                              );
+                            })}
                             {entries?.length > 2 && (
                               <div style={{ fontSize: '0.62rem', color: 'var(--text-muted)' }}>+{entries.length - 2} more</div>
                             )}

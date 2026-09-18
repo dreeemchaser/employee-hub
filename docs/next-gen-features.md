@@ -49,6 +49,9 @@ Chronological record of work shipped to `master` during this build cycle. ✅ = 
 | 6 | CD pipeline (B.3) | ✅ **DONE** | `.github/workflows/cd.yml` — publishes all 3 images to GHCR on push to master + `v*` tags; env-gated SSH deploy via `docker-compose.prod.yml` (no-op until deploy secrets set) |
 | 7 | Password reset + email (B.5a) | ✅ **DONE** | `POST /auth/forgot-password` + `/auth/reset-password`; single-use TTL token; config-gated email delivery |
 | 8 | Refresh tokens (B.5b) | ✅ **DONE** | Short-lived access (15m) + rotating opaque refresh (7d, hashed at rest); `POST /auth/refresh` + `/auth/logout`; reuse-detection revoke-all; silent-refresh interceptor in both frontends. Completes the B.5 auth-hygiene epic. |
+| 9 | DTO hardening — Tier 1 (Slice A) | ✅ **DONE** | PR #10: response DTOs for 5 previously-unmasked entities (BenefitApplication, EmployeeBenefit, SalaryIncreaseRequest, PerformanceGoal, PerformanceReview); `@JsonIgnore` on `Employee.idNumber` |
+| 10 | DTO hardening — Tier 2 (Slice A) | ✅ **DONE** | PR #11: `EmployeeController` single-employee endpoints return `EmployeeResponse` (idNumber/password never serialised); null-safe idNumber update; `EmployeeDetailsPage` fix |
+| 11 | Bugfix: sick leave >3 days unblockable + calendar legend | ✅ **DONE** | PR #12: `documentationConfirmed` gate (employee confirms docs emailed to manager, audit-logged) lets >3-day sick leave submit; team calendar colour-coded per leave type with a per-month legend; `dev-up.ps1` quiet compose wrapper |
 
 ---
 

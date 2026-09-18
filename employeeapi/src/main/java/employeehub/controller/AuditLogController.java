@@ -1,7 +1,7 @@
 package employeehub.controller;
 
-import employeehub.domain.AuditLog;
 import employeehub.dto.ApiResponse;
+import employeehub.dto.AuditLogResponse;
 import employeehub.service.AuditService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -24,12 +24,13 @@ public class AuditLogController {
 
     @GetMapping
     @Operation(summary = "Get audit logs (HR_ADMIN/SUPER_ADMIN), filterable by entity type, employee, date range")
-    public ResponseEntity<ApiResponse<Page<AuditLog>>> getAll(
+    public ResponseEntity<ApiResponse<Page<AuditLogResponse>>> getAll(
             @RequestParam(required = false) String entityType,
             @RequestParam(required = false) String employeeId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
             Pageable pageable) {
-        return ResponseEntity.ok(ApiResponse.ok(auditService.getAll(entityType, employeeId, from, to, pageable)));
+        return ResponseEntity.ok(ApiResponse.ok(
+                auditService.getAll(entityType, employeeId, from, to, pageable).map(AuditLogResponse::new)));
     }
 }

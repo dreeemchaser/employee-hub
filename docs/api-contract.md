@@ -108,7 +108,7 @@
 | GET | `/leave/requests/{id}` | ALL | Get leave request by ID |
 | GET | `/leave/requests/pending` | MANAGER, HR_ADMIN, SUPER_ADMIN | Get all pending requests |
 | GET | `/leave/requests/team/{teamId}` | MANAGER, HR_ADMIN, SUPER_ADMIN | Get team leave requests |
-| POST | `/leave/requests` | ALL | Submit leave request (system validates balance automatically) |
+| POST | `/leave/requests` | ALL | Submit leave request (validates balance automatically; sick leave over 3 working days requires `documentationConfirmed: true` in the body) |
 | PUT | `/leave/requests/{id}/approve` | MANAGER, HR_ADMIN | Approve leave request |
 | PUT | `/leave/requests/{id}/reject` | MANAGER, HR_ADMIN | Reject leave request |
 | PUT | `/leave/requests/{id}/cancel` | ALL | Cancel own leave request |

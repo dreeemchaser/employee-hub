@@ -161,25 +161,31 @@ Get all employees (paginated).
 }
 ```
 
+> All employee endpoints return the same safe projection shown in the `GET /employees` example above (an `EmployeeResponse`): flattened `departmentId`/`department`, `teamId`/`team`, `managerId`/`manager`, plus non-sensitive profile fields (`dateOfBirth`, `gender`, `nationality`, `address`). The `password` hash and the SA `idNumber` (PII) are never included.
+
 ### GET /employees/{id}
 Get a single employee by ID.
 
-**Response (200 OK):** Employee object  
+**Response (200 OK):** an `EmployeeResponse` (same shape as a `GET /employees` content item)  
 **Response (404 Not Found):** Employee not found
 
 ### POST /employees
 Create a new employee. Requires `HR_ADMIN` or `SUPER_ADMIN` role.
 
+**Response (201 Created):** the created `EmployeeResponse`.
+
 ### PUT /employees/{id}
 Update an employee. Requires `HR_ADMIN` or `SUPER_ADMIN` role.
 
-### PUT /employees/{id}/photo
+**Response (200 OK):** the updated `EmployeeResponse`. Note: because `idNumber` is not returned, it is only overwritten when a non-blank value is supplied — omitting it preserves the stored value.
+
+### POST /employees/{id}/photo
 Upload an employee profile photo.
 
 **Form Parameters (multipart/form-data):**
 - `file`: Image file (JPEG, PNG, GIF)
 
-**Response (200 OK):** Photo URL string
+**Response (200 OK):** the updated `EmployeeResponse` (with the new `profilePhoto`).
 
 ---
 

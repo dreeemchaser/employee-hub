@@ -1,6 +1,5 @@
 package employeehub.controller;
 
-import employeehub.domain.Employee;
 import employeehub.domain.enums.EmploymentStatus;
 import employeehub.dto.ApiResponse;
 import employeehub.dto.EmployeeRequest;
@@ -41,20 +40,21 @@ public class EmployeeController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Get employee by ID")
-    public ResponseEntity<ApiResponse<Employee>> getById(@PathVariable String id) {
-        return ResponseEntity.ok(ApiResponse.ok(employeeService.getById(id)));
+    public ResponseEntity<ApiResponse<EmployeeResponse>> getById(@PathVariable String id) {
+        return ResponseEntity.ok(ApiResponse.ok(new EmployeeResponse(employeeService.getById(id))));
     }
 
     @PostMapping
     @Operation(summary = "Create a new employee")
-    public ResponseEntity<ApiResponse<Employee>> create(@RequestBody EmployeeRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(employeeService.create(request)));
+    public ResponseEntity<ApiResponse<EmployeeResponse>> create(@RequestBody EmployeeRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.ok(new EmployeeResponse(employeeService.create(request))));
     }
 
     @PutMapping("/{id}")
     @Operation(summary = "Update an employee")
-    public ResponseEntity<ApiResponse<Employee>> update(@PathVariable String id, @RequestBody EmployeeRequest request) {
-        return ResponseEntity.ok(ApiResponse.ok(employeeService.update(id, request)));
+    public ResponseEntity<ApiResponse<EmployeeResponse>> update(@PathVariable String id, @RequestBody EmployeeRequest request) {
+        return ResponseEntity.ok(ApiResponse.ok(new EmployeeResponse(employeeService.update(id, request))));
     }
 
     @DeleteMapping("/{id}")
@@ -66,19 +66,19 @@ public class EmployeeController {
 
     @PatchMapping("/{id}/status")
     @Operation(summary = "Update employee employment status")
-    public ResponseEntity<ApiResponse<Employee>> updateStatus(
+    public ResponseEntity<ApiResponse<EmployeeResponse>> updateStatus(
             @PathVariable String id,
             @RequestBody Map<String, String> body) {
         EmploymentStatus status = EmploymentStatus.valueOf(body.get("status"));
-        return ResponseEntity.ok(ApiResponse.ok(employeeService.updateStatus(id, status)));
+        return ResponseEntity.ok(ApiResponse.ok(new EmployeeResponse(employeeService.updateStatus(id, status))));
     }
 
     @PostMapping("/{id}/photo")
     @Operation(summary = "Upload employee profile photo")
-    public ResponseEntity<ApiResponse<Employee>> uploadPhoto(
+    public ResponseEntity<ApiResponse<EmployeeResponse>> uploadPhoto(
             @PathVariable String id,
             @RequestParam("file") MultipartFile file) {
-        return ResponseEntity.ok(ApiResponse.ok(employeeService.updatePhoto(id, photoService.save(file))));
+        return ResponseEntity.ok(ApiResponse.ok(new EmployeeResponse(employeeService.updatePhoto(id, photoService.save(file)))));
     }
 
     @GetMapping("/photo/{filename}")

@@ -65,9 +65,9 @@ const EmployeeDetailsPage = () => {
         employmentStatus: emp.employmentStatus ?? '',
         startDate:        emp.startDate ?? '',
         endDate:          emp.endDate ?? '',
-        departmentId:     emp.department?.id ?? '',
-        teamId:           emp.team?.id ?? '',
-        managerId:        emp.manager?.id ?? '',
+        departmentId:     emp.departmentId ?? emp.department?.id ?? '',
+        teamId:           emp.teamId ?? emp.team?.id ?? '',
+        managerId:        emp.managerId ?? emp.manager?.id ?? '',
         role:             emp.role ?? '',
       });
     } catch {
@@ -246,7 +246,7 @@ const EmployeeDetailsPage = () => {
                   <Field label='Gender'        name='gender'      value={form.gender}      onChange={set}
                     options={['Male', 'Female', 'Non-binary', 'Prefer not to say']} />
                   <Field label='Nationality'   name='nationality' value={form.nationality} onChange={set} />
-                  <Field label='SA ID Number'  name='idNumber'    value={form.idNumber}    onChange={set} />
+                  <Field label='SA ID Number (hidden — type to update)' name='idNumber' value={form.idNumber} onChange={set} />
                 </div>
               )}
 

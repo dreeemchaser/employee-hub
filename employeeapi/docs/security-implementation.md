@@ -1,8 +1,10 @@
 # Security Implementation Guide
 
+> ⚠️ **Outdated tutorial — read `security.md` for the accurate current design.** This document is a from-scratch JWT walkthrough written against an earlier design that used a generic `User`/`users` table, a `/auth/register` endpoint, and username-based login returning a bare `{token}`. **The shipped system differs:** it authenticates against the **`Employee`** entity by **email**, has **no** `User` table and **no** `/auth/register`, the filter class is `JwtAuthFilter`, `JwtUtil.generateToken(String email, String role)` takes email+role, and `POST /auth/login` returns a **`{accessToken, refreshToken}` pair** (short-lived 15-min access + 7-day rotating refresh). Account lockout, password reset, and refresh-token rotation are all implemented. The "Refresh tokens (B.5b)" and config sections below are accurate; treat the `User`/register tutorial parts as historical.
+
 ## Overview
 
-This document covers the JWT (JSON Web Token) based authentication implemented in the Employee API using Spring Security. All endpoints except `/auth/register` and `/auth/login` are protected — only users who have registered and logged in with a valid token can access them.
+This document covers the JWT (JSON Web Token) based authentication in the Employee API using Spring Security. Public endpoints are `/auth/**` (login, refresh, logout, forgot-password, reset-password) plus Swagger and `/actuator/health`; everything else requires a valid Bearer access token.
 
 ### What is JWT?
 

@@ -24,8 +24,8 @@ src/main/java/employeehub/
 ├── Application.java              # @SpringBootApplication entry point
 ├── config/
 │   ├── Config.java               # CorsFilter bean
-│   ├── OpenApiConfiguration.java # Swagger/OpenAPI setup
-│   └── DataSeeder.java           # ApplicationRunner: seeds admin, leave types, tax brackets, benefits
+│   └── OpenApiConfiguration.java # Swagger/OpenAPI setup
+│                                 # (seeding is src/main/resources/data.sql, not a Java class)
 ├── security/
 │   ├── SecurityConfig.java       # SecurityFilterChain, AuthManager, PasswordEncoder
 │   ├── JwtUtil.java              # Token generation and validation
@@ -103,8 +103,8 @@ public class ThingController {
 
 - Request DTOs: plain `@Getter @Setter` (or `@Data`) Lombok classes in the `dto` package
 - The one standard response wrapper is `ApiResponse<T>` — use its static factory methods (`ok`, `error`)
-- `MeResponse` is the only dedicated response DTO; it projects a safe subset of `Employee` (no password)
-- When creating new endpoints that return `Employee` directly, be aware the `password` field is currently not `@JsonIgnore`'d — prefer adding a response DTO or annotating the field
+- `MeResponse` and `EmployeeResponse` are the dedicated response DTOs; both project a safe subset of `Employee` (no password, no `idNumber`). `EmployeeResponse` also flattens lazy associations to avoid serialization errors.
+- `Employee.password` IS `@JsonIgnore`'d, so it never serializes. However, many endpoints still return raw entities (exposing `idNumber` and internal fields); prefer a response DTO for any new entity-returning endpoint. The `best-practices-hardening` spec (Slice A) migrates the remaining raw-entity returns to DTOs.
 
 ### Test Conventions
 

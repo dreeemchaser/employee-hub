@@ -2,13 +2,13 @@
 
 ## Overview
 
-The Employee API is a RESTful web service built with Spring Boot 3.5.13, Java 25, and PostgreSQL. It follows a layered architecture with clear separation of concerns and JWT-based role-based access control.
+The Employee API is a RESTful web service built with Spring Boot 3.5.13, Java 21, and PostgreSQL. It follows a layered architecture with clear separation of concerns and JWT-based role-based access control.
 
 ## Layers
 
 ### Presentation Layer
 Controllers handle HTTP requests and responses, grouped by domain module:
-- `AuthController` — registration and login
+- `AuthController` — login, token refresh/logout, profile (`/auth/me`), and password change/reset
 - `EmployeeController` — employee CRUD and photo upload
 - `DepartmentController`, `TeamController` — organisation structure
 - `LeaveController`, `TimesheetController` — workforce management
@@ -34,10 +34,10 @@ JPA entities representing the full HR data model. See [../../docs/data-model-uml
 ## Technologies
 
 - **Framework**: Spring Boot 3.5.13
-- **Language**: Java 25
+- **Language**: Java 21
 - **Database**: PostgreSQL 15
 - **ORM**: JPA/Hibernate
-- **Security**: Spring Security + JJWT
+- **Security**: Spring Security + JJWT 0.12.6 (stateless JWT; short-lived access + rotating refresh tokens)
 - **Build Tool**: Maven
 - **Utilities**: Lombok
 - **Monitoring**: Spring Boot Actuator
@@ -48,6 +48,7 @@ JPA entities representing the full HR data model. See [../../docs/data-model-uml
 |--------|----------|
 | Organisation | Department, Team |
 | Employee | Employee |
+| Auth | RefreshToken, PasswordResetToken |
 | Leave | LeaveType, LeaveBalance, LeaveRequest |
 | Salary | SalaryRecord, PaySlip, TaxBracket, SalaryIncreaseRequest |
 | Benefits | BenefitType, EmployeeBenefit, BenefitApplication |
@@ -63,11 +64,11 @@ Application configuration is managed through `application.yml`:
 - JPA/Hibernate settings
 - File upload limits
 - Server port (8080)
-- JWT secret and expiration
+- JWT secret + access-token expiration (`jwt.access-expiration`, 15 min) and refresh-token expiration (`jwt.refresh-expiration`, 7 days)
 
 ## File Storage
 
-Photos are stored locally in the `PHOTO_DIRECTORY`. For production deployments, consider migrating to cloud storage such as AWS S3.
+Photos/documents are stored locally at `app.upload.directory` (env `UPLOAD_DIRECTORY`, default `~/employeehub/uploads/`; Docker `/app/photos/`), resolved by `PhotoService`. For production deployments, consider migrating to cloud storage such as AWS S3.
 
 ## Error Handling
 

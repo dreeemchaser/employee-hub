@@ -2,7 +2,7 @@
 
 ## Current Security Status
 
-JWT-based authentication and role-based access control are implemented. All endpoints except `/auth/register` and `/auth/login` require a valid Bearer token.
+JWT-based authentication and role-based access control are implemented. All `/auth/**` endpoints are public (login, refresh, logout, forgot-password, reset-password), along with Swagger and `/actuator/health`. Every other endpoint requires a valid Bearer access token.
 
 ## Roles
 
@@ -124,19 +124,14 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO employeeh
 ## Security Testing
 
 ```bash
-# Register
-curl -X POST http://localhost:8080/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"username": "admin", "password": "password123"}'
-
-# Login — copy the token
+# Login — copy the accessToken from data.accessToken
 curl -X POST http://localhost:8080/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"username": "admin", "password": "password123"}'
+  -d '{"email": "admin@employeehub.com", "password": "Admin@1234"}'
 
-# Access protected endpoint with token
+# Access protected endpoint with the access token
 curl http://localhost:8080/employees \
-  -H "Authorization: Bearer <your-token>"
+  -H "Authorization: Bearer <your-accessToken>"
 
 # Access without token — should return 401
 curl http://localhost:8080/employees

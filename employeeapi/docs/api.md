@@ -7,24 +7,7 @@ Base URL: `http://localhost:8080`
 
 ## Authentication
 
-### POST /auth/register `[PUBLIC]`
-Register a new user.
-
-**Request Body:**
-```json
-{
-  "username": "jane@example.com",
-  "password": "password123"
-}
-```
-
-**Response (200 OK):**
-```json
-{
-  "token": "eyJhbGci...",
-  "username": "jane@example.com"
-}
-```
+> There is no self-service registration endpoint. New accounts are created by HR/admin via `POST /employees`, or seeded on first boot.
 
 ### POST /auth/login `[PUBLIC]`
 Login and receive an access token plus a refresh token.

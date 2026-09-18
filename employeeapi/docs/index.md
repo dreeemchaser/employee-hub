@@ -24,7 +24,7 @@ docker-compose up --build
 ```
 
 - API: http://localhost:8080
-- Swagger: http://localhost:8080/swagger-ui.html
+- Swagger: http://localhost:8080/swagger-ui/index.html
 
 ### Without Docker
 

@@ -54,12 +54,15 @@ classDiagram
     class AuthController {
         -AuthenticationManager authManager
         -JwtUtil jwtUtil
-        +register(RegisterRequest) ResponseEntity~AuthResponse~
-        +login(LoginRequest) ResponseEntity~AuthResponse~
+        -RefreshTokenService refreshTokenService
+        +login(Map) ResponseEntity~ApiResponse~
+        +refresh(RefreshRequest) ResponseEntity~ApiResponse~
+        +logout(RefreshRequest) ResponseEntity~ApiResponse~
+        +me(UserDetails) ResponseEntity~ApiResponse~
     }
 
     class JwtUtil {
-        +generateToken(UserDetails) String
+        +generateToken(String email, String role) String
         +extractUsername(String) String
         +isTokenValid(String, UserDetails) boolean
     }

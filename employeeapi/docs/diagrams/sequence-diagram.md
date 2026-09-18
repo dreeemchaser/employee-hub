@@ -15,9 +15,11 @@ sequenceDiagram
     AuthenticationManager->>Database: SELECT * FROM employees WHERE email = ?
     Database-->>AuthenticationManager: Employee
     AuthenticationManager-->>AuthController: Authentication
-    AuthController->>JwtUtil: generateToken(employee)
-    JwtUtil-->>AuthController: JWT token
-    AuthController-->>Client: 200 OK (token, username)
+    AuthController->>JwtUtil: generateToken(email, role)
+    JwtUtil-->>AuthController: access token (JWT)
+    AuthController->>RefreshTokenService: issue(employee)
+    RefreshTokenService-->>AuthController: refresh token (opaque)
+    AuthController-->>Client: 200 OK { accessToken, refreshToken }
 ```
 
 ## Create Employee Flow
@@ -86,7 +88,7 @@ sequenceDiagram
     EmployeeRepository->>Database: SELECT * FROM employees WHERE id = ?
     Database-->>EmployeeRepository: Employee
     EmployeeRepository-->>EmployeeService: Employee
-    EmployeeService->>FileSystem: Save file to PHOTO_DIRECTORY
+    EmployeeService->>FileSystem: Save file to upload directory (app.upload.directory)
     FileSystem-->>EmployeeService: File saved
     EmployeeService->>EmployeeRepository: save(Employee with profilePhoto)
     EmployeeRepository->>Database: UPDATE employees SET profile_photo = ? WHERE id = ?

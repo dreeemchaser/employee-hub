@@ -2,9 +2,9 @@
 
 ## Prerequisites
 
-- Java 25
-- Maven 3.6+
-- PostgreSQL 12+ (for local dev without Docker)
+- Java 21
+- Maven 3.6+ (or the bundled `./mvnw` wrapper)
+- PostgreSQL 15 (for local dev without Docker)
 - Docker + Docker Compose (for containerized dev)
 - Node.js 20+ (for frontend local dev)
 
@@ -15,10 +15,9 @@ employeeapi/src/main/java/employeehub/
 ├── Application.java
 ├── config/
 │   ├── Config.java                  # CORS configuration
-│   ├── DataSeeder.java              # Seed data on startup
 │   └── OpenApiConfiguration.java    # Swagger/OpenAPI setup
 ├── constant/
-│   └── Constant.java                # PHOTO_DIRECTORY, X_REQUESTED_WITH
+│   └── Constant.java                # X_REQUESTED_WITH header constant
 ├── controller/
 │   ├── AuthController.java          # /auth endpoints
 │   ├── EmployeeController.java      # /employees endpoints
@@ -75,15 +74,21 @@ Override any value via environment variable — Docker Compose injects these aut
 
 ## Photo Storage
 
-Controlled by `Constant.java`:
+Resolved by `PhotoService` from the `app.upload.directory` property:
 ```java
-public static final String PHOTO_DIRECTORY = System.getenv("PHOTO_DIRECTORY") != null
-    ? System.getenv("PHOTO_DIRECTORY")
-    : System.getProperty("user.home") + "/downloads/uploads/";
+@Value("${app.upload.directory:${user.home}/employeehub/uploads/}")
+private String uploadDirectory;
 ```
 
-- Docker: `/app/photos/` (set via `PHOTO_DIRECTORY` env var)
-- Local: `~/downloads/uploads/`
+- Docker: `/app/photos/` (set via the `UPLOAD_DIRECTORY` env var)
+- Local: `~/employeehub/uploads/` (default)
+
+## Seed Data
+
+Startup seed data (departments, teams, leave types, SA tax brackets, benefit types,
+and the seeded admin/employee accounts) is loaded from `src/main/resources/data.sql`
+via Spring's `spring.sql.init` (`mode: always`). Inserts are idempotent
+(`INSERT ... WHERE NOT EXISTS`). There is no Java `DataSeeder` class.
 
 ## Adding New Features
 

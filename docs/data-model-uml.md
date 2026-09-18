@@ -446,6 +446,7 @@ EMPLOYEE ||--o{ NOTIFICATION : "receives"
 |--------|----------|-------|
 | Organisation | Department, Team | 2 |
 | Employee | Employee | 1 |
+| Auth | RefreshToken, PasswordResetToken | 2 |
 | Leave | LeaveType, LeaveBalance, LeaveRequest | 3 |
 | Salary | SalaryRecord, PaySlip, TaxBracket, SalaryIncreaseRequest | 4 |
 | Benefits | BenefitType, EmployeeBenefit, BenefitApplication | 3 |
@@ -453,4 +454,4 @@ EMPLOYEE ||--o{ NOTIFICATION : "receives"
 | Performance | PerformanceCycle, PerformanceReview, PerformanceGoal | 3 |
 | Documents | Document | 1 |
 | System | AuditLog, Notification | 2 |
-| **Total** | | **21** |
+| **Total** | | **22** |

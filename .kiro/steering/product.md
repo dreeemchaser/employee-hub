@@ -10,7 +10,7 @@ There are five roles, enforced by Spring Security on the API and decoded from th
 
 | Role | Who | What They Can Do |
 |---|---|---|
-| `SUPER_ADMIN` | System administrator | Full access, seeded by DataSeeder on first boot (admin@employeehub.com) |
+| `SUPER_ADMIN` | System administrator | Full access, seeded on first boot via `data.sql` (admin@employeehub.com) |
 | `HR_ADMIN` | HR staff | Manage all employees, approve leave/timesheets, verify documents, view audit logs |
 | `PAYROLL_ADMIN` | Payroll staff | Manage salary records, generate payslips, approve salary increase requests |
 | `MANAGER` | Team leads | Approve leave/timesheets for their direct reports, submit salary increase requests |
@@ -45,5 +45,5 @@ A `MANAGER` is also an `EMPLOYEE` — they access self-service features and thei
 ## Business Context
 
 - Tax calculations use South African SARS PAYE brackets and UIF (1% employee contribution, capped at R177.12/month)
-- Default admin password: `Admin@1234`; default employee password: `Employee@1234` (set by DataSeeder on startup)
+- Default admin password: `Admin@1234`; default employee password: `Employee@1234` (seeded via `data.sql` on startup)
 - Employee numbers follow the pattern `EMP-NNN` (zero-padded, sequential)

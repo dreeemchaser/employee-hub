@@ -69,7 +69,7 @@ Once it's up, everything's wired together automatically:
 | 👤 Frontend | http://localhost:3000 |
 | 🛠️ HR Dashboard | http://localhost:3001 |
 | ⚙️ API | http://localhost:8080 |
-| 📚 Swagger | http://localhost:8080/swagger-ui.html |
+| 📚 Swagger | http://localhost:8080/swagger-ui/index.html |
 
 ```bash
 docker-compose down      # 🛑 stop the stack

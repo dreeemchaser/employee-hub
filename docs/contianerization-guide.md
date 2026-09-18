@@ -5,7 +5,7 @@ This guide documents the Docker setup for the EmployeeHub full stack.
 ## Architecture
 
 ```
-frontend (Nginx:3000) → api (Spring Boot:8080) → db (PostgreSQL:5432)
+frontend (Nginx:3000) → api (Spring Boot:8080) → db (PostgreSQL, container :5432, host :5433)
 hrdashboard (Nginx:3001) ↗
 ```
 
@@ -16,7 +16,7 @@ All services run on the `docker-net` bridge network. Service names resolve as in
 ### db — PostgreSQL 15
 
 - Image: `postgres:15-alpine`
-- Port: `5432`
+- Port: `5433:5432` (host `5433` → container `5432`; connect from the host on `5433`)
 - Volume: `postgres_data` → `/var/lib/postgresql/data`
 - Health check: `pg_isready -U admin -d employeehub`
 
@@ -69,24 +69,23 @@ the CI test job.
 
 ## Key Configuration
 
-### Photo Directory
+### Photo / Upload Directory
 
-`Constant.java` reads `PHOTO_DIRECTORY` from the environment:
+`PhotoService` resolves the storage path from the `app.upload.directory` property
+(env `UPLOAD_DIRECTORY`), defaulting to `~/employeehub/uploads/`:
 ```java
-System.getenv("PHOTO_DIRECTORY") != null
-    ? System.getenv("PHOTO_DIRECTORY")
-    : System.getProperty("user.home") + "/downloads/uploads/"
+@Value("${app.upload.directory:${user.home}/employeehub/uploads/}")
+private String uploadDirectory;
 ```
 
-In Docker, `docker-compose.yml` sets `PHOTO_DIRECTORY: /app/photos/`.
+In Docker, `docker-compose.yml` sets `UPLOAD_DIRECTORY: /app/photos/`, backed by the
+`employee_photos` volume.
 
 ### API URL in Frontend
 
-`ContactService.js` reads `REACT_APP_API_URL` at runtime:
+`EmployeeService.js` (the active API module) reads `REACT_APP_API_URL` at runtime:
 ```js
-const API_URL = process.env.REACT_APP_API_URL
-    ? `${process.env.REACT_APP_API_URL}/employees`
-    : 'http://localhost:8080/employees';
+const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
 ```
 
 This is injected at build time via `docker-compose.yml`:
@@ -164,7 +163,7 @@ docker-compose up --build
 lsof -i :8080
 lsof -i :3000
 lsof -i :3001
-lsof -i :5432
+lsof -i :5433
 ```
 
 **Full reset:**

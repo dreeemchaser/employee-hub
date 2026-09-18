@@ -2,6 +2,8 @@
 
 Each step maps to one or more commits on the backend. Follow in order — each step depends on the previous.
 
+> **Note — historical build plan.** This document records the original step-by-step build order and does not track later changes. The auth surface in particular has evolved since Step 4 (see the note there). For the current API, treat the live controllers, `docs/api-contract.md`, and `employeeapi/docs/api.md` as the source of truth.
+
 ---
 
 ## Step 1 — Project Restructure & Base Setup
@@ -69,12 +71,13 @@ Each step maps to one or more commits on the backend. Follow in order — each s
 - Update `UserDetails` implementation to use `Employee` instead of old `User`
 - Update `SecurityConfig` to use role-based access rules per endpoint
 - Update JWT filter to load employee by email
-- Add `POST /auth/register` — creates an `EMPLOYEE` by default
-- Add `POST /auth/login` — returns JWT with role claim
+- Add `POST /auth/login` — returns a JWT with a role claim
 - Add `GET /auth/me` — returns current authenticated employee profile
 - Ensure `MANAGER` can only access their team's data (service-level enforcement)
 
 **Commit:** `feat: overhaul auth to use Employee entity, add role-based security, update JWT with role claim`
+
+> **Since evolved (current auth surface):** there is **no** `/auth/register` — accounts are created via `POST /employees` (HR/admin) or seeded on first boot. `POST /auth/login` now returns a **pair**: `{accessToken, refreshToken}` (short-lived 15-min access + 7-day rotating refresh). Additional endpoints added later: `POST /auth/refresh`, `POST /auth/logout`, `PATCH /auth/me`, `POST /auth/change-password`, `POST /auth/forgot-password`, `POST /auth/reset-password`, plus account lockout. See `employeeapi/docs/security.md`.
 
 ---
 

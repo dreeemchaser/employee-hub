@@ -1,8 +1,10 @@
 # Performance
 
+> ⚠️ **Aspirational / future-looking.** This document describes target performance practices, several of which are **not implemented** in the current codebase: there is no Redis caching, no AWS S3 storage, no Prometheus metrics, and no custom HikariCP tuning (the default Hikari pool ships with `spring-boot-starter-data-jpa`, unconfigured). Benchmark numbers below are illustrative, not measured. Any SQL that references singular table names (e.g. `leave_request`, `timesheet`) should use the actual plural, snake_case Hibernate names (`leave_requests`, `timesheets`). Treat this as a roadmap for performance work, not a description of the running system.
+
 ## Performance Overview
 
-The Employee API is designed for optimal performance with proper database indexing, connection pooling, and caching strategies. Current implementation supports thousands of concurrent users with sub-second response times for typical operations.
+The Employee API targets solid performance through database indexing, connection pooling, and caching. This section describes intended practices; see the caveat above for what is and isn't implemented today.
 
 ## Current Performance Characteristics
 

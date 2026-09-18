@@ -1,8 +1,10 @@
 # Employee Hub — API Contract
 
-**Base URL:** `/api/v1`
-**Auth:** All endpoints require `Authorization: Bearer <token>` unless marked `[PUBLIC]`
+**Base URL:** `/` (no version prefix — controllers are mounted at the root, e.g. `/auth`, `/employees`)
+**Auth:** All endpoints require `Authorization: Bearer <accessToken>` unless marked `[PUBLIC]`
 **Content-Type:** `application/json`
+
+> ⚠️ **Partly aspirational.** This contract documents the intended/target API and includes some endpoints and sections that are not implemented (e.g. any WebSocket/real-time section, and a few verbs/paths differ from the live controllers). The **live controllers**, `employeeapi/docs/api.md`, and Swagger (`/swagger-ui/index.html`) are the source of truth. The Authentication and core CRUD tables below have been reconciled with the current code; deeper sections may still drift.
 
 ---
 
@@ -24,13 +26,16 @@
 
 | Method | Endpoint | Access | Description |
 |--------|----------|--------|-------------|
-| POST | `/auth/register` | PUBLIC | Register new user |
-| POST | `/auth/login` | PUBLIC | Login, returns JWT. Returns `423 Locked` (with `Retry-After` + `retryAfterSeconds`) after repeated failed attempts |
-| POST | `/auth/logout` | ALL | Invalidate token |
-| POST | `/auth/refresh` | ALL | Refresh JWT token |
-| PUT | `/auth/change-password` | ALL | Change own password |
+| POST | `/auth/login` | PUBLIC | Login. Returns `{ accessToken, refreshToken }` (15-min access + 7-day rotating refresh). Returns `423 Locked` (with `Retry-After` + `retryAfterSeconds`) after repeated failed attempts |
+| POST | `/auth/refresh` | PUBLIC | Exchange a refresh token for a new `{ accessToken, refreshToken }` pair (rotates; `401` if invalid/expired/revoked) |
+| POST | `/auth/logout` | PUBLIC | Revoke a refresh token (idempotent) |
+| GET | `/auth/me` | ALL | Get own profile |
+| PATCH | `/auth/me` | ALL | Update own profile |
+| POST | `/auth/change-password` | ALL | Change own password |
 | POST | `/auth/forgot-password` | PUBLIC | Request a password reset link (generic response, no enumeration) |
 | POST | `/auth/reset-password` | PUBLIC | Reset password with a single-use, expiring token |
+
+> There is **no** `/auth/register`. New accounts are created via `POST /employees` (HR/admin) or seeded on first boot. Self-service profile lives under `/auth/me` (not `/employees/me`).
 
 ---
 
@@ -40,16 +45,14 @@
 |--------|----------|--------|-------------|
 | GET | `/employees` | HR_ADMIN, SUPER_ADMIN | Get all employees |
 | GET | `/employees/{id}` | ALL | Get employee by ID |
-| GET | `/employees/me` | ALL | Get own profile |
 | POST | `/employees` | HR_ADMIN, SUPER_ADMIN | Create employee |
 | PUT | `/employees/{id}` | HR_ADMIN, SUPER_ADMIN | Update employee |
-| PUT | `/employees/me` | ALL | Update own profile |
-| DELETE | `/employees/{id}` | SUPER_ADMIN | Delete employee |
-| PUT | `/employees/{id}/photo` | HR_ADMIN, SUPER_ADMIN | Upload employee photo |
-| PUT | `/employees/me/photo` | ALL | Upload own photo |
-| GET | `/employees/department/{departmentId}` | MANAGER, HR_ADMIN, SUPER_ADMIN | Get employees by department |
-| GET | `/employees/team/{teamId}` | MANAGER, HR_ADMIN, SUPER_ADMIN | Get employees by team |
-| GET | `/employees/manager/{managerId}` | MANAGER, HR_ADMIN, SUPER_ADMIN | Get employees by manager |
+| PATCH | `/employees/{id}/status` | HR_ADMIN, SUPER_ADMIN | Update employment status |
+| DELETE | `/employees/{id}` | HR_ADMIN, SUPER_ADMIN | Delete employee |
+| POST | `/employees/{id}/photo` | HR_ADMIN, SUPER_ADMIN | Upload employee photo |
+| GET | `/employees/photo/{filename}` | PUBLIC | Serve a profile photo |
+
+> `GET /employees` supports filtering via query params (`departmentId`, `teamId`, `status`) and pagination (`Pageable`) rather than dedicated `/department/{id}` / `/team/{id}` / `/manager/{id}` paths. Own-profile read/update is `GET`/`PATCH /auth/me` (see Authentication), not `/employees/me`.
 
 ---
 

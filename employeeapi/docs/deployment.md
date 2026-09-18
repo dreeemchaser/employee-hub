@@ -19,7 +19,7 @@ docker-compose up --build
 | Frontend      | http://localhost:3000 |
 | HR Dashboard  | http://localhost:3001 |
 | API           | http://localhost:8080 |
-| Swagger       | http://localhost:8080/swagger-ui.html |
+| Swagger       | http://localhost:8080/swagger-ui/index.html |
 
 ### Stop Services
 
@@ -114,8 +114,10 @@ Configured in `docker-compose.yml`. Key variables:
 | `SPRING_DATASOURCE_URL` | `jdbc:postgresql://db:5432/employeehub` |
 | `SPRING_DATASOURCE_USERNAME` | `admin` |
 | `SPRING_DATASOURCE_PASSWORD` | `administrator` |
-| `PHOTO_DIRECTORY` | `/app/photos/` |
+| `UPLOAD_DIRECTORY` | `/app/photos/` |
 | `JWT_SECRET` | (set in docker-compose or env) |
+| `JWT_ACCESS_EXPIRATION` | `900000` (15 min) |
+| `JWT_REFRESH_EXPIRATION` | `604800000` (7 days) |
 | `REACT_APP_API_URL` | `http://localhost:8080` (build arg) |
 
 ### Auth hardening (optional)
@@ -170,7 +172,7 @@ npm start
 ```bash
 cd employeeapi
 ./mvnw clean package -DskipTests
-java -jar target/employeeapi-0.0.1-SNAPSHOT.jar
+java -jar target/employeeapi-1.0.0.jar
 ```
 
 ---

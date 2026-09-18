@@ -8,12 +8,14 @@ React frontend for the EmployeeHub HR management system, built with Create React
 employeehub/
 ├── src/
 │   ├── api/
-│   │   ├── AuthService.js      # Auth API calls (login, register)
-│   │   └── ContactService.js   # Employee API calls to backend
+│   │   ├── AuthService.js      # Auth: login, logout, refresh, token/role helpers
+│   │   └── EmployeeService.js  # All backend API calls (employees, leave, timesheets, docs, salary, benefits, performance, notifications)
 │   ├── components/
 │   │   ├── EmployeeCard.jsx
-│   │   ├── Header.jsx
+│   │   ├── NewEmployeeModal.jsx
 │   │   ├── LoginPage.jsx
+│   │   ├── ForgotPasswordPage.jsx
+│   │   ├── ResetPasswordPage.jsx
 │   │   ├── Sidebar.jsx
 │   │   ├── Spinner.jsx
 │   │   └── TopBar.jsx
@@ -26,12 +28,15 @@ employeehub/
 │   │   ├── SalaryPage.jsx
 │   │   ├── BenefitsPage.jsx
 │   │   ├── PerformancePage.jsx
-│   │   └── DocumentsPage.jsx
+│   │   ├── DocumentsPage.jsx
+│   │   ├── NotificationsPage.jsx
+│   │   ├── ProfilePage.jsx
+│   │   └── TeamApprovalsPage.jsx   # Manager team leave/timesheet approvals (role-gated)
 │   ├── App.js
 │   └── index.js
 ├── public/
 ├── Dockerfile                  # Multi-stage build: Node builder + Nginx runtime
-├── nginx.conf                  # Nginx config with SPA routing and API proxy
+├── nginx.conf                  # Nginx SPA routing (the /api/ proxy block is present but unused — the app calls REACT_APP_API_URL directly)
 └── package.json
 ```
 

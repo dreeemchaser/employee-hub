@@ -26,6 +26,10 @@ public class EmployeeResponse {
     private final String lastName;
     private final String email;
     private final String phone;
+    private final String dateOfBirth;
+    private final String gender;
+    private final String nationality;
+    private final String address;
     private final String jobTitle;
     private final Role role;
     private final EmploymentStatus employmentStatus;
@@ -33,6 +37,8 @@ public class EmployeeResponse {
     private final String profilePhoto;
     private final String startDate;
     private final String endDate;
+
+    // Note: idNumber (SA ID, sensitive PII) is deliberately NOT projected here.
 
     // Flattened associations (names only) — safe to touch here because the
     // service method that builds this DTO runs while the session is open.
@@ -50,6 +56,10 @@ public class EmployeeResponse {
         this.lastName         = e.getLastName();
         this.email            = e.getEmail();
         this.phone            = e.getPhone();
+        this.dateOfBirth      = e.getDateOfBirth() != null ? e.getDateOfBirth().toString() : null;
+        this.gender           = e.getGender();
+        this.nationality      = e.getNationality();
+        this.address          = e.getAddress();
         this.jobTitle         = e.getJobTitle();
         this.role             = e.getRole();
         this.employmentStatus = e.getEmploymentStatus();

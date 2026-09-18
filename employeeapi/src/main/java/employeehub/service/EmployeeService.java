@@ -145,7 +145,12 @@ public class EmployeeService {
         employee.setDateOfBirth(req.getDateOfBirth());
         employee.setGender(req.getGender());
         employee.setNationality(req.getNationality());
-        employee.setIdNumber(req.getIdNumber());
+        // idNumber is not exposed in responses (PII), so the edit form cannot echo
+        // it back. Only overwrite when a non-blank value is explicitly supplied,
+        // otherwise the stored value would be wiped by an empty round-trip.
+        if (req.getIdNumber() != null && !req.getIdNumber().isBlank()) {
+            employee.setIdNumber(req.getIdNumber());
+        }
         employee.setAddress(req.getAddress());
         employee.setJobTitle(req.getJobTitle());
         employee.setEmploymentType(req.getEmploymentType());

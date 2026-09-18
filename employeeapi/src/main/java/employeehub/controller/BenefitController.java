@@ -1,9 +1,9 @@
 package employeehub.controller;
 
-import employeehub.domain.BenefitApplication;
 import employeehub.domain.BenefitType;
-import employeehub.domain.EmployeeBenefit;
 import employeehub.dto.ApiResponse;
+import employeehub.dto.BenefitApplicationResponse;
+import employeehub.dto.EmployeeBenefitResponse;
 import employeehub.service.EmployeeService;
 import employeehub.service.BenefitService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -35,36 +35,40 @@ public class BenefitController {
 
     @GetMapping("/my")
     @Operation(summary = "Get current employee's active benefits")
-    public ResponseEntity<ApiResponse<List<EmployeeBenefit>>> getMy(@AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<ApiResponse<List<EmployeeBenefitResponse>>> getMy(@AuthenticationPrincipal UserDetails userDetails) {
         var employee = employeeService.getByEmail(userDetails.getUsername());
-        return ResponseEntity.ok(ApiResponse.ok(benefitService.getMyBenefits(employee.getId())));
+        return ResponseEntity.ok(ApiResponse.ok(
+                EmployeeBenefitResponse.from(benefitService.getMyBenefits(employee.getId()))));
     }
 
     @PostMapping("/apply")
     @Operation(summary = "Apply for a benefit")
-    public ResponseEntity<ApiResponse<BenefitApplication>> apply(
+    public ResponseEntity<ApiResponse<BenefitApplicationResponse>> apply(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestBody Map<String, Long> body) {
         var employee = employeeService.getByEmail(userDetails.getUsername());
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.ok(benefitService.apply(employee.getId(), body.get("benefitTypeId"))));
+                .body(ApiResponse.ok(new BenefitApplicationResponse(
+                        benefitService.apply(employee.getId(), body.get("benefitTypeId")))));
     }
 
     @PatchMapping("/applications/{id}/approve")
     @Operation(summary = "Approve a benefit application (HR)")
-    public ResponseEntity<ApiResponse<BenefitApplication>> approve(
+    public ResponseEntity<ApiResponse<BenefitApplicationResponse>> approve(
             @PathVariable String id,
             @AuthenticationPrincipal UserDetails userDetails) {
         var reviewer = employeeService.getByEmail(userDetails.getUsername());
-        return ResponseEntity.ok(ApiResponse.ok(benefitService.approve(id, reviewer.getId())));
+        return ResponseEntity.ok(ApiResponse.ok(new BenefitApplicationResponse(
+                benefitService.approve(id, reviewer.getId()))));
     }
 
     @PatchMapping("/applications/{id}/reject")
     @Operation(summary = "Reject a benefit application (HR)")
-    public ResponseEntity<ApiResponse<BenefitApplication>> reject(
+    public ResponseEntity<ApiResponse<BenefitApplicationResponse>> reject(
             @PathVariable String id,
             @AuthenticationPrincipal UserDetails userDetails) {
         var reviewer = employeeService.getByEmail(userDetails.getUsername());
-        return ResponseEntity.ok(ApiResponse.ok(benefitService.reject(id, reviewer.getId())));
+        return ResponseEntity.ok(ApiResponse.ok(new BenefitApplicationResponse(
+                benefitService.reject(id, reviewer.getId()))));
     }
 }

@@ -1,7 +1,6 @@
 package employeehub.controller;
 
 import employeehub.domain.PaySlip;
-import employeehub.domain.SalaryIncreaseRequest;
 import employeehub.domain.SalaryRecord;
 import employeehub.dto.*;
 import employeehub.service.EmployeeService;
@@ -74,44 +73,49 @@ public class SalaryController {
 
     @GetMapping("/increase-requests/my")
     @Operation(summary = "Get current employee's salary increase requests")
-    public ResponseEntity<ApiResponse<List<SalaryIncreaseRequest>>> getMyIncreaseRequests(
+    public ResponseEntity<ApiResponse<List<SalaryIncreaseRequestResponse>>> getMyIncreaseRequests(
             @AuthenticationPrincipal UserDetails userDetails) {
         var employee = employeeService.getByEmail(userDetails.getUsername());
-        return ResponseEntity.ok(ApiResponse.ok(salaryService.getMyIncreaseRequests(employee.getId())));
+        return ResponseEntity.ok(ApiResponse.ok(
+                SalaryIncreaseRequestResponse.from(salaryService.getMyIncreaseRequests(employee.getId()))));
     }
 
     @GetMapping("/increase-requests")
     @Operation(summary = "Get all salary increase requests (HR/Payroll)")
-    public ResponseEntity<ApiResponse<List<SalaryIncreaseRequest>>> getAllIncreaseRequests() {
-        return ResponseEntity.ok(ApiResponse.ok(salaryService.getAllIncreaseRequests()));
+    public ResponseEntity<ApiResponse<List<SalaryIncreaseRequestResponse>>> getAllIncreaseRequests() {
+        return ResponseEntity.ok(ApiResponse.ok(
+                SalaryIncreaseRequestResponse.from(salaryService.getAllIncreaseRequests())));
     }
 
     @PostMapping("/increase-requests")
     @Operation(summary = "Submit a salary increase request")
-    public ResponseEntity<ApiResponse<SalaryIncreaseRequest>> submitIncreaseRequest(
+    public ResponseEntity<ApiResponse<SalaryIncreaseRequestResponse>> submitIncreaseRequest(
             @RequestBody SalaryIncreaseRequestDto request,
             @AuthenticationPrincipal UserDetails userDetails) {
         var requester = employeeService.getByEmail(userDetails.getUsername());
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.ok(salaryService.submitIncreaseRequest(request, requester.getId())));
+                .body(ApiResponse.ok(new SalaryIncreaseRequestResponse(
+                        salaryService.submitIncreaseRequest(request, requester.getId()))));
     }
 
     @PatchMapping("/increase-requests/{id}/approve")
     @Operation(summary = "Approve a salary increase request (HR_ADMIN)")
-    public ResponseEntity<ApiResponse<SalaryIncreaseRequest>> approveIncreaseRequest(
+    public ResponseEntity<ApiResponse<SalaryIncreaseRequestResponse>> approveIncreaseRequest(
             @PathVariable String id,
             @AuthenticationPrincipal UserDetails userDetails) {
         var reviewer = employeeService.getByEmail(userDetails.getUsername());
-        return ResponseEntity.ok(ApiResponse.ok(salaryService.approveIncreaseRequest(id, reviewer.getId())));
+        return ResponseEntity.ok(ApiResponse.ok(new SalaryIncreaseRequestResponse(
+                salaryService.approveIncreaseRequest(id, reviewer.getId()))));
     }
 
     @PatchMapping("/increase-requests/{id}/reject")
     @Operation(summary = "Reject a salary increase request (HR_ADMIN)")
-    public ResponseEntity<ApiResponse<SalaryIncreaseRequest>> rejectIncreaseRequest(
+    public ResponseEntity<ApiResponse<SalaryIncreaseRequestResponse>> rejectIncreaseRequest(
             @PathVariable String id,
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestBody Map<String, String> body) {
         var reviewer = employeeService.getByEmail(userDetails.getUsername());
-        return ResponseEntity.ok(ApiResponse.ok(salaryService.rejectIncreaseRequest(id, reviewer.getId(), body.get("reason"))));
+        return ResponseEntity.ok(ApiResponse.ok(new SalaryIncreaseRequestResponse(
+                salaryService.rejectIncreaseRequest(id, reviewer.getId(), body.get("reason")))));
     }
 }

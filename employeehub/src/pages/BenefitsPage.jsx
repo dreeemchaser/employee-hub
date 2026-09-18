@@ -20,7 +20,7 @@ export default function BenefitsPage() {
 
   useEffect(() => { load(); }, [load]);
 
-  const activeIds = new Set(active.map(b => b.benefitType?.id));
+  const activeIds = new Set(active.map(b => b.benefitTypeId));
 
   const handleApply = async (id) => {
     setApplying(id);
@@ -58,9 +58,9 @@ export default function BenefitsPage() {
                   <tr><td colSpan={4} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>No active benefits.</td></tr>
                 ) : active.map(b => (
                   <tr key={b.id}>
-                    <td style={{ fontWeight: 500 }}>{b.benefitType?.name}</td>
-                    <td style={{ color: 'var(--text-secondary)' }}>R {b.benefitType?.employeeContribution?.toLocaleString('en-ZA')} / month</td>
-                    <td style={{ color: 'var(--green)' }}>R {b.benefitType?.employerContribution?.toLocaleString('en-ZA')} / month</td>
+                    <td style={{ fontWeight: 500 }}>{b.benefitTypeName}</td>
+                    <td style={{ color: 'var(--text-secondary)' }}>R {b.employeeContribution?.toLocaleString('en-ZA')} / month</td>
+                    <td style={{ color: 'var(--green)' }}>R {b.employerContribution?.toLocaleString('en-ZA')} / month</td>
                     <td><span className='badge badge--active'>{b.status}</span></td>
                   </tr>
                 ))}

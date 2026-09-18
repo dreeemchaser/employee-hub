@@ -5,6 +5,7 @@ import employeehub.domain.Timesheet;
 import employeehub.domain.enums.Role;
 import employeehub.domain.enums.TimesheetStatus;
 import employeehub.dto.TimesheetRequest;
+import employeehub.exception.BusinessRuleException;
 import employeehub.exception.ResourceNotFoundException;
 import employeehub.repository.EmployeeRepository;
 import employeehub.repository.TimesheetRepository;
@@ -96,7 +97,7 @@ class TimesheetServiceTest {
         when(timesheetRepository.findById("ts-1")).thenReturn(Optional.of(timesheet));
 
         assertThatThrownBy(() -> timesheetService.submit("ts-1", "emp-1"))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(BusinessRuleException.class)
                 .hasMessageContaining("not in DRAFT");
     }
 
@@ -131,7 +132,7 @@ class TimesheetServiceTest {
         when(timesheetRepository.findById("ts-1")).thenReturn(Optional.of(timesheet));
 
         assertThatThrownBy(() -> timesheetService.approve("ts-1", "mgr-1"))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(BusinessRuleException.class)
                 .hasMessageContaining("not in SUBMITTED");
     }
 }

@@ -9,6 +9,7 @@ import employeehub.domain.enums.EmploymentType;
 import employeehub.domain.enums.Role;
 import employeehub.dto.EmployeeRequest;
 import employeehub.dto.EmployeeResponse;
+import employeehub.exception.BusinessRuleException;
 import employeehub.exception.ResourceNotFoundException;
 import employeehub.repository.DepartmentRepository;
 import employeehub.repository.EmployeeRepository;
@@ -108,7 +109,7 @@ class EmployeeServiceTest {
         when(employeeRepository.existsByEmail(anyString())).thenReturn(true);
 
         assertThatThrownBy(() -> employeeService.create(request))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(BusinessRuleException.class)
                 .hasMessageContaining("Email already in use");
     }
 

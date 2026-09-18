@@ -5,6 +5,7 @@ import employeehub.domain.enums.LeaveStatus;
 import employeehub.domain.enums.NotificationType;
 import employeehub.domain.enums.Role;
 import employeehub.dto.LeaveRequestDto;
+import employeehub.exception.BusinessRuleException;
 import employeehub.exception.ResourceNotFoundException;
 import employeehub.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -89,7 +90,7 @@ public class LeaveService {
         // ── Overlap check ────────────────────────────────────────────
         List<LeaveRequest> overlapping = leaveRequestRepository.findOverlapping(employeeId, start, end);
         if (!overlapping.isEmpty()) {
-            throw new IllegalArgumentException(
+            throw new BusinessRuleException(
                 "You already have a pending or approved leave request that overlaps with these dates.");
         }
 
@@ -100,7 +101,7 @@ public class LeaveService {
                     "No leave balance found for this leave type. Please contact HR."));
 
         if (balance.getRemainingDays().compareTo(days) < 0) {
-            throw new IllegalArgumentException(
+            throw new BusinessRuleException(
                 "Insufficient leave balance. You have " + balance.getRemainingDays() +
                 " day(s) remaining but requested " + days + " day(s).");
         }
@@ -186,7 +187,7 @@ public class LeaveService {
             throw new IllegalArgumentException("You can only cancel your own requests");
         }
         if (request.getStatus() != LeaveStatus.PENDING) {
-            throw new IllegalArgumentException("Only pending requests can be cancelled");
+            throw new BusinessRuleException("Only pending requests can be cancelled");
         }
         request.setStatus(LeaveStatus.CANCELLED);
         leaveRequestRepository.save(request);
@@ -210,7 +211,7 @@ public class LeaveService {
 
     private void validateApprover(LeaveRequest request, Employee approver) {
         if (request.getStatus() != LeaveStatus.PENDING) {
-            throw new IllegalArgumentException("Request is no longer pending");
+            throw new BusinessRuleException("Request is no longer pending");
         }
         Role role = approver.getRole();
         if (role != Role.MANAGER && role != Role.HR_ADMIN && role != Role.SUPER_ADMIN) {

@@ -4,6 +4,7 @@ import employeehub.domain.*;
 import employeehub.domain.enums.LeaveStatus;
 import employeehub.domain.enums.Role;
 import employeehub.dto.LeaveRequestDto;
+import employeehub.exception.BusinessRuleException;
 import employeehub.exception.ResourceNotFoundException;
 import employeehub.repository.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -101,7 +102,7 @@ class LeaveServiceTest {
         when(leaveRequestRepository.findOverlapping(eq("emp-1"), any(), any())).thenReturn(java.util.List.of());
 
         assertThatThrownBy(() -> leaveService.submit("emp-1", dto))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(BusinessRuleException.class)
                 .hasMessageContaining("Insufficient leave balance");
     }
 
@@ -225,7 +226,7 @@ class LeaveServiceTest {
         when(leaveRequestRepository.findById("req-1")).thenReturn(Optional.of(request));
 
         assertThatThrownBy(() -> leaveService.cancel("req-1", "emp-1"))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(BusinessRuleException.class)
                 .hasMessageContaining("Only pending requests can be cancelled");
     }
 

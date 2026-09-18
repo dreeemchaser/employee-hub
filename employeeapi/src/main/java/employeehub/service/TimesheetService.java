@@ -8,6 +8,7 @@ import employeehub.domain.enums.NotificationType;
 import employeehub.domain.enums.TimesheetStatus;
 import employeehub.dto.TimesheetEntryRequest;
 import employeehub.dto.TimesheetRequest;
+import employeehub.exception.BusinessRuleException;
 import employeehub.exception.ResourceNotFoundException;
 import employeehub.repository.EmployeeRepository;
 import employeehub.repository.TimesheetRepository;
@@ -138,13 +139,13 @@ public class TimesheetService {
 
     private void validateDraft(Timesheet timesheet) {
         if (timesheet.getStatus() != TimesheetStatus.DRAFT) {
-            throw new IllegalArgumentException("Timesheet is not in DRAFT status");
+            throw new BusinessRuleException("Timesheet is not in DRAFT status");
         }
     }
 
     private void validateApprover(Timesheet timesheet, String approverId) {
         if (timesheet.getStatus() != TimesheetStatus.SUBMITTED) {
-            throw new IllegalArgumentException("Timesheet is not in SUBMITTED status");
+            throw new BusinessRuleException("Timesheet is not in SUBMITTED status");
         }
         Employee approver = findEmployee(approverId);
         Role role = approver.getRole();

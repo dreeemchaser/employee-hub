@@ -2,6 +2,7 @@ package employeehub.service;
 
 import employeehub.domain.*;
 import employeehub.domain.enums.BenefitStatus;
+import employeehub.exception.BusinessRuleException;
 import employeehub.exception.ResourceNotFoundException;
 import employeehub.repository.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -94,7 +95,7 @@ class BenefitServiceTest {
         when(applicationRepository.findById("app-1")).thenReturn(Optional.of(application));
 
         assertThatThrownBy(() -> benefitService.approve("app-1", "hr-1"))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(BusinessRuleException.class)
                 .hasMessageContaining("no longer pending");
     }
 

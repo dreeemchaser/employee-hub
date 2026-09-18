@@ -10,6 +10,7 @@ import employeehub.dto.ChangePasswordRequest;
 import employeehub.dto.EmployeeRequest;
 import employeehub.dto.EmployeeResponse;
 import employeehub.dto.UpdateMeRequest;
+import employeehub.exception.BusinessRuleException;
 import employeehub.exception.ResourceNotFoundException;
 import employeehub.repository.*;
 
@@ -39,7 +40,7 @@ public class EmployeeService {
     @Transactional
     public Employee create(EmployeeRequest req) {
         if (employeeRepository.existsByEmail(req.getEmail())) {
-            throw new IllegalArgumentException("Email already in use: " + req.getEmail());
+            throw new BusinessRuleException("Email already in use: " + req.getEmail());
         }
         if (req.getPassword() == null || req.getPassword().isBlank()) {
             throw new IllegalArgumentException("Password is required");

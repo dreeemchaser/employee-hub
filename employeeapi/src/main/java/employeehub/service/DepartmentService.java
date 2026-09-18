@@ -1,6 +1,7 @@
 package employeehub.service;
 
 import employeehub.domain.Department;
+import employeehub.exception.BusinessRuleException;
 import employeehub.exception.ResourceNotFoundException;
 import employeehub.repository.DepartmentRepository;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +21,7 @@ public class DepartmentService {
 
     public Department create(Department department) {
         if (departmentRepository.existsByName(department.getName())) {
-            throw new IllegalArgumentException("Department already exists: " + department.getName());
+            throw new BusinessRuleException("Department already exists: " + department.getName());
         }
         return departmentRepository.save(department);
     }

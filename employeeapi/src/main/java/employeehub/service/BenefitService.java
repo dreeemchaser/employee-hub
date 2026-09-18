@@ -5,6 +5,7 @@ import employeehub.domain.BenefitType;
 import employeehub.domain.Employee;
 import employeehub.domain.EmployeeBenefit;
 import employeehub.domain.enums.BenefitStatus;
+import employeehub.exception.BusinessRuleException;
 import employeehub.exception.ResourceNotFoundException;
 import employeehub.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -76,7 +77,7 @@ public class BenefitService {
 
     private void validatePending(BenefitApplication application) {
         if (application.getStatus() != BenefitStatus.PENDING) {
-            throw new IllegalArgumentException("Application is no longer pending");
+            throw new BusinessRuleException("Application is no longer pending");
         }
     }
 

@@ -52,6 +52,7 @@ Chronological record of work shipped to `master` during this build cycle. ✅ = 
 | 9 | DTO hardening — Tier 1 (Slice A) | ✅ **DONE** | PR #10: response DTOs for 5 previously-unmasked entities (BenefitApplication, EmployeeBenefit, SalaryIncreaseRequest, PerformanceGoal, PerformanceReview); `@JsonIgnore` on `Employee.idNumber` |
 | 10 | DTO hardening — Tier 2 (Slice A) | ✅ **DONE** | PR #11: `EmployeeController` single-employee endpoints return `EmployeeResponse` (idNumber/password never serialised); null-safe idNumber update; `EmployeeDetailsPage` fix |
 | 11 | Bugfix: sick leave >3 days unblockable + calendar legend | ✅ **DONE** | PR #12: `documentationConfirmed` gate (employee confirms docs emailed to manager, audit-logged) lets >3-day sick leave submit; team calendar colour-coded per leave type with a per-month legend; `dev-up.ps1` quiet compose wrapper |
+| 12 | DTO hardening — Tier 3 (Slice A **complete**) | ✅ **DONE** | PR #13: Leave, Timesheet (+entries), Document, SalaryRecord, PaySlip, Notification, AuditLog endpoints now return DTOs. Reusable `EmployeeSummary`/`LeaveTypeSummary` keep the nested shape the frontends read while guaranteeing no `idNumber`/`password`/proxy leaks. **No endpoint returns a raw JPA entity any more.** |
 
 ---
 

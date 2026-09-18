@@ -114,6 +114,7 @@ Configured in `docker-compose.yml`. Key variables:
 | `SPRING_DATASOURCE_URL` | `jdbc:postgresql://db:5432/employeehub` |
 | `SPRING_DATASOURCE_USERNAME` | `admin` |
 | `SPRING_DATASOURCE_PASSWORD` | `administrator` |
+| `SPRING_JPA_HIBERNATE_DDL_AUTO` | `validate` (Flyway owns the schema; Hibernate only validates) |
 | `UPLOAD_DIRECTORY` | `/app/photos/` |
 | `JWT_SECRET` | (set in docker-compose or env) |
 | `JWT_ACCESS_EXPIRATION` | `900000` (15 min) |

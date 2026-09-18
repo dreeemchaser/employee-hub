@@ -37,6 +37,7 @@ JPA entities representing the full HR data model. See [../../docs/data-model-uml
 - **Language**: Java 21
 - **Database**: PostgreSQL 15
 - **ORM**: JPA/Hibernate
+- **Migrations**: Flyway (owns the schema; Hibernate runs `ddl-auto=validate`)
 - **Security**: Spring Security + JJWT 0.12.6 (stateless JWT; short-lived access + rotating refresh tokens)
 - **Build Tool**: Maven
 - **Utilities**: Lombok
@@ -61,10 +62,16 @@ JPA entities representing the full HR data model. See [../../docs/data-model-uml
 
 Application configuration is managed through `application.yml`:
 - Database connection (PostgreSQL)
-- JPA/Hibernate settings
+- JPA/Hibernate settings (`ddl-auto=validate` — Hibernate validates the mapping against the migrated schema and never mutates it)
 - File upload limits
 - Server port (8080)
 - JWT secret + access-token expiration (`jwt.access-expiration`, 15 min) and refresh-token expiration (`jwt.refresh-expiration`, 7 days)
+
+## Database Schema & Migrations
+
+Flyway owns the database schema. Migrations live in `src/main/resources/db/migration` as `V{n}__snake_case.sql`, applied in order at startup; `V1__baseline.sql` is the initial schema. Hibernate runs with `ddl-auto=validate`, so it only checks that the entities match the migrated schema and never alters it — a mismatch fails startup, surfacing a missing migration early.
+
+Any change to an entity must ship with a new `V{n}` migration in the same commit. Flyway is configured with `baseline-on-migrate` so an existing database created under the old `ddl-auto=update` is adopted (stamped at the baseline) rather than rejected. Reference/seed data is still loaded by `data.sql`, which runs after Flyway has created the schema.
 
 ## File Storage
 

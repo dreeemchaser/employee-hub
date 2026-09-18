@@ -118,14 +118,14 @@ export default function SalaryPage() {
                     <tr><td colSpan={9} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>No requests found.</td></tr>
                   ) : filtered.map(r => (
                     <tr key={r.id}>
-                      <td style={{ fontWeight: 500 }}>{r.employee?.firstName} {r.employee?.lastName}</td>
+                      <td style={{ fontWeight: 500 }}>{r.employeeName}</td>
                       <td>{fmt(r.currentSalary)}</td>
                       <td style={{ fontWeight: 600 }}>{fmt(r.proposedSalary)}</td>
                       <td style={{ color: 'var(--green)', fontWeight: 600 }}>+{r.increasePercentage}%</td>
                       <td style={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-secondary)' }} title={r.justification}>
                         {r.justification}
                       </td>
-                      <td>{r.requestedBy?.firstName} {r.requestedBy?.lastName}</td>
+                      <td>{r.requestedByName}</td>
                       <td style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>
                         {r.createdAt ? new Date(r.createdAt).toLocaleDateString('en-ZA') : '—'}
                       </td>

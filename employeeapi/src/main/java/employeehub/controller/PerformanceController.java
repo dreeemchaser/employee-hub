@@ -1,8 +1,6 @@
 package employeehub.controller;
 
 import employeehub.domain.PerformanceCycle;
-import employeehub.domain.PerformanceGoal;
-import employeehub.domain.PerformanceReview;
 import employeehub.domain.enums.PerformanceGoalStatus;
 import employeehub.dto.*;
 import employeehub.service.EmployeeService;
@@ -47,55 +45,61 @@ public class PerformanceController {
 
     @PostMapping("/goals")
     @Operation(summary = "Create a goal for an employee (Manager/HR)")
-    public ResponseEntity<ApiResponse<PerformanceGoal>> createGoal(
+    public ResponseEntity<ApiResponse<PerformanceGoalResponse>> createGoal(
             @RequestBody PerformanceGoalRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
         var creator = employeeService.getByEmail(userDetails.getUsername());
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.ok(performanceService.createGoal(request, creator.getId())));
+                .body(ApiResponse.ok(new PerformanceGoalResponse(
+                        performanceService.createGoal(request, creator.getId()))));
     }
 
     @GetMapping("/goals/my")
     @Operation(summary = "Get current employee's goals")
-    public ResponseEntity<ApiResponse<List<PerformanceGoal>>> getMyGoals(@AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<ApiResponse<List<PerformanceGoalResponse>>> getMyGoals(@AuthenticationPrincipal UserDetails userDetails) {
         var employee = employeeService.getByEmail(userDetails.getUsername());
-        return ResponseEntity.ok(ApiResponse.ok(performanceService.getMyGoals(employee.getId())));
+        return ResponseEntity.ok(ApiResponse.ok(
+                PerformanceGoalResponse.from(performanceService.getMyGoals(employee.getId()))));
     }
 
     @PatchMapping("/goals/{id}/status")
     @Operation(summary = "Update goal status")
-    public ResponseEntity<ApiResponse<PerformanceGoal>> updateGoalStatus(
+    public ResponseEntity<ApiResponse<PerformanceGoalResponse>> updateGoalStatus(
             @PathVariable String id,
             @RequestBody Map<String, String> body) {
         PerformanceGoalStatus status = PerformanceGoalStatus.valueOf(body.get("status"));
-        return ResponseEntity.ok(ApiResponse.ok(performanceService.updateGoalStatus(id, status)));
+        return ResponseEntity.ok(ApiResponse.ok(new PerformanceGoalResponse(
+                performanceService.updateGoalStatus(id, status))));
     }
 
     // ── Reviews ───────────────────────────────────────────────────────
 
     @PostMapping("/reviews")
     @Operation(summary = "Submit a performance review (Manager)")
-    public ResponseEntity<ApiResponse<PerformanceReview>> createReview(
+    public ResponseEntity<ApiResponse<PerformanceReviewResponse>> createReview(
             @RequestBody PerformanceReviewRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
         var reviewer = employeeService.getByEmail(userDetails.getUsername());
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.ok(performanceService.createReview(request, reviewer.getId())));
+                .body(ApiResponse.ok(new PerformanceReviewResponse(
+                        performanceService.createReview(request, reviewer.getId()))));
     }
 
     @GetMapping("/reviews/my")
     @Operation(summary = "Get current employee's reviews")
-    public ResponseEntity<ApiResponse<List<PerformanceReview>>> getMyReviews(@AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<ApiResponse<List<PerformanceReviewResponse>>> getMyReviews(@AuthenticationPrincipal UserDetails userDetails) {
         var employee = employeeService.getByEmail(userDetails.getUsername());
-        return ResponseEntity.ok(ApiResponse.ok(performanceService.getMyReviews(employee.getId())));
+        return ResponseEntity.ok(ApiResponse.ok(
+                PerformanceReviewResponse.from(performanceService.getMyReviews(employee.getId()))));
     }
 
     @PatchMapping("/reviews/{id}/acknowledge")
     @Operation(summary = "Acknowledge a performance review (Employee)")
-    public ResponseEntity<ApiResponse<PerformanceReview>> acknowledge(
+    public ResponseEntity<ApiResponse<PerformanceReviewResponse>> acknowledge(
             @PathVariable String id,
             @AuthenticationPrincipal UserDetails userDetails) {
         var employee = employeeService.getByEmail(userDetails.getUsername());
-        return ResponseEntity.ok(ApiResponse.ok(performanceService.acknowledge(id, employee.getId())));
+        return ResponseEntity.ok(ApiResponse.ok(new PerformanceReviewResponse(
+                performanceService.acknowledge(id, employee.getId()))));
     }
 }

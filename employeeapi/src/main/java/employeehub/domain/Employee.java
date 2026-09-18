@@ -47,7 +47,13 @@ public class Employee {
     private LocalDate dateOfBirth;
     private String gender;
     private String nationality;
+
+    // South African ID number — sensitive PII. Never serialize it in API
+    // responses; expose it only through a dedicated, access-controlled DTO if a
+    // screen ever requires it.
+    @JsonIgnore
     private String idNumber;
+
     private String address;
     private String profilePhoto;
 

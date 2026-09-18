@@ -54,8 +54,8 @@ export default function PerformancePage() {
                   ) : goals.map(g => (
                     <tr key={g.id}>
                       <td style={{ fontWeight: 500 }}>{g.title}</td>
-                      <td style={{ color: 'var(--text-muted)' }}>{g.cycle?.name ?? g.cycleId}</td>
-                      <td style={{ color: 'var(--text-muted)' }}>{g.dueDate}</td>
+                      <td style={{ color: 'var(--text-muted)' }}>{g.cycleName}</td>
+                      <td style={{ color: 'var(--text-muted)' }}>{g.targetDate}</td>
                       <td><span className={`badge badge--${STATUS_COLORS[g.status] ?? 'pending'}`}>{STATUS_LABELS[g.status] ?? g.status}</span></td>
                     </tr>
                   ))}
@@ -74,9 +74,9 @@ export default function PerformancePage() {
               <div className='card' key={r.id}>
                 <div className='card__header'>
                   <div>
-                    <span className='card__title'>{r.cycle?.name ?? 'Review'}</span>
+                    <span className='card__title'>{r.cycleName ?? 'Review'}</span>
                     <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 2 }}>
-                      Reviewed by {r.reviewer ? `${r.reviewer.firstName} ${r.reviewer.lastName}` : '—'} · {r.reviewDate}
+                      Reviewed by {r.reviewerName ?? '—'}{r.createdAt ? ` · ${new Date(r.createdAt).toLocaleDateString('en-ZA')}` : ''}
                     </p>
                   </div>
                   <span className='badge badge--active'>{r.status}</span>
@@ -85,11 +85,11 @@ export default function PerformancePage() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
                     <div style={{ display: 'flex', gap: 2 }}>
                       {[1,2,3,4,5].map(s => (
-                        <i key={s} className={`bi ${s <= r.rating ? 'bi-star-fill' : 'bi-star'}`}
-                          style={{ color: s <= r.rating ? '#f59e0b' : 'var(--border)', fontSize: '1.1rem' }}></i>
+                        <i key={s} className={`bi ${s <= r.overallRating ? 'bi-star-fill' : 'bi-star'}`}
+                          style={{ color: s <= r.overallRating ? '#f59e0b' : 'var(--border)', fontSize: '1.1rem' }}></i>
                       ))}
                     </div>
-                    <span style={{ fontSize: '0.83rem', fontWeight: 600, color: 'var(--text-primary)' }}>{RATING_LABELS[r.rating]}</span>
+                    <span style={{ fontSize: '0.83rem', fontWeight: 600, color: 'var(--text-primary)' }}>{RATING_LABELS[r.overallRating]}</span>
                   </div>
                   <div className='form-grid'>
                     <div>

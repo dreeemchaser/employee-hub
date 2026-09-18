@@ -13,7 +13,7 @@
 | API docs | springdoc-openapi 2.8.9 (Swagger UI at `/swagger-ui/index.html`) |
 | Boilerplate | Lombok (`@Getter`, `@Setter`, `@RequiredArgsConstructor`, `@Slf4j`) |
 | Health | Spring Boot Actuator (`/actuator/health`) |
-| Testing | JUnit 5 + Mockito (service layer only; no controller or integration tests) |
+| Testing | JUnit 5 + Mockito (service layer) + `@WebMvcTest` controller tests (`spring-security-test`); no `@DataJpaTest`/Testcontainers integration or ArchUnit yet |
 | Assertions | AssertJ (`assertThat`) |
 
 **groupId:** `co.draai`  
@@ -97,6 +97,6 @@ Photos and documents stored on disk at `${UPLOAD_DIRECTORY}` (default `~/employe
 
 5. **Nginx `/api/` proxy in employeehub is unused** — the React app hits `REACT_APP_API_URL` (localhost:8080) directly. The proxy block in `nginx.conf` exists but is never triggered.
 
-6. **No controller or integration tests** — only service-layer unit tests exist (plus JWT filter and refresh/lockout/password-reset service tests). Controller/integration/ArchUnit coverage is the `best-practices-testing` follow-up spec.
+6. **Controller tests exist; integration + architecture tests do not yet.** Service-layer unit tests (plus JWT filter and refresh/lockout/password-reset service tests) and `@WebMvcTest` controller tests (every controller + a `GlobalExceptionHandler` status matrix, driven with `spring-security-test` so route authorization is exercised) both exist. Still missing — the remaining slices of the `best-practices-testing` spec: `@DataJpaTest` + Testcontainers repository/integration tests (real Postgres, per-`@Query` coverage) and the ArchUnit `ArchitectureTest`.
 
 7. **`docs/api-contract.md` is partly aspirational** — it carries a banner to that effect. `/auth/logout`, `/auth/refresh`, and `/auth/change-password` DO exist; `/auth/register` and `/employees/me` do NOT (self-service is `GET`/`PATCH /auth/me`), and any WebSocket/real-time section is unimplemented. Treat the actual controllers (and `employeeapi/docs/api.md`) as the source of truth.

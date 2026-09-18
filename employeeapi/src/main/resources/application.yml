@@ -9,12 +9,24 @@ spring:
   sql:
     init:
       mode: always
+  flyway:
+    enabled: ${SPRING_FLYWAY_ENABLED:true}
+    # Adopt a database that already has the schema (e.g. an existing dev/prod DB
+    # created under ddl-auto=update) by stamping the baseline instead of failing.
+    baseline-on-migrate: true
+    baseline-version: 1
   jpa:
-    generate-ddl: ${SPRING_JPA_GENERATE_DDL:true}
+    generate-ddl: ${SPRING_JPA_GENERATE_DDL:false}
     show-sql: ${SPRING_JPA_SHOW_SQL:false}
-    defer-datasource-initialization: true
+    # Flyway now owns the schema and runs before data.sql, so data.sql no longer
+    # needs to defer until after Hibernate. Keeping defer-datasource-initialization
+    # on with Flyway present creates a flyway <-> entityManagerFactory dependency
+    # cycle at startup, so it is deliberately removed.
     hibernate:
-      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
+      # Flyway owns the schema; Hibernate only validates that the entities match
+      # the migrated schema and never mutates it. A mismatch fails startup — that
+      # is intentional (it surfaces missing migrations early).
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:validate}
     properties:
       hibernate:
         dialect: ${SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT:org.hibernate.dialect.PostgreSQLDialect}

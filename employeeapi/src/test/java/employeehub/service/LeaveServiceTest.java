@@ -66,9 +66,14 @@ class LeaveServiceTest {
 
         dto = new LeaveRequestDto();
         dto.setLeaveTypeId(1L);
-        // Annual Leave requires >= 14 days advance notice; use dates well beyond that.
-        dto.setStartDate(LocalDate.now().plusDays(20));
-        dto.setEndDate(LocalDate.now().plusDays(22));
+        // Annual Leave requires >= 14 days advance notice. Anchor to a Monday at
+        // least 3 weeks out so the range is always Mon-Wed (3 working days),
+        // independent of the day the suite runs on (no date-dependent flakiness).
+        LocalDate start = LocalDate.now()
+                .plusWeeks(3)
+                .with(java.time.temporal.TemporalAdjusters.next(java.time.DayOfWeek.MONDAY));
+        dto.setStartDate(start);
+        dto.setEndDate(start.plusDays(2)); // Mon -> Wed = 3 working days
         dto.setReason("Holiday");
     }
 

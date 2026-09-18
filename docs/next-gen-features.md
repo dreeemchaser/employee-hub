@@ -53,6 +53,7 @@ Chronological record of work shipped to `master` during this build cycle. ✅ = 
 | 10 | DTO hardening — Tier 2 (Slice A) | ✅ **DONE** | PR #11: `EmployeeController` single-employee endpoints return `EmployeeResponse` (idNumber/password never serialised); null-safe idNumber update; `EmployeeDetailsPage` fix |
 | 11 | Bugfix: sick leave >3 days unblockable + calendar legend | ✅ **DONE** | PR #12: `documentationConfirmed` gate (employee confirms docs emailed to manager, audit-logged) lets >3-day sick leave submit; team calendar colour-coded per leave type with a per-month legend; `dev-up.ps1` quiet compose wrapper |
 | 12 | DTO hardening — Tier 3 (Slice A **complete**) | ✅ **DONE** | PR #13: Leave, Timesheet (+entries), Document, SalaryRecord, PaySlip, Notification, AuditLog endpoints now return DTOs. Reusable `EmployeeSummary`/`LeaveTypeSummary` keep the nested shape the frontends read while guaranteeing no `idNumber`/`password`/proxy leaks. **No endpoint returns a raw JPA entity any more.** |
+| 13 | Flyway baseline + `ddl-auto=validate` (Slice B **complete**) | ✅ **DONE** | PR #14: Flyway owns the schema (`V1__baseline.sql` reproduces the Hibernate DDL); Hibernate switched to `validate` in all three environments so schema drift fails startup instead of mutating the DB. Removed `defer-datasource-initialization` (Flyway↔EMF cycle); fixed a date-dependent flaky `LeaveServiceTest`. Verified via wiped-volume `docker compose up --build`. |
 
 ---
 

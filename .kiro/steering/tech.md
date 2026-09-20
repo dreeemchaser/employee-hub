@@ -13,7 +13,7 @@
 | API docs | springdoc-openapi 2.8.9 (Swagger UI at `/swagger-ui/index.html`) |
 | Boilerplate | Lombok (`@Getter`, `@Setter`, `@RequiredArgsConstructor`, `@Slf4j`) |
 | Health | Spring Boot Actuator (`/actuator/health`) |
-| Testing | JUnit 5 + Mockito (service layer) + `@WebMvcTest` controller tests (`spring-security-test`); no `@DataJpaTest`/Testcontainers integration or ArchUnit yet |
+| Testing | JUnit 5 + Mockito (service, Surefire) · `@WebMvcTest` controller tests (`spring-security-test`, Surefire) · ArchUnit `ArchitectureTest` (Surefire) · `@DataJpaTest` repository tests on Testcontainers PostgreSQL 15 (`*IT`, Failsafe at `verify`, skip without Docker) |
 | Assertions | AssertJ (`assertThat`) |
 
 **groupId:** `co.draai`  
@@ -97,6 +97,6 @@ Photos and documents stored on disk at `${UPLOAD_DIRECTORY}` (default `~/employe
 
 5. **Nginx `/api/` proxy in employeehub is unused** — the React app hits `REACT_APP_API_URL` (localhost:8080) directly. The proxy block in `nginx.conf` exists but is never triggered.
 
-6. **Controller tests exist; integration + architecture tests do not yet.** Service-layer unit tests (plus JWT filter and refresh/lockout/password-reset service tests) and `@WebMvcTest` controller tests (every controller + a `GlobalExceptionHandler` status matrix, driven with `spring-security-test` so route authorization is exercised) both exist. Still missing — the remaining slices of the `best-practices-testing` spec: `@DataJpaTest` + Testcontainers repository/integration tests (real Postgres, per-`@Query` coverage) and the ArchUnit `ArchitectureTest`.
+6. **Test coverage is now multi-tier (the `best-practices-testing` spec is complete).** Service unit tests (Mockito), `@WebMvcTest` controller tests (`spring-security-test`, every controller + a `GlobalExceptionHandler` status matrix), an ArchUnit `ArchitectureTest` (layering + `System.out` ban + no-domain-in-controller-return) — all Surefire (`mvnw test`) — plus `@DataJpaTest` repository integration tests on a real PostgreSQL 15 Testcontainer (`*IT`, Failsafe, `mvnw verify`; skip cleanly without Docker). The IT tier also validates the Flyway baseline against the entities. Remaining test gap: frontend tests beyond CRA defaults.
 
 7. **`docs/api-contract.md` is partly aspirational** — it carries a banner to that effect. `/auth/logout`, `/auth/refresh`, and `/auth/change-password` DO exist; `/auth/register` and `/employees/me` do NOT (self-service is `GET`/`PATCH /auth/me`), and any WebSocket/real-time section is unimplemented. Treat the actual controllers (and `employeeapi/docs/api.md`) as the source of truth.

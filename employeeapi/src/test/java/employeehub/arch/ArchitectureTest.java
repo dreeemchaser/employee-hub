@@ -4,6 +4,7 @@ import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaMethod;
 import com.tngtech.archunit.core.domain.JavaParameterizedType;
 import com.tngtech.archunit.core.domain.JavaType;
+import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.junit.CacheMode;
@@ -30,7 +31,12 @@ import static com.tngtech.archunit.library.GeneralCodingRules.NO_CLASSES_SHOULD_
  * "Known exceptions" list in {@code coding-best-practices.md}. Any new exception must be added in
  * both places.
  */
-@AnalyzeClasses(packages = "employeehub", cacheMode = CacheMode.PER_CLASS)
+@AnalyzeClasses(
+        packages = "employeehub",
+        // Analyze production code only — test classes (e.g. concrete repository ITs living in the
+        // employeehub.repository package) must not trip the layering rules.
+        importOptions = ImportOption.DoNotIncludeTests.class,
+        cacheMode = CacheMode.PER_CLASS)
 class ArchitectureTest {
 
     // ── Layering ─────────────────────────────────────────────────────

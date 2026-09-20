@@ -108,6 +108,19 @@ via Spring's `spring.sql.init` (`mode: always`). Inserts are idempotent
 ./mvnw test
 ```
 
+## Testing
+
+- `./mvnw test` runs the **unit / web / architecture** tiers (Surefire): service tests
+  (Mockito), `@WebMvcTest` controller tests (`spring-security-test`), and the ArchUnit
+  `ArchitectureTest`. No database or Docker required.
+- `./mvnw verify` additionally runs the **repository integration tests** (`*IT`, Failsafe):
+  `@DataJpaTest` against a real **PostgreSQL 15** container via **Testcontainers**. Flyway applies
+  `V1__baseline.sql` against the container, so `verify` also proves the migration matches the JPA
+  entities (`ddl-auto=validate`).
+  - **Requires a running Docker daemon.** When Docker is unavailable the integration tier is
+    **skipped** (JUnit assumption), not failed — `verify` stays green locally without Docker. CI has
+    Docker, so it runs them for real. `verify` is the authoritative pre-merge command.
+
 ## IDE Setup
 
 - IntelliJ IDEA: Import as Maven project, enable Lombok annotation processing

@@ -11,11 +11,15 @@ import java.time.LocalDateTime;
 
 public interface AuditLogRepository extends JpaRepository<AuditLog, String> {
 
+    // The :from/:to timestamp params are cast explicitly: PostgreSQL cannot infer the type of a
+    // bind parameter that only ever appears as `:param IS NULL` when the value is null, and fails
+    // with "could not determine data type of parameter". The cast gives it the type. (String/UUID
+    // params above don't need this — their type is inferable from the column comparison.)
     @Query("SELECT a FROM AuditLog a WHERE " +
            "(:entityType IS NULL OR a.entityType = :entityType) AND " +
            "(:employeeId IS NULL OR a.performedBy.id = :employeeId) AND " +
-           "(:from IS NULL OR a.timestamp >= :from) AND " +
-           "(:to IS NULL OR a.timestamp <= :to)")
+           "(CAST(:from AS timestamp) IS NULL OR a.timestamp >= :from) AND " +
+           "(CAST(:to AS timestamp) IS NULL OR a.timestamp <= :to)")
     Page<AuditLog> findAllFiltered(
             @Param("entityType") String entityType,
             @Param("employeeId") String employeeId,

@@ -2,13 +2,14 @@
 
 These rules apply to every code change made in this project. Follow them without exception unless the user explicitly overrides one.
 
-> **Adoption status (updated 2026-09):** Most of this standard is now wired into the codebase. **Shipped:** **Flyway migrations + `ddl-auto=validate`** (`db/migration/V1__baseline.sql`, `validate` in all three environments — hardening Slice B) and **DTO-only controller responses** (no endpoint returns a raw JPA entity — hardening Slice A). **Still outstanding — do not assume these exist:** **`@WebMvcTest` controller tests / Testcontainers / ArchUnit / `spring-security-test`** (not yet added; the DTO work added only plain unit tests), and **`AuthController` still returns a `Map`** in places rather than a dedicated DTO. When you touch these areas, follow the target rule for *new* code where practical and flag any gap, but a full migration is its own task — do not silently retrofit the whole project mid-feature.
+> **Adoption status (updated 2026-09):** Most of this standard is now wired into the codebase. **Shipped:** **Flyway migrations + `ddl-auto=validate`** (`db/migration/V1__baseline.sql`, `validate` in all three environments — hardening Slice B); **DTO-only controller responses** for every `Employee`-embedding / PII-bearing entity (hardening Slice A — see the reference-entity exception below); **`@WebMvcTest` controller tests + `spring-security-test`** (testing Slice A — every controller, plus a `GlobalExceptionHandler` status matrix); and **`ArchUnit` `ArchitectureTest`** enforcing layering, the `System.out`/`java.util.logging` ban, and "no domain entity in a controller return" (testing Slice C). **Still outstanding — do not assume these exist:** **Testcontainers `@DataJpaTest` repository/integration tests** (testing Slice B — the remaining slice), and **`AuthController` still returns a `Map`** in places rather than a dedicated DTO. When you touch these areas, follow the target rule for *new* code where practical and flag any gap, but a full migration is its own task — do not silently retrofit the whole project mid-feature.
 
 **Precedence:** an explicit instruction from the user overrides a rule here, but only for that change — it does not become the new default. If a task seems to require a pattern this document forbids, say so and propose it before writing the code. Do not introduce a new pattern silently.
 
 **Known exceptions** (do not extend, do not replicate):
 
 - `DashboardController` calls repositories directly (read-only aggregation shortcut).
+- Reference/lookup entities are still returned raw by their controllers: `Department`, `Team`, `BenefitType`, `PerformanceCycle` (simple value-like tables, no lazy `Employee`, no PII). These are the only exceptions to "no domain entity in a controller return" and are encoded in `ArchitectureTest.ALLOWED_RAW_ENTITY_RETURNS`. Any new exception must be added in both places.
 
 ---
 

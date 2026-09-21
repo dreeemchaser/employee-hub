@@ -58,6 +58,8 @@ Chronological record of work shipped to `master` during this build cycle. ✅ = 
 | 15 | `Employee`-to-`Team` assignment surfaced in employee UI (B.6) | ✅ **DONE** | PR #19: `ProfilePage` team badge + "My Team" tab; `EmployeesPage` card/table toggle with Department/Team columns and department→team filter panel; `MeResponse` now exposes `teamId`/`departmentId`. |
 | 16 | Attendance / clock-in tracking (B.6) | ✅ **DONE** | PR #20: `AttendanceRecord` entity (OPEN/CLOSED session), `POST /attendance/clock-in`, `PATCH /attendance/clock-out`, `GET /attendance/my`, `GET /attendance` (manager scoped to direct reports). Dashboard clock-in/out widget; read-only Attendance tab in `TeamApprovalsPage` for managers/HR. Verified against live Postgres via `docker compose up --build`. |
 | 17 | Employee offboarding workflow (B.6 **complete**) | ✅ **DONE** | PR #21: dedicated `POST /employees/{id}/offboard`, distinct from the generic `PATCH /employees/{id}/status`. Cancels `PENDING` leave requests, deactivates active benefits, notifies the employee's manager, and logs the transition via `AuditService`; refuses to re-run on an already-terminated employee. Verified against live Postgres (403/400/200/409 paths, manager notification, audit log attribution all confirmed). Closes B.6. |
+| 18 | API client type generation (B.4) | ✅ **DONE** | PR #22: `openapi-typescript` generates a types-only `api-types.d.ts` in both frontends (no runtime code, zero new deps); existing hand-written axios calls annotated with JSDoc against the generated types; `npm run spec:update` refreshes spec + types. Fixed a Springdoc `Page<T>` type-collapsing bug for the audit log endpoint along the way. |
+| 19 | Document expiration tracking + renewal reminders (Feature 7, sub-item 1) | ✅ **DONE** | PR #23: nullable `expiryDate` on `Document` (expiry is orthogonal to verification status, not a new `DocumentStatus`); `DocumentExpiryReminderService` scheduled job emails employees at 30/14/7 days before expiry (idempotent via persisted `reminderSentAt30/14/7` timestamps) and notifies all HR/Admin on verified-document expiry; dashboard widgets in both frontends show expiring documents. Scope explicitly excludes DocuSign, OCR, and templates (Feature 7 sub-items 2-4). |
 
 ---
 
@@ -339,21 +341,20 @@ Independent of the longer roadmap, these deliver the most value relative to effo
 ### Feature 7: Document Lifecycle Management
 
 **Current State:**  
-- Documents upload-only with basic verification status
-- No expiration tracking or renewal reminders
-- Limited metadata
+- ✅ **Sub-item 1 DONE (see Progress Log #19)** — expiration tracking, 30/14/7-day reminder emails, and dashboard widgets are shipped.
+- Digital signatures, OCR classification, and document templates (sub-items 2-4 below) remain unbuilt.
 
 **Proposed Changes:**
 
-1. **Document Expiration Tracking**
+1. **Document Expiration Tracking** ✅ **DONE**
    - Implementation Steps:
-     - Add expiration_date field to Document model
-     - Create renewal reminder workflow
-     - Auto-email employees 30/14/7 days before expiry
-     - Dashboard widget showing expiring documents
+     - ~~Add expiration_date field to Document model~~
+     - ~~Create renewal reminder workflow~~
+     - ~~Auto-email employees 30/14/7 days before expiry~~
+     - ~~Dashboard widget showing expiring documents~~
    - Track license/certification expiration
    - Alert HR when credentials expire
-   - Require renewal submission before expiry
+   - Require renewal submission before expiry *(not built — no renewal-submission gate exists yet)*
 
 2. **Digital Signature Support**
    - Integration with DocuSign or similar

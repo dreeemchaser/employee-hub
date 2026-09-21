@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import TopBar from '../components/TopBar';
-import { getMe, updateMe, changePassword } from '../api/EmployeeService';
+import { getMe, updateMe, changePassword, getEmployees } from '../api/EmployeeService';
 
 export default function ProfilePage() {
   const [tab, setTab]         = useState('profile');
@@ -10,6 +10,8 @@ export default function ProfilePage() {
   const [pwForm, setPwForm]   = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [feedback, setFeedback] = useState(null);
   const [saving, setSaving]   = useState(false);
+  const [teamMembers, setTeamMembers] = useState([]);
+  const [loadingTeam, setLoadingTeam] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -27,7 +29,26 @@ export default function ProfilePage() {
     } catch { /* silent */ }
   }, []);
 
+  const loadTeamMembers = useCallback(async () => {
+    if (!profile?.teamId) return;
+    setLoadingTeam(true);
+    try {
+      const res = await getEmployees(0, 100, { teamId: profile.teamId });
+      setTeamMembers(res.data?.data?.content ?? []);
+    } catch {
+      setTeamMembers([]);
+    } finally {
+      setLoadingTeam(false);
+    }
+  }, [profile?.teamId]);
+
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    if (tab === 'team') {
+      loadTeamMembers();
+    }
+  }, [tab, loadTeamMembers]);
 
   const set   = e => setForm(f => ({ ...f, [e.target.name]: e.target.value }));
   const setPw = e => setPwForm(f => ({ ...f, [e.target.name]: e.target.value }));
@@ -94,6 +115,7 @@ export default function ProfilePage() {
                   <span className='badge badge--active'>{ROLE_LABEL[profile.role] ?? profile.role}</span>
                   <span className='badge badge--pending'>{profile.employeeNumber}</span>
                   {profile.department && <span className='badge' style={{ background: 'var(--brand-light)', color: 'var(--brand)' }}>{profile.department}</span>}
+                  {profile.team && <span className='badge' style={{ background: 'var(--green)', color: '#fff' }}>{profile.team}</span>}
                 </div>
               </div>
             </div>
@@ -101,7 +123,7 @@ export default function ProfilePage() {
         )}
 
         <div className='profile-tabs' style={{ marginBottom: '1.5rem' }}>
-          {[['profile', 'Personal Info'], ['security', 'Security']].map(([key, label]) => (
+          {[['profile', 'Personal Info'], ['team', 'My Team'], ['security', 'Security']].map(([key, label]) => (
             <button key={key} className={`profile-tab${tab === key ? ' active' : ''}`} onClick={() => { setTab(key); setFeedback(null); }}>
               {label}
             </button>
@@ -188,6 +210,91 @@ export default function ProfilePage() {
                     </button>
                   </div>
                 </form>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── My Team ── */}
+        {tab === 'team' && profile && (
+          <div className='card' style={{ maxWidth: 800 }}>
+            <div className='card__header'>
+              <span className='card__title'>
+                <i className='bi bi-people'></i> Team: {profile.team || 'No team assigned'}
+              </span>
+            </div>
+            <div className='card__body'>
+              {!profile.team ? (
+                <div className='empty-state'>
+                  <i className='bi bi-people' style={{ fontSize: '2rem', color: 'var(--text-muted)' }}></i>
+                  <h3>No Team Assignment</h3>
+                  <p>You are not currently assigned to a team. Contact your manager or HR for team assignment.</p>
+                </div>
+              ) : loadingTeam ? (
+                <div style={{ textAlign: 'center', padding: '2rem' }}>
+                  <i className='bi bi-hourglass-split'></i> Loading team members...
+                </div>
+              ) : (
+                <>
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '0.5rem' }}>
+                      <strong>{profile.team}</strong> team • <strong>{profile.department}</strong> department
+                    </p>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                      {teamMembers.length} team member{teamMembers.length !== 1 ? 's' : ''}
+                    </p>
+                  </div>
+
+                  {teamMembers.length === 0 ? (
+                    <div className='empty-state'>
+                      <i className='bi bi-people' style={{ fontSize: '2rem', color: 'var(--text-muted)' }}></i>
+                      <h3>No Team Members</h3>
+                      <p>No other team members found or you may not have permission to view them.</p>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'grid', gap: '1rem' }}>
+                      {teamMembers.map(member => (
+                        <div key={member.id} style={{
+                          display: 'flex', alignItems: 'center', gap: '1rem',
+                          padding: '1rem', border: '1px solid var(--border)',
+                          borderRadius: 'var(--radius-lg)', background: 'var(--bg-card)'
+                        }}>
+                          <div style={{
+                            width: 48, height: 48, borderRadius: '50%',
+                            background: member.id === profile.id ? 'var(--brand)' : 'var(--text-muted)',
+                            color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: '1.2rem', fontWeight: 700, flexShrink: 0,
+                          }}>
+                            {member.firstName?.[0]}{member.lastName?.[0]}
+                          </div>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.2rem' }}>
+                              <span style={{ fontWeight: 600, fontSize: '0.95rem' }}>
+                                {member.firstName} {member.lastName}
+                                {member.id === profile.id && <span style={{ color: 'var(--brand)', fontSize: '0.8rem' }}> (You)</span>}
+                              </span>
+                              {member.role === 'MANAGER' && (
+                                <span className='badge' style={{ background: 'var(--amber)', color: '#000', fontSize: '0.7rem' }}>Manager</span>
+                              )}
+                            </div>
+                            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.2rem' }}>
+                              {member.jobTitle}
+                            </p>
+                            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                              <i className='bi bi-envelope'></i> {member.email}
+                              {member.phone && (
+                                <>
+                                  <span style={{ margin: '0 0.5rem', color: 'var(--text-muted)' }}>•</span>
+                                  <i className='bi bi-telephone'></i> {member.phone}
+                                </>
+                              )}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>

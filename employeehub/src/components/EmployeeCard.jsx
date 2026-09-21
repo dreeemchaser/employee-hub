@@ -22,6 +22,7 @@ const EmployeeCard = ({ employee }) => {
       : `${FALLBACK}${encodeURIComponent(fullName)}`;
 
   const dept = employee.department?.name ?? employee.department ?? null;
+  const team = employee.team?.name ?? employee.team ?? null;
 
   return (
     <Link to={`/employees/${employee.id}`} className='emp-card'>
@@ -36,7 +37,10 @@ const EmployeeCard = ({ employee }) => {
           {(employee.jobTitle ?? employee.title) && (
             <span className='emp-card__title'>{employee.jobTitle ?? employee.title}</span>
           )}
-          {dept && <span className='emp-card__dept'>{dept}</span>}
+          <div style={{ display: 'flex', gap: '0.25rem', marginTop: '0.25rem', flexWrap: 'wrap' }}>
+            {dept && <span className='emp-card__dept'>{dept}</span>}
+            {team && <span className='emp-card__dept' style={{ background: 'var(--green)', color: '#fff' }}>{team}</span>}
+          </div>
         </div>
       </div>
 

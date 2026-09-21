@@ -46,8 +46,13 @@ export async function getTeams(departmentId) {
 
 // ── Employees ────────────────────────────────────────────────────────────────
 
-export async function getEmployees(page = 0, size = 10) {
-    const r = await axios.get(`${BASE_URL}/employees?page=${page}&size=${size}`, authHeaders());
+export async function getEmployees(page = 0, size = 10, filters = {}) {
+    const params = new URLSearchParams({ page, size });
+    if (filters.departmentId) params.append('departmentId', filters.departmentId);
+    if (filters.teamId) params.append('teamId', filters.teamId);
+    if (filters.status) params.append('status', filters.status);
+    
+    const r = await axios.get(`${BASE_URL}/employees?${params}`, authHeaders());
     const pageData = r.data.data;
     return {
         data: {

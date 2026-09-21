@@ -54,6 +54,10 @@ Chronological record of work shipped to `master` during this build cycle. ✅ = 
 | 11 | Bugfix: sick leave >3 days unblockable + calendar legend | ✅ **DONE** | PR #12: `documentationConfirmed` gate (employee confirms docs emailed to manager, audit-logged) lets >3-day sick leave submit; team calendar colour-coded per leave type with a per-month legend; `dev-up.ps1` quiet compose wrapper |
 | 12 | DTO hardening — Tier 3 (Slice A **complete**) | ✅ **DONE** | PR #13: Leave, Timesheet (+entries), Document, SalaryRecord, PaySlip, Notification, AuditLog endpoints now return DTOs. Reusable `EmployeeSummary`/`LeaveTypeSummary` keep the nested shape the frontends read while guaranteeing no `idNumber`/`password`/proxy leaks. **No endpoint returns a raw JPA entity any more.** |
 | 13 | Flyway baseline + `ddl-auto=validate` (Slice B **complete**) | ✅ **DONE** | PR #14: Flyway owns the schema (`V1__baseline.sql` reproduces the Hibernate DDL); Hibernate switched to `validate` in all three environments so schema drift fails startup instead of mutating the DB. Removed `defer-datasource-initialization` (Flyway↔EMF cycle); fixed a date-dependent flaky `LeaveServiceTest`. Verified via wiped-volume `docker compose up --build`. |
+| 14 | `BusinessRuleException` + WebMvcTest/ArchUnit/Testcontainers (best-practices-testing) | ✅ **DONE** | PRs #15–18: dedicated 409 exception replacing ad-hoc `IllegalStateException`; `@WebMvcTest` controller-layer coverage with `spring-security-test`; `ArchitectureTest` enforcing layering + no-raw-entity-return + `System.out` ban; Testcontainers Postgres repository tests (also fixed an `AuditLogRepository` null-bind-parameter JPQL bug). |
+| 15 | `Employee`-to-`Team` assignment surfaced in employee UI (B.6) | ✅ **DONE** | PR #19: `ProfilePage` team badge + "My Team" tab; `EmployeesPage` card/table toggle with Department/Team columns and department→team filter panel; `MeResponse` now exposes `teamId`/`departmentId`. |
+| 16 | Attendance / clock-in tracking (B.6) | ✅ **DONE** | PR #20: `AttendanceRecord` entity (OPEN/CLOSED session), `POST /attendance/clock-in`, `PATCH /attendance/clock-out`, `GET /attendance/my`, `GET /attendance` (manager scoped to direct reports). Dashboard clock-in/out widget; read-only Attendance tab in `TeamApprovalsPage` for managers/HR. Verified against live Postgres via `docker compose up --build`. |
+| 17 | Employee offboarding workflow (B.6 **complete**) | ✅ **DONE** | PR #21: dedicated `POST /employees/{id}/offboard`, distinct from the generic `PATCH /employees/{id}/status`. Cancels `PENDING` leave requests, deactivates active benefits, notifies the employee's manager, and logs the transition via `AuditService`; refuses to re-run on an already-terminated employee. Verified against live Postgres (403/400/200/409 paths, manager notification, audit log attribution all confirmed). Closes B.6. |
 
 ---
 
@@ -103,10 +107,11 @@ These gaps were found by reading the code and are not adequately covered by the 
    - ✅ Refresh tokens (B.5b): access token is now short-lived (15m) and renewed via a rotating, server-tracked opaque refresh token (7d, SHA-256 hashed at rest). `POST /auth/refresh` rotates the pair; `POST /auth/logout` revokes it; presenting a revoked token triggers reuse-detection revoke-all. Both React apps silently refresh on 401 via a single-flight axios interceptor and fall back to login when refresh fails.
    - ✅ Email delivery channel (B.5a): config-gated `EmailService` sends the reset link (off by default until SMTP configured).
 
-6. **Data-model gaps.**
-   - No attendance / clock-in entity, despite timesheets being present.
-   - No offboarding / termination workflow.
-   - `Employee`-to-`Team` assignment is not surfaced in the employee UI.
+6. ✅ **DONE — Data-model gaps.**
+   - ✅ `Employee`-to-`Team` assignment now surfaced in the employee UI: `ProfilePage` shows a team badge + "My Team" tab listing teammates; `EmployeesPage` gained a card/table view toggle with Department/Team columns and a department→team filter panel.
+   - ✅ Attendance / clock-in entity: `AttendanceRecord` (one row per work session, OPEN until clock-out closes it); `POST /attendance/clock-in`, `PATCH /attendance/clock-out`, `GET /attendance/my`, `GET /attendance` (manager scoped to direct reports, HR/Admin see all). Dashboard clock-in/out widget for every employee; read-only Attendance tab in `TeamApprovalsPage` for managers/HR.
+   - ✅ Offboarding / termination workflow: dedicated `POST /employees/{id}/offboard` (distinct from the pre-existing generic `PATCH /employees/{id}/status`) terminates the employee, cancels their `PENDING` leave requests, deactivates active benefit enrollments, notifies their manager, and logs the transition to the audit trail. Refuses to run twice on an already-terminated employee.
+   *Known gap, deliberately out of scope:* `LeaveService.create` does not check `employmentStatus`/`endDate`, so a terminated employee's leave balance could technically still accept a new submission after offboarding runs.
 
 ### C. Recommended Near-Term Priorities
 

@@ -6,6 +6,7 @@ import employeehub.domain.enums.DocumentType;
 import lombok.Getter;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -29,6 +30,10 @@ public class DocumentResponse {
     private final LocalDateTime verifiedAt;
     private final DocumentStatus status;
     private final LocalDateTime createdAt;
+    private final LocalDate expiryDate;
+    // Computed at construction time, never persisted -- expiry is a function of
+    // "now" vs expiryDate, not a stored fact that could drift out of sync.
+    private final boolean isExpired;
 
     public DocumentResponse(Document d) {
         this.id = d.getId();
@@ -41,6 +46,8 @@ public class DocumentResponse {
         this.verifiedAt = d.getVerifiedAt();
         this.status = d.getStatus();
         this.createdAt = d.getCreatedAt();
+        this.expiryDate = d.getExpiryDate();
+        this.isExpired = d.getExpiryDate() != null && d.getExpiryDate().isBefore(LocalDate.now());
     }
 
     public static List<DocumentResponse> from(List<Document> documents) {

@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -27,7 +28,7 @@ public class DocumentService {
     private final NotificationService notificationService;
     private final AuditService auditService;
 
-    public Document upload(String employeeId, DocumentType type, MultipartFile file) {
+    public Document upload(String employeeId, DocumentType type, MultipartFile file, LocalDate expiryDate) {
         Employee employee = findEmployee(employeeId);
         String filename = photoService.save(file);
 
@@ -38,6 +39,7 @@ public class DocumentService {
         doc.setFileName(file.getOriginalFilename());
         doc.setFileUrl(filename);
         doc.setFileSize(BigDecimal.valueOf(file.getSize()));
+        doc.setExpiryDate(expiryDate);
         return documentRepository.save(doc);
     }
 

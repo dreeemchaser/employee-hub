@@ -1,10 +1,13 @@
 package employeehub.repository.support;
 
 import employeehub.domain.Department;
+import employeehub.domain.Document;
 import employeehub.domain.Employee;
 import employeehub.domain.LeaveRequest;
 import employeehub.domain.LeaveType;
 import employeehub.domain.Team;
+import employeehub.domain.enums.DocumentStatus;
+import employeehub.domain.enums.DocumentType;
 import employeehub.domain.enums.EmploymentStatus;
 import employeehub.domain.enums.EmploymentType;
 import employeehub.domain.enums.LeaveStatus;
@@ -82,5 +85,20 @@ public final class EntityFactory {
         lr.setTotalDays(BigDecimal.valueOf(java.time.temporal.ChronoUnit.DAYS.between(start, end) + 1));
         lr.setStatus(LeaveStatus.PENDING);
         return lr;
+    }
+
+    /**
+     * A PENDING document, uploaded by and belonging to the same employee, with no expiry date set.
+     * Caller overrides status/expiryDate/reminder-sent columns as needed for the case under test.
+     */
+    public static Document document(Employee employee, DocumentType type) {
+        Document d = new Document();
+        d.setEmployee(employee);
+        d.setUploadedBy(employee);
+        d.setDocumentType(type);
+        d.setFileName(type + ".pdf");
+        d.setFileUrl("stored-" + type + ".pdf");
+        d.setStatus(DocumentStatus.PENDING);
+        return d;
     }
 }

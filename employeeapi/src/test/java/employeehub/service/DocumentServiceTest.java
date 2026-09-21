@@ -15,6 +15,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
 
+import java.time.LocalDate;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
@@ -61,11 +62,27 @@ class DocumentServiceTest {
         when(photoService.save(any())).thenReturn("stored-uuid.pdf");
         when(documentRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
-        Document result = documentService.upload("emp-1", DocumentType.CONTRACT, file);
+        Document result = documentService.upload("emp-1", DocumentType.CONTRACT, file, null);
 
         assertThat(result.getStatus()).isEqualTo(DocumentStatus.PENDING);
         assertThat(result.getDocumentType()).isEqualTo(DocumentType.CONTRACT);
         assertThat(result.getFileUrl()).isEqualTo("stored-uuid.pdf");
+        assertThat(result.getExpiryDate()).isNull();
+    }
+
+    @Test
+    void upload_shouldSetExpiryDate_whenProvided() {
+        MockMultipartFile file = new MockMultipartFile("file", "id.pdf",
+                "application/pdf", "content".getBytes());
+        LocalDate expiry = LocalDate.now().plusYears(5);
+
+        when(employeeRepository.findById("emp-1")).thenReturn(Optional.of(employee));
+        when(photoService.save(any())).thenReturn("stored-uuid.pdf");
+        when(documentRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        Document result = documentService.upload("emp-1", DocumentType.ID, file, expiry);
+
+        assertThat(result.getExpiryDate()).isEqualTo(expiry);
     }
 
     @Test

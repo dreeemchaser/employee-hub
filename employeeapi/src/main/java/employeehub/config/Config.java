@@ -7,6 +7,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
+import java.time.Clock;
 import java.util.Arrays;
 import java.util.List;
 
@@ -46,5 +47,13 @@ public class Config {
         var source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", corsConfiguration);
         return new CorsFilter(source);
+    }
+
+    // Injected wherever "now" matters (e.g. DocumentExpiryReminderService) so
+    // date-threshold logic can be tested with a fixed instant instead of
+    // waiting for real time to pass.
+    @Bean
+    public Clock systemClock() {
+        return Clock.systemDefaultZone();
     }
 }

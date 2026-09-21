@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -57,6 +58,32 @@ public class Document {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private DocumentStatus status = DocumentStatus.PENDING;
+
+    // Not every document type expires (a payslip has no expiry; an ID document
+    // or work permit does) so this is optional for every DocumentType, not
+    // restricted to a subset.
+    private LocalDate expiryDate;
+
+    // Set the first time each reminder threshold fires for this document. Null
+    // means that threshold has not fired yet — this is the idempotency guard
+    // for DocumentExpiryReminderService, not just a log of when it happened.
+    // Column names given explicitly (rather than relying on Hibernate's
+    // default CamelCaseToUnderscoresNamingStrategy) because a trailing digit
+    // run adjacent to a field name does not reliably get its own underscore —
+    // see Hibernate issue HHH-17310. Explicit @Column avoids depending on
+    // that strategy's undocumented edge-case behavior.
+    @Column(name = "reminder_30_sent_at")
+    private LocalDateTime reminderSentAt30;
+    @Column(name = "reminder_14_sent_at")
+    private LocalDateTime reminderSentAt14;
+    @Column(name = "reminder_7_sent_at")
+    private LocalDateTime reminderSentAt7;
+
+    // Distinct from the three reminder columns above: those are employee-facing
+    // "expiring soon" warnings sent before expiry; this is the one-time
+    // HR/Admin notification sent when a VERIFIED document's expiry date has
+    // already passed.
+    private LocalDateTime hrExpiryNotifiedAt;
 
     @CreationTimestamp
     private LocalDateTime createdAt;

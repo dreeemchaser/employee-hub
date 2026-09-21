@@ -1,12 +1,40 @@
 import axios from 'axios';
 import { getToken } from './AuthService';
 
+/**
+ * @typedef {import('./api-types').components['schemas']['EmployeeResponse']} EmployeeResponse
+ *
+ * AuditLogResponse is hand-typed, not sourced from api-types.d.ts: Springdoc's
+ * OpenAPI generation collapses every Page<T> onto a single generic PageObject
+ * schema keyed by whichever generic instantiation it renders first (currently
+ * EmployeeResponse), so the generated type for GET /audit-logs's page content
+ * is wrong (claims EmployeeResponse[], the real shape is below, matching
+ * employeeapi/src/main/java/employeehub/dto/AuditLogResponse.java). Re-check
+ * this by hand if that DTO changes — codegen can't catch drift here.
+ * @typedef {{
+ *   id?: string,
+ *   performedBy?: { id?: string, firstName?: string, lastName?: string, employeeNumber?: string },
+ *   action?: string,
+ *   entityType?: string,
+ *   entityId?: string,
+ *   oldValue?: string,
+ *   newValue?: string,
+ *   timestamp?: string,
+ *   ipAddress?: string,
+ * }} AuditLogResponse
+ */
+
 const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
 
 const auth = () => ({ headers: { Authorization: `Bearer ${getToken()}` } });
 
 // ── Employees ────────────────────────────────────────────────────────────────
 
+/**
+ * @param {number} [page]
+ * @param {number} [size]
+ * @returns {Promise<{data: {success?: boolean, message?: string, data?: {content?: EmployeeResponse[], totalElements?: number, totalPages?: number}}}>}
+ */
 export async function getEmployees(page = 0, size = 10) {
   return axios.get(`${BASE_URL}/employees?page=${page}&size=${size}`, auth());
 }
@@ -51,6 +79,11 @@ export async function verifyDocument(id) {
 
 // ── Audit Logs ───────────────────────────────────────────────────────────────
 
+/**
+ * @param {number} [page]
+ * @param {number} [size]
+ * @returns {Promise<{data: {success?: boolean, message?: string, data?: {content?: AuditLogResponse[], totalElements?: number, totalPages?: number}}}>}
+ */
 export async function getAuditLogs(page = 0, size = 20) {
   return axios.get(`${BASE_URL}/audit-logs?page=${page}&size=${size}`, auth());
 }

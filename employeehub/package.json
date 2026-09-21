@@ -14,7 +14,10 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "spec:fetch": "node scripts/fetch-openapi-spec.js",
+    "spec:types": "openapi-typescript src/api/openapi.json -o src/api/api-types.d.ts",
+    "spec:update": "npm run spec:fetch && npm run spec:types"
   },
   "eslintConfig": {
     "extends": [
@@ -37,6 +40,16 @@
   "devDependencies": {
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^14.3.1",
-    "@testing-library/user-event": "^14.5.2"
+    "@testing-library/user-event": "^14.5.2",
+    "openapi-typescript": "7.13.0",
+    "typescript": "5.9.3"
+  },
+  "overrides": {
+    "react-scripts": {
+      "typescript": "5.9.3"
+    },
+    "fork-ts-checker-webpack-plugin": {
+      "typescript": "5.9.3"
+    }
   }
 }

@@ -75,3 +75,20 @@ See the root `docker-compose.yml`. The dashboard is built and served via Nginx o
 | `npm start` | Start local dev server at http://localhost:3001 |
 | `npm run build` | Build production bundle to `build/` |
 | `npm test` | Run tests (includes `LeaveApprovalsPage` RTL tests) |
+| `npm run spec:fetch` | Refresh `src/api/openapi.json` from a running backend (`REACT_APP_API_URL`, defaults to `localhost:8080`) |
+| `npm run spec:types` | Regenerate `src/api/api-types.d.ts` from the committed `openapi.json` |
+| `npm run spec:update` | Both of the above, in order |
+
+## API types (drift detection, not a generated client)
+
+`src/api/api-types.d.ts` is generated from the backend's OpenAPI spec and
+committed to git; `HrService.js`/`AuthService.js` keep making hand-written
+`axios` calls through the shared instance (needed for the silent-refresh
+interceptor) but annotate them with JSDoc referencing the generated types, so
+editors/`tsc` flag a call site that no longer matches the real backend DTO.
+See `employeehub/README.md`'s "API types" section for the full explanation,
+the regeneration workflow, and a real caveat about paginated non-`Employee`
+endpoints (Springdoc-generated `Page<T>` types are unreliable for anything
+other than `Page<EmployeeResponse>` — `getAuditLogs`'s `AuditLogResponse`
+typedef in `HrService.js` is hand-written for exactly this reason, not
+sourced from `api-types.d.ts`).

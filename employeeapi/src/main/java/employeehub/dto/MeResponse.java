@@ -23,7 +23,9 @@ public class MeResponse {
     private final EmploymentStatus employmentStatus;
     private final EmploymentType employmentType;
     private final String profilePhoto;
+    private final Long departmentId;
     private final String department;
+    private final Long teamId;
     private final String team;
     private final String startDate;
 
@@ -42,7 +44,9 @@ public class MeResponse {
         this.employmentStatus = employee.getEmploymentStatus();
         this.employmentType   = employee.getEmploymentType();
         this.profilePhoto     = employee.getProfilePhoto() != null ? employee.getProfilePhoto() : "";
+        this.departmentId     = employee.getDepartment() != null ? employee.getDepartment().getId() : null;
         this.department       = employee.getDepartment() != null ? employee.getDepartment().getName() : null;
+        this.teamId           = employee.getTeam() != null ? employee.getTeam().getId() : null;
         this.team             = employee.getTeam() != null ? employee.getTeam().getName() : null;
         this.startDate        = employee.getStartDate() != null ? employee.getStartDate().toString() : null;
     }

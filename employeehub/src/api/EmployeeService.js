@@ -207,6 +207,29 @@ export async function deleteTimesheetEntry(timesheetId, entryId) {
     return axios.delete(`${BASE_URL}/timesheets/${timesheetId}/entries/${entryId}`, authHeaders());
 }
 
+// ── Attendance ───────────────────────────────────────────────────────────────
+
+export async function clockIn() {
+    return axios.post(`${BASE_URL}/attendance/clock-in`, {}, authHeaders());
+}
+
+export async function clockOut(notes) {
+    return axios.patch(`${BASE_URL}/attendance/clock-out`, { notes }, authHeaders());
+}
+
+export async function getMyAttendance(page = 0, size = 10) {
+    return axios.get(`${BASE_URL}/attendance/my?page=${page}&size=${size}`, authHeaders());
+}
+
+// Manager/HR: team attendance (backend scopes MANAGER to direct reports, HR/Admin see all).
+export async function getTeamAttendance(page = 0, size = 20, filters = {}) {
+    const params = new URLSearchParams({ page, size });
+    if (filters.employeeId) params.append('employeeId', filters.employeeId);
+    if (filters.from) params.append('from', filters.from);
+    if (filters.to) params.append('to', filters.to);
+    return axios.get(`${BASE_URL}/attendance?${params}`, authHeaders());
+}
+
 // ── Manager: Team Approvals ───────────────────────────────────────────────────
 // These call the same backend endpoints the HR dashboard uses. The backend
 // scopes results to the manager's direct reports and enforces that a MANAGER

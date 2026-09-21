@@ -3,6 +3,7 @@ import TopBar from '../components/TopBar';
 import {
   getMyLeaveBalances, getMyLeaveRequests, getMyTimesheets,
   getMyNotifications, markNotificationRead, getEmployees,
+  getMyAttendance, clockIn, clockOut,
 } from '../api/EmployeeService';
 import { isHrOrAdmin } from '../api/AuthService';
 
@@ -16,7 +17,18 @@ export default function DashboardPage() {
   const [notifications, setNotifs]    = useState([]);
   const [empCount, setEmpCount]       = useState('—');
   const [loading, setLoading]         = useState(true);
+  const [openSession, setOpenSession] = useState(null);
+  const [clocking, setClocking]       = useState(false);
+  const [clockFeedback, setClockFeedback] = useState(null);
   const hrAdmin = isHrOrAdmin();
+
+  const loadAttendance = useCallback(async () => {
+    try {
+      const res = await getMyAttendance(0, 1);
+      const latest = res.data?.data?.content?.[0];
+      setOpenSession(latest && latest.status === 'OPEN' ? latest : null);
+    } catch { /* silent */ }
+  }, []);
 
   const load = useCallback(async () => {
     const calls = [
@@ -39,6 +51,35 @@ export default function DashboardPage() {
   }, [hrAdmin]);
 
   useEffect(() => { load(); }, [load]);
+  useEffect(() => { loadAttendance(); }, [loadAttendance]);
+
+  const handleClockIn = async () => {
+    setClocking(true);
+    setClockFeedback(null);
+    try {
+      const res = await clockIn();
+      setOpenSession(res.data?.data);
+      setClockFeedback({ type: 'success', msg: 'Clocked in.' });
+    } catch (err) {
+      setClockFeedback({ type: 'error', msg: err.response?.data?.message ?? 'Failed to clock in.' });
+    } finally {
+      setClocking(false);
+    }
+  };
+
+  const handleClockOut = async () => {
+    setClocking(true);
+    setClockFeedback(null);
+    try {
+      await clockOut();
+      setOpenSession(null);
+      setClockFeedback({ type: 'success', msg: 'Clocked out.' });
+    } catch (err) {
+      setClockFeedback({ type: 'error', msg: err.response?.data?.message ?? 'Failed to clock out.' });
+    } finally {
+      setClocking(false);
+    }
+  };
 
   const handleMarkRead = async id => {
     try {
@@ -91,6 +132,38 @@ export default function DashboardPage() {
     <>
       <TopBar title='Dashboard' breadcrumb='Employee Hub / Dashboard' />
       <div className='page'>
+
+        {/* Clock in/out */}
+        <div className='card' style={{ marginBottom: '1.5rem', padding: '1rem 1.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <div className={`stat-card__icon stat-card__icon--${openSession ? 'green' : 'blue'}`} style={{ width: 40, height: 40 }}>
+                <i className='bi bi-clock-history'></i>
+              </div>
+              <div>
+                <p style={{ fontWeight: 600, fontSize: '0.9rem' }}>
+                  {openSession
+                    ? `Clocked in since ${new Date(openSession.clockInAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                    : 'Not clocked in'}
+                </p>
+                {clockFeedback && (
+                  <p className={`feedback feedback--${clockFeedback.type}`} style={{ fontSize: '0.78rem', margin: 0 }}>
+                    {clockFeedback.msg}
+                  </p>
+                )}
+              </div>
+            </div>
+            {openSession ? (
+              <button className='btn btn-sm btn-danger' onClick={handleClockOut} disabled={clocking}>
+                <i className='bi bi-box-arrow-right'></i> {clocking ? 'Clocking out...' : 'Clock Out'}
+              </button>
+            ) : (
+              <button className='btn btn-sm' style={{ background: 'var(--green)' }} onClick={handleClockIn} disabled={clocking}>
+                <i className='bi bi-box-arrow-in-right'></i> {clocking ? 'Clocking in...' : 'Clock In'}
+              </button>
+            )}
+          </div>
+        </div>
 
         {/* Stat cards */}
         <div className='stat-grid' style={{ marginBottom: '1.5rem' }}>

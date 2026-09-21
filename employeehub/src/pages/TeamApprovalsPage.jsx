@@ -3,6 +3,7 @@ import TopBar from '../components/TopBar';
 import {
   getTeamLeaveRequests, approveTeamLeave, rejectTeamLeave,
   getTeamTimesheets, approveTeamTimesheet, rejectTeamTimesheet,
+  getTeamAttendance,
 } from '../api/EmployeeService';
 
 const LEAVE_STATUS_COLOR = { APPROVED: 'approved', REJECTED: 'rejected', PENDING: 'pending', CANCELLED: 'inactive' };
@@ -14,6 +15,8 @@ export default function TeamApprovalsPage() {
   const [tab, setTab]             = useState('leave');
   const [leave, setLeave]         = useState([]);
   const [timesheets, setTimesheets] = useState([]);
+  const [attendance, setAttendance] = useState([]);
+  const [attendanceLoading, setAttendanceLoading] = useState(false);
   const [loading, setLoading]     = useState(true);
   const [acting, setActing]       = useState(null);
   const [feedback, setFeedback]   = useState(null);
@@ -35,6 +38,22 @@ export default function TeamApprovalsPage() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  const loadAttendance = useCallback(async () => {
+    setAttendanceLoading(true);
+    try {
+      const res = await getTeamAttendance(0, 50);
+      setAttendance(res.data?.data?.content ?? []);
+    } catch {
+      setAttendance([]);
+    } finally {
+      setAttendanceLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (tab === 'attendance') loadAttendance();
+  }, [tab, loadAttendance]);
 
   const pendingLeave = leave.filter(r => r.status === 'PENDING').length;
   const pendingTs    = timesheets.filter(t => t.status === 'SUBMITTED').length;
@@ -113,7 +132,7 @@ export default function TeamApprovalsPage() {
         )}
 
         <div className='profile-tabs' style={{ marginBottom: '1.5rem' }}>
-          {[['leave', `Leave${pendingLeave ? ` (${pendingLeave})` : ''}`], ['timesheets', `Timesheets${pendingTs ? ` (${pendingTs})` : ''}`]].map(([key, label]) => (
+          {[['leave', `Leave${pendingLeave ? ` (${pendingLeave})` : ''}`], ['timesheets', `Timesheets${pendingTs ? ` (${pendingTs})` : ''}`], ['attendance', 'Attendance']].map(([key, label]) => (
             <button key={key} className={`profile-tab${tab === key ? ' active' : ''}`} onClick={() => { setTab(key); setFeedback(null); }}>
               {label}
             </button>
@@ -204,6 +223,34 @@ export default function TeamApprovalsPage() {
                           </span>
                         ) : null}
                       </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* ── Attendance ── */}
+        {tab === 'attendance' && (
+          <div className='card'>
+            <div className='card__header'><span className='card__title'>Team Attendance</span></div>
+            <div className='table-wrap'>
+              <table>
+                <thead><tr><th>Employee</th><th>Date</th><th>Clock In</th><th>Clock Out</th><th>Status</th><th>Notes</th></tr></thead>
+                <tbody>
+                  {attendanceLoading ? (
+                    <tr><td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>Loading...</td></tr>
+                  ) : attendance.length === 0 ? (
+                    <tr><td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>No attendance records.</td></tr>
+                  ) : attendance.map(a => (
+                    <tr key={a.id}>
+                      <td style={{ fontWeight: 500 }}>{empName(a.employee)}</td>
+                      <td style={{ color: 'var(--text-muted)' }}>{a.workDate}</td>
+                      <td>{a.clockInAt ? new Date(a.clockInAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}</td>
+                      <td>{a.clockOutAt ? new Date(a.clockOutAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}</td>
+                      <td><span className={`badge badge--${a.status === 'OPEN' ? 'pending' : 'approved'}`}>{a.status}</span></td>
+                      <td style={{ color: 'var(--text-secondary)', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={a.notes}>{a.notes || '—'}</td>
                     </tr>
                   ))}
                 </tbody>

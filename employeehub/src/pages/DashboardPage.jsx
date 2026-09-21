@@ -1,14 +1,31 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import TopBar from '../components/TopBar';
 import {
   getMyLeaveBalances, getMyLeaveRequests, getMyTimesheets,
   getMyNotifications, markNotificationRead, getEmployees,
   getMyAttendance, clockIn, clockOut, getMyDocuments,
 } from '../api/EmployeeService';
-import { isHrOrAdmin } from '../api/AuthService';
+import { isHrOrAdmin, getAccountKey } from '../api/AuthService';
+import { useDashboardLayout } from '../hooks/useDashboardLayout';
 
 const fmt = n => n != null ? String(n) : '—';
 const STATUS_COLOR = { APPROVED: 'approved', REJECTED: 'rejected', PENDING: 'pending', DRAFT: 'inactive', SUBMITTED: 'pending', CANCELLED: 'inactive' };
+
+// Stable ids + human labels for every personalizable card, in default display
+// order (stat cards first, then the two body cards). The clock-in widget and
+// Notifications card are intentionally absent: they are always shown, at fixed
+// positions, and cannot be reordered or hidden.
+const CARD_LABELS = {
+  employeeCount:    'Total Employees',
+  pendingLeave:     'Pending Leave',
+  pendingTimesheets:'Timesheets Awaiting',
+  annualLeaveLeft:  'Annual Leave Left',
+  expiringDocs:     'Documents Expiring Soon',
+  leaveBalances:    'Leave Balances',
+  recentActivity:   'Recent Activity',
+};
+const ALL_CARD_IDS = Object.keys(CARD_LABELS);
+const BODY_CARD_IDS = ['leaveBalances', 'recentActivity'];
 
 export default function DashboardPage() {
   const [balances, setBalances]       = useState([]);
@@ -21,7 +38,12 @@ export default function DashboardPage() {
   const [openSession, setOpenSession] = useState(null);
   const [clocking, setClocking]       = useState(false);
   const [clockFeedback, setClockFeedback] = useState(null);
+  const [showSettings, setShowSettings] = useState(false);
   const hrAdmin = isHrOrAdmin();
+
+  const accountKey = useMemo(() => getAccountKey(), []);
+  const { isHidden, toggleHidden, moveUp, moveDown, reset, orderedVisible } =
+    useDashboardLayout(accountKey, ALL_CARD_IDS);
 
   const loadAttendance = useCallback(async () => {
     try {
@@ -101,17 +123,22 @@ export default function DashboardPage() {
   const pendingTS        = timesheets.filter(t => t.status === 'SUBMITTED').length;
   const annualBalance    = balances.find(b => b.leaveType?.name?.toLowerCase().includes('annual'));
 
-  const STAT_CARDS = [
-    ...(hrAdmin ? [{ icon: 'bi-people', color: 'blue', value: fmt(empCount), label: 'Total Employees' }] : []),
-    { icon: 'bi-calendar-check', color: 'green', value: fmt(pendingLeave), label: 'Pending Leave' },
-    { icon: 'bi-clock-history',  color: 'amber', value: fmt(pendingTS),    label: 'Timesheets Awaiting' },
+  // Candidate stat cards, each tagged with its stable id. Data-dependent cards
+  // (annual balance, expiring docs) are only candidates when they have something
+  // to show — a hide/show preference can never force an empty card to appear.
+  const statCandidates = [
+    ...(hrAdmin ? [{ id: 'employeeCount', icon: 'bi-people', color: 'blue', value: fmt(empCount), label: 'Total Employees' }] : []),
+    { id: 'pendingLeave', icon: 'bi-calendar-check', color: 'green', value: fmt(pendingLeave), label: 'Pending Leave' },
+    { id: 'pendingTimesheets', icon: 'bi-clock-history', color: 'amber', value: fmt(pendingTS), label: 'Timesheets Awaiting' },
     annualBalance ? {
+      id: 'annualLeaveLeft',
       icon: 'bi-sun',
       color: 'brand',
       value: `${parseFloat(annualBalance.remainingDays ?? 0)} days`,
       label: 'Annual Leave Left',
     } : null,
     expiringDocsCount > 0 ? {
+      id: 'expiringDocs',
       icon: 'bi-file-earmark-x',
       color: 'red',
       value: fmt(expiringDocsCount),
@@ -119,6 +146,23 @@ export default function DashboardPage() {
       href: '/documents',
     } : null,
   ].filter(Boolean);
+
+  // Apply the saved order + hidden set. Stat cards and body cards are each
+  // ordered within their own visual group (stat grid vs. body row).
+  const statById = Object.fromEntries(statCandidates.map(c => [c.id, c]));
+  const visibleStatCards = orderedVisible(statCandidates.map(c => c.id)).map(id => statById[id]);
+  const visibleBodyCardIds = orderedVisible(BODY_CARD_IDS);
+
+  // Card ids actually available right now (data-dependent ones may be missing) —
+  // you can't reorder or toggle a card that has nothing to render. Shown in the
+  // settings panel in the current saved order, including hidden ones (so they can
+  // be toggled back on). orderedVisible drops hidden, so union it with the hidden
+  // available ids, preserving saved order for the visible run then appending
+  // hidden ones at the end.
+  const availableCardIds = [...statCandidates.map(c => c.id), ...BODY_CARD_IDS];
+  const visibleOrdered = orderedVisible(availableCardIds);
+  const hiddenAvailable = availableCardIds.filter(id => isHidden(id));
+  const settingsRows = [...visibleOrdered, ...hiddenAvailable];
 
   const recentActivity = [
     ...leave.slice(0, 3).map(r => ({
@@ -181,75 +225,147 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Stat cards */}
-        <div className='stat-grid' style={{ marginBottom: '1.5rem' }}>
-          {STAT_CARDS.map(s => {
-            const Wrapper = s.href ? 'a' : 'div';
-            return (
-              <Wrapper className='stat-card' key={s.label} href={s.href} style={s.href ? { cursor: 'pointer', textDecoration: 'none', color: 'inherit' } : undefined}>
-                <div className={`stat-card__icon stat-card__icon--${s.color}`}>
-                  <i className={`bi ${s.icon}`}></i>
-                </div>
-                <div>
-                  <div className='stat-card__value'>{s.value}</div>
-                  <div className='stat-card__label'>{s.label}</div>
-                </div>
-              </Wrapper>
-            );
-          })}
+        {/* Customize dashboard toggle */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.75rem' }}>
+          <button className='btn btn-ghost btn-sm' onClick={() => setShowSettings(s => !s)}>
+            <i className='bi bi-sliders'></i> Customize Dashboard
+          </button>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1.25rem' }}>
-
-          {/* Leave balance mini-bars */}
-          <div className='card'>
+        {showSettings && (
+          <div className='card' style={{ marginBottom: '1.5rem' }}>
             <div className='card__header'>
-              <span className='card__title'>Leave Balances</span>
+              <span className='card__title'>Customize Dashboard</span>
+              <button className='btn btn-ghost btn-sm' onClick={reset}>Reset to default</button>
             </div>
-            <div className='card__body' style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-              {balances.length === 0 ? (
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No balances found.</p>
-              ) : balances.map((b, i) => {
-                const rem   = parseFloat(b.remainingDays ?? 0);
-                const total = parseFloat(b.totalDays ?? 1);
-                const pct   = Math.max(0, Math.min(100, Math.round((rem / total) * 100)));
-                const COLORS = ['var(--brand)', 'var(--red)', 'var(--amber)', 'var(--green)', 'hsl(270,60%,55%)', 'hsl(190,60%,40%)'];
-                return (
-                  <div key={b.id}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-                      <span style={{ fontSize: '0.8rem', fontWeight: 500 }}>{b.leaveType?.name}</span>
-                      <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{rem}/{total} days</span>
-                    </div>
-                    <div style={{ height: 6, background: 'var(--border)', borderRadius: 'var(--radius-full)', overflow: 'hidden' }}>
-                      <div style={{ height: '100%', width: `${pct}%`, background: COLORS[i % COLORS.length], borderRadius: 'var(--radius-full)', transition: 'width 0.4s ease' }} />
-                    </div>
+            <div className='card__body' style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+              <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.35rem' }}>
+                Show, hide, and reorder the cards on your dashboard. Preferences are saved to this browser.
+              </p>
+              {settingsRows.map((id, i) => (
+                <div key={id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', padding: '0.4rem 0', borderBottom: i < settingsRows.length - 1 ? '1px solid var(--border)' : 'none' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', cursor: 'pointer' }}>
+                    <input
+                      type='checkbox'
+                      checked={!isHidden(id)}
+                      onChange={() => toggleHidden(id)}
+                      aria-label={`Show ${CARD_LABELS[id]}`}
+                    />
+                    <span style={{ color: isHidden(id) ? 'var(--text-muted)' : 'inherit' }}>{CARD_LABELS[id]}</span>
+                  </label>
+                  <div style={{ display: 'flex', gap: '0.25rem' }}>
+                    <button
+                      className='btn btn-ghost btn-sm'
+                      onClick={() => moveUp(id)}
+                      disabled={isHidden(id) || i === 0}
+                      aria-label={`Move ${CARD_LABELS[id]} up`}
+                      title='Move up'
+                    >
+                      <i className='bi bi-arrow-up'></i>
+                    </button>
+                    <button
+                      className='btn btn-ghost btn-sm'
+                      onClick={() => moveDown(id)}
+                      disabled={isHidden(id) || i >= visibleOrdered.length - 1}
+                      aria-label={`Move ${CARD_LABELS[id]} down`}
+                      title='Move down'
+                    >
+                      <i className='bi bi-arrow-down'></i>
+                    </button>
                   </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Recent activity */}
-          <div className='card'>
-            <div className='card__header'><span className='card__title'>Recent Activity</span></div>
-            <div className='card__body'>
-              {recentActivity.length === 0 ? (
-                <div className='empty-state'><i className='bi bi-activity'></i><p>No recent activity.</p></div>
-              ) : recentActivity.map((a, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', padding: '0.55rem 0', borderBottom: i < recentActivity.length - 1 ? '1px solid var(--border)' : 'none' }}>
-                  <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--brand-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <i className={`bi ${a.icon}`} style={{ color: 'var(--brand)', fontSize: '0.8rem' }}></i>
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: '0.82rem', fontWeight: 500, marginBottom: '0.1rem' }}>{a.text}</p>
-                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{a.sub}</p>
-                  </div>
-                  <span className={`badge badge--${a.color}`} style={{ fontSize: '0.7rem', flexShrink: 0 }}>{a.status}</span>
                 </div>
               ))}
             </div>
           </div>
-        </div>
+        )}
+
+        {/* Stat cards */}
+        {visibleStatCards.length > 0 && (
+          <div className='stat-grid' style={{ marginBottom: '1.5rem' }}>
+            {visibleStatCards.map(s => {
+              const Wrapper = s.href ? 'a' : 'div';
+              return (
+                <Wrapper className='stat-card' key={s.id} href={s.href} style={s.href ? { cursor: 'pointer', textDecoration: 'none', color: 'inherit' } : undefined}>
+                  <div className={`stat-card__icon stat-card__icon--${s.color}`}>
+                    <i className={`bi ${s.icon}`}></i>
+                  </div>
+                  <div>
+                    <div className='stat-card__value'>{s.value}</div>
+                    <div className='stat-card__label'>{s.label}</div>
+                  </div>
+                </Wrapper>
+              );
+            })}
+          </div>
+        )}
+
+        {visibleBodyCardIds.length > 0 && (
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: visibleBodyCardIds.length > 1 ? '1fr 1fr' : '1fr',
+              gap: '1.25rem',
+              marginBottom: '1.25rem',
+            }}
+          >
+            {visibleBodyCardIds.map(id => {
+              if (id === 'leaveBalances') {
+                return (
+                  <div className='card' key={id}>
+                    <div className='card__header'>
+                      <span className='card__title'>Leave Balances</span>
+                    </div>
+                    <div className='card__body' style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                      {balances.length === 0 ? (
+                        <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No balances found.</p>
+                      ) : balances.map((b, i) => {
+                        const rem   = parseFloat(b.remainingDays ?? 0);
+                        const total = parseFloat(b.totalDays ?? 1);
+                        const pct   = Math.max(0, Math.min(100, Math.round((rem / total) * 100)));
+                        const COLORS = ['var(--brand)', 'var(--red)', 'var(--amber)', 'var(--green)', 'hsl(270,60%,55%)', 'hsl(190,60%,40%)'];
+                        return (
+                          <div key={b.id}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                              <span style={{ fontSize: '0.8rem', fontWeight: 500 }}>{b.leaveType?.name}</span>
+                              <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{rem}/{total} days</span>
+                            </div>
+                            <div style={{ height: 6, background: 'var(--border)', borderRadius: 'var(--radius-full)', overflow: 'hidden' }}>
+                              <div style={{ height: '100%', width: `${pct}%`, background: COLORS[i % COLORS.length], borderRadius: 'var(--radius-full)', transition: 'width 0.4s ease' }} />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              }
+              if (id === 'recentActivity') {
+                return (
+                  <div className='card' key={id}>
+                    <div className='card__header'><span className='card__title'>Recent Activity</span></div>
+                    <div className='card__body'>
+                      {recentActivity.length === 0 ? (
+                        <div className='empty-state'><i className='bi bi-activity'></i><p>No recent activity.</p></div>
+                      ) : recentActivity.map((a, i) => (
+                        <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', padding: '0.55rem 0', borderBottom: i < recentActivity.length - 1 ? '1px solid var(--border)' : 'none' }}>
+                          <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--brand-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <i className={`bi ${a.icon}`} style={{ color: 'var(--brand)', fontSize: '0.8rem' }}></i>
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <p style={{ fontSize: '0.82rem', fontWeight: 500, marginBottom: '0.1rem' }}>{a.text}</p>
+                            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{a.sub}</p>
+                          </div>
+                          <span className={`badge badge--${a.color}`} style={{ fontSize: '0.7rem', flexShrink: 0 }}>{a.status}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              }
+              return null;
+            })}
+          </div>
+        )}
 
         {/* Notifications */}
         <div className='card'>

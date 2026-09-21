@@ -108,6 +108,15 @@ export async function getAllSalaryRecords(employeeId) {
 
 // ── Dashboard Stats ───────────────────────────────────────────────────────────
 
+/**
+ * Pending leave/timesheet/document counts grouped by department. Every department
+ * is returned exactly once, with 0 in any category it has no pending items for.
+ * @returns {Promise<{data: {success?: boolean, message?: string, data?: Array<{departmentName: string, pendingLeave: number, pendingTimesheets: number, pendingDocuments: number}>}}>}
+ */
+export async function getDepartmentBreakdown() {
+  return axios.get(`${BASE_URL}/dashboard/department-breakdown`, auth());
+}
+
 export async function getDashboardStats() {
   const [empRes, leaveRes, tsRes, docRes] = await Promise.allSettled([
     getEmployees(0, 1),

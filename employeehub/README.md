@@ -82,3 +82,43 @@ args:
 | `npm start` | Start local dev server at http://localhost:3000 |
 | `npm run build` | Build production bundle to `build/` |
 | `npm test` | Run tests in interactive watch mode |
+| `npm run spec:fetch` | Refresh `src/api/openapi.json` from a running backend (`REACT_APP_API_URL`, defaults to `localhost:8080`) |
+| `npm run spec:types` | Regenerate `src/api/api-types.d.ts` from the committed `openapi.json` |
+| `npm run spec:update` | Both of the above, in order |
+
+## API types (drift detection, not a generated client)
+
+`src/api/api-types.d.ts` is generated from the backend's live OpenAPI spec via
+[`openapi-typescript`](https://openapi-typescript.pages.dev/) and committed to
+git. `src/api/EmployeeService.js` and `AuthService.js` still make hand-written
+`axios` calls through the same shared instance (this is required — the module
+registers a global response interceptor for silent token refresh; a generated
+client with its own HTTP layer would bypass it). What the generated file adds
+is JSDoc type annotations on top of those calls:
+
+```js
+/** @returns {Promise<{data: {success?: boolean, message?: string, data?: MeResponse}}>} */
+export async function getMe() { ... }
+```
+
+This is types-only — no runtime code is generated, no new dependency ships to
+the browser, and `.d.ts` files have zero effect on the CRA build (`react-scripts
+build` output is unaffected). The payoff is at edit time: VS Code (or `npx tsc
+--allowJs --checkJs --noEmit src/api/*.js` in CI/pre-commit if you want it
+enforced) will flag a call site that references a field the backend doesn't
+actually have, or a field that got renamed — the exact kind of drift this
+pattern exists to catch.
+
+**When the backend's DTOs change:** run `npm run spec:update` (with the API
+running) and commit the regenerated `openapi.json` + `api-types.d.ts` alongside
+your frontend change.
+
+**Known limitation — paginated non-`Employee` endpoints:** Springdoc collapses
+every `Page<T>` response onto one generic `PageObject` schema, keyed by
+whichever `T` it renders first (currently `EmployeeResponse`). So
+`api-types.d.ts` will claim every paginated endpoint's `content` is
+`EmployeeResponse[]`, which is wrong for endpoints paginating anything else.
+Don't trust the generated type for a paginated field unless you've confirmed
+which DTO it actually renders — hand-write the JSDoc `@typedef` from the real
+backend DTO instead (see `hrdashboard/src/api/HrService.js`'s `AuditLogResponse`
+typedef for the pattern).

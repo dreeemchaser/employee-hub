@@ -1,6 +1,12 @@
 import axios from 'axios';
 import { getToken } from './AuthService';
 
+/**
+ * @typedef {import('./api-types').components['schemas']['MeResponse']} MeResponse
+ * @typedef {import('./api-types').components['schemas']['EmployeeResponse']} EmployeeResponse
+ * @typedef {import('./api-types').components['schemas']['ApiResponsePageEmployeeResponse']['data']} EmployeePage
+ */
+
 const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
 
 const authHeaders = () => ({ headers: { Authorization: `Bearer ${getToken()}` } });
@@ -21,6 +27,7 @@ function normaliseEmployee(emp) {
 
 // ── Profile ──────────────────────────────────────────────────────────────────
 
+/** @returns {Promise<{data: {success?: boolean, message?: string, data?: MeResponse}}>} */
 export async function getMe() {
     return axios.get(`${BASE_URL}/auth/me`, authHeaders());
 }
@@ -46,6 +53,12 @@ export async function getTeams(departmentId) {
 
 // ── Employees ────────────────────────────────────────────────────────────────
 
+/**
+ * @param {number} [page]
+ * @param {number} [size]
+ * @param {{departmentId?: number, teamId?: number, status?: string}} [filters]
+ * @returns {Promise<{data: EmployeePage}>} `content` items are pre-flattened by normaliseEmployee.
+ */
 export async function getEmployees(page = 0, size = 10, filters = {}) {
     const params = new URLSearchParams({ page, size });
     if (filters.departmentId) params.append('departmentId', filters.departmentId);
@@ -62,6 +75,10 @@ export async function getEmployees(page = 0, size = 10, filters = {}) {
     };
 }
 
+/**
+ * @param {string} id
+ * @returns {Promise<{data: EmployeeResponse}>}
+ */
 export async function getEmployee(id) {
     const r = await axios.get(`${BASE_URL}/employees/${id}`, authHeaders());
     return { data: normaliseEmployee(r.data.data) };

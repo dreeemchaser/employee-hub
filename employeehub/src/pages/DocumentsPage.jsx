@@ -2,6 +2,11 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import TopBar from '../components/TopBar';
 import { getMyDocuments, uploadDocument } from '../api/EmployeeService';
 
+// Types that plausibly carry a real-world expiry (ID documents, certifications/permits).
+// The backend accepts an optional expiryDate for any type; this just decides when the
+// UI nudges the user to fill it in.
+const TYPES_THAT_TYPICALLY_EXPIRE = new Set(['ID_DOCUMENT', 'CERTIFICATE']);
+
 const DOC_TYPES = ['ID_DOCUMENT', 'CONTRACT', 'CERTIFICATE', 'PAYSLIP', 'OTHER'];
 const DOC_LABELS = { ID_DOCUMENT: 'ID Document', CONTRACT: 'Contract', CERTIFICATE: 'Certificate', PAYSLIP: 'Payslip', OTHER: 'Other' };
 const TYPE_ICONS = {
@@ -14,6 +19,7 @@ export default function DocumentsPage() {
   const [tab, setTab]         = useState('documents');
   const [docs, setDocs]       = useState([]);
   const [docType, setDocType] = useState('');
+  const [expiryDate, setExpiryDate] = useState('');
   const [file, setFile]       = useState(null);
   const [uploading, setUploading] = useState(false);
   const [feedback, setFeedback]   = useState(null);
@@ -36,10 +42,11 @@ export default function DocumentsPage() {
     setUploading(true);
     setFeedback(null);
     try {
-      await uploadDocument(docType, file);
+      await uploadDocument(docType, file, expiryDate || undefined);
       setFeedback({ type: 'success', msg: 'Document uploaded successfully.' });
       setFile(null);
       setDocType('');
+      setExpiryDate('');
       if (fileRef.current) fileRef.current.value = '';
       await load();
       setTimeout(() => { setFeedback(null); setTab('documents'); }, 1500);
@@ -74,10 +81,10 @@ export default function DocumentsPage() {
             </div>
             <div className='table-wrap'>
               <table>
-                <thead><tr><th>Document</th><th>Type</th><th>Size</th><th>Uploaded</th><th>Status</th></tr></thead>
+                <thead><tr><th>Document</th><th>Type</th><th>Size</th><th>Uploaded</th><th>Expires</th><th>Status</th></tr></thead>
                 <tbody>
                   {docs.length === 0 ? (
-                    <tr><td colSpan={5} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>No documents uploaded yet.</td></tr>
+                    <tr><td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>No documents uploaded yet.</td></tr>
                   ) : docs.map(doc => (
                     <tr key={doc.id}>
                       <td>
@@ -89,6 +96,16 @@ export default function DocumentsPage() {
                       <td style={{ color: 'var(--text-secondary)' }}>{DOC_LABELS[doc.documentType] ?? doc.documentType}</td>
                       <td style={{ color: 'var(--text-muted)' }}>{fmtSize(doc.fileSize)}</td>
                       <td style={{ color: 'var(--text-muted)' }}>{doc.createdAt?.split('T')[0]}</td>
+                      <td>
+                        {doc.expiryDate ? (
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            <span style={{ color: doc.expired ? 'var(--red)' : 'var(--text-muted)' }}>{doc.expiryDate}</span>
+                            {doc.expired && <span className='badge badge--rejected'>Expired</span>}
+                          </span>
+                        ) : (
+                          <span style={{ color: 'var(--text-muted)' }}>—</span>
+                        )}
+                      </td>
                       <td><span className={`badge badge--${STATUS_COLOR[doc.status] ?? 'pending'}`}>{doc.status}</span></td>
                     </tr>
                   ))}
@@ -115,6 +132,21 @@ export default function DocumentsPage() {
                     <option value=''>— Select type —</option>
                     {DOC_TYPES.map(t => <option key={t} value={t}>{DOC_LABELS[t]}</option>)}
                   </select>
+                </div>
+                <div className='form-group' style={{ marginBottom: '1rem' }}>
+                  <label className='form-label'>
+                    Expiry Date {!TYPES_THAT_TYPICALLY_EXPIRE.has(docType) && <span style={{ color: 'var(--text-muted)' }}>(optional)</span>}
+                  </label>
+                  <input
+                    className='form-control'
+                    type='date'
+                    value={expiryDate}
+                    onChange={e => setExpiryDate(e.target.value)}
+                    min={new Date().toISOString().split('T')[0]}
+                  />
+                  <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                    Leave blank if this document doesn't expire.
+                  </p>
                 </div>
                 <div className='form-group' style={{ marginBottom: '1.25rem' }}>
                   <label className='form-label'>File</label>

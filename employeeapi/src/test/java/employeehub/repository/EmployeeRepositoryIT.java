@@ -4,6 +4,7 @@ import employeehub.domain.Department;
 import employeehub.domain.Employee;
 import employeehub.domain.Team;
 import employeehub.domain.enums.EmploymentStatus;
+import employeehub.domain.enums.Role;
 import employeehub.repository.support.EntityFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -73,8 +74,25 @@ class EmployeeRepositoryIT extends AbstractRepositoryIT {
 
     @Test
     void findMaxEmployeeSequence_returnsHighestNumericSuffix() {
-        // EMP-001..003 seeded above -> max suffix is 3. Exercises the Postgres
+        // EMP-001..003 seeded in setUp() -> max suffix is 3. Exercises the Postgres
         // CAST(SUBSTRING(...) AS int) expression that H2 would not evaluate identically.
         assertThat(employeeRepository.findMaxEmployeeSequence()).contains(3);
+    }
+
+    @Test
+    void findByRoleIn_returnsOnlyMatchingRoles() {
+        // Own fixtures (not the shared setUp() employees, which are all role EMPLOYEE) so this test
+        // doesn't perturb the employee counts the other tests in this class depend on.
+        Employee hrAdmin = EntityFactory.employee("EMP-010", "hr@x.com", deptA, teamA);
+        hrAdmin.setRole(Role.HR_ADMIN);
+        Employee superAdmin = EntityFactory.employee("EMP-011", "admin@x.com", deptA, teamA);
+        superAdmin.setRole(Role.SUPER_ADMIN);
+        em.persist(hrAdmin);
+        em.persist(superAdmin);
+        em.flush();
+
+        assertThat(employeeRepository.findByRoleIn(java.util.List.of(Role.HR_ADMIN, Role.SUPER_ADMIN)))
+                .extracting(Employee::getEmail)
+                .containsExactlyInAnyOrder("hr@x.com", "admin@x.com");
     }
 }

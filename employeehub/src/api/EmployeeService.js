@@ -188,10 +188,12 @@ export async function getMyDocuments() {
     return axios.get(`${BASE_URL}/documents/my`, authHeaders());
 }
 
-export async function uploadDocument(type, file) {
+export async function uploadDocument(type, file, expiryDate) {
     const fd = new FormData();
     fd.append('file', file);
-    return axios.post(`${BASE_URL}/documents/upload?type=${type}`, fd, authHeaders());
+    const params = new URLSearchParams({ type });
+    if (expiryDate) params.append('expiryDate', expiryDate);
+    return axios.post(`${BASE_URL}/documents/upload?${params}`, fd, authHeaders());
 }
 
 // ── Notifications ────────────────────────────────────────────────────────────

@@ -8,36 +8,44 @@ import employeehub.service.EmployeeService;
 import employeehub.service.DocumentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.FutureOrPresent;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
 @RequestMapping("/documents")
 @RequiredArgsConstructor
 @Tag(name = "Documents")
+@Validated
 public class DocumentController {
 
     private final DocumentService documentService;
     private final EmployeeService employeeService;
 
     @PostMapping("/upload")
-    @Operation(summary = "Upload a document")
+    @Operation(summary = "Upload a document, optionally with an expiry date")
     public ResponseEntity<ApiResponse<DocumentResponse>> upload(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam DocumentType type,
-            @RequestParam("file") MultipartFile file) {
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            @FutureOrPresent(message = "Expiry date cannot be in the past") LocalDate expiryDate) {
         var employee = employeeService.getByEmail(userDetails.getUsername());
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.ok(new DocumentResponse(documentService.upload(employee.getId(), type, file))));
+                .body(ApiResponse.ok(new DocumentResponse(documentService.upload(employee.getId(), type, file, expiryDate))));
     }
 
     @GetMapping("/my")

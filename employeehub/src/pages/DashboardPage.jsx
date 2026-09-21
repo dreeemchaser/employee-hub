@@ -3,7 +3,7 @@ import TopBar from '../components/TopBar';
 import {
   getMyLeaveBalances, getMyLeaveRequests, getMyTimesheets,
   getMyNotifications, markNotificationRead, getEmployees,
-  getMyAttendance, clockIn, clockOut,
+  getMyAttendance, clockIn, clockOut, getMyDocuments,
 } from '../api/EmployeeService';
 import { isHrOrAdmin } from '../api/AuthService';
 
@@ -16,6 +16,7 @@ export default function DashboardPage() {
   const [timesheets, setTimesheets]   = useState([]);
   const [notifications, setNotifs]    = useState([]);
   const [empCount, setEmpCount]       = useState('—');
+  const [expiringDocsCount, setExpiringDocsCount] = useState(0);
   const [loading, setLoading]         = useState(true);
   const [openSession, setOpenSession] = useState(null);
   const [clocking, setClocking]       = useState(false);
@@ -36,6 +37,7 @@ export default function DashboardPage() {
       getMyLeaveRequests(),
       getMyTimesheets(),
       getMyNotifications(),
+      getMyDocuments(),
       ...(hrAdmin ? [getEmployees(0, 1)] : []),
     ];
     const results = await Promise.allSettled(calls);
@@ -43,8 +45,15 @@ export default function DashboardPage() {
     if (results[1].status === 'fulfilled') setLeave(results[1].value.data?.data ?? []);
     if (results[2].status === 'fulfilled') setTimesheets(results[2].value.data?.data ?? []);
     if (results[3].status === 'fulfilled') setNotifs((results[3].value.data?.data ?? []).slice(0, 5));
-    if (hrAdmin && results[4]?.status === 'fulfilled') {
-      const d = results[4].value.data?.data ?? results[4].value.data;
+    if (results[4].status === 'fulfilled') {
+      const docs = results[4].value.data?.data ?? [];
+      const in30Days = new Date();
+      in30Days.setDate(in30Days.getDate() + 30);
+      const expiringSoon = docs.filter(d => d.expiryDate && (d.expired || new Date(d.expiryDate) <= in30Days));
+      setExpiringDocsCount(expiringSoon.length);
+    }
+    if (hrAdmin && results[5]?.status === 'fulfilled') {
+      const d = results[5].value.data?.data ?? results[5].value.data;
       setEmpCount(d?.totalElements ?? '—');
     }
     setLoading(false);
@@ -101,6 +110,13 @@ export default function DashboardPage() {
       color: 'brand',
       value: `${parseFloat(annualBalance.remainingDays ?? 0)} days`,
       label: 'Annual Leave Left',
+    } : null,
+    expiringDocsCount > 0 ? {
+      icon: 'bi-file-earmark-x',
+      color: 'red',
+      value: fmt(expiringDocsCount),
+      label: 'Documents Expiring Soon',
+      href: '/documents',
     } : null,
   ].filter(Boolean);
 
@@ -167,17 +183,20 @@ export default function DashboardPage() {
 
         {/* Stat cards */}
         <div className='stat-grid' style={{ marginBottom: '1.5rem' }}>
-          {STAT_CARDS.map(s => (
-            <div className='stat-card' key={s.label}>
-              <div className={`stat-card__icon stat-card__icon--${s.color}`}>
-                <i className={`bi ${s.icon}`}></i>
-              </div>
-              <div>
-                <div className='stat-card__value'>{s.value}</div>
-                <div className='stat-card__label'>{s.label}</div>
-              </div>
-            </div>
-          ))}
+          {STAT_CARDS.map(s => {
+            const Wrapper = s.href ? 'a' : 'div';
+            return (
+              <Wrapper className='stat-card' key={s.label} href={s.href} style={s.href ? { cursor: 'pointer', textDecoration: 'none', color: 'inherit' } : undefined}>
+                <div className={`stat-card__icon stat-card__icon--${s.color}`}>
+                  <i className={`bi ${s.icon}`}></i>
+                </div>
+                <div>
+                  <div className='stat-card__value'>{s.value}</div>
+                  <div className='stat-card__label'>{s.label}</div>
+                </div>
+              </Wrapper>
+            );
+          })}
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1.25rem' }}>

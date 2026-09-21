@@ -48,6 +48,7 @@
 | POST | `/employees` | HR_ADMIN, SUPER_ADMIN | Create employee |
 | PUT | `/employees/{id}` | HR_ADMIN, SUPER_ADMIN | Update employee |
 | PATCH | `/employees/{id}/status` | HR_ADMIN, SUPER_ADMIN | Update employment status |
+| POST | `/employees/{id}/offboard` | HR_ADMIN, SUPER_ADMIN | Offboard employee: terminate, cancel pending leave requests, deactivate active benefits |
 | DELETE | `/employees/{id}` | HR_ADMIN, SUPER_ADMIN | Delete employee |
 | POST | `/employees/{id}/photo` | HR_ADMIN, SUPER_ADMIN | Upload employee photo |
 | GET | `/employees/photo/{filename}` | PUBLIC | Serve a profile photo |

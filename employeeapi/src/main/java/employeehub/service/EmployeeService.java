@@ -2,13 +2,19 @@ package employeehub.service;
 
 import employeehub.domain.Department;
 import employeehub.domain.Employee;
+import employeehub.domain.EmployeeBenefit;
 import employeehub.domain.LeaveBalance;
+import employeehub.domain.LeaveRequest;
 import employeehub.domain.LeaveType;
 import employeehub.domain.Team;
+import employeehub.domain.enums.BenefitStatus;
 import employeehub.domain.enums.EmploymentStatus;
+import employeehub.domain.enums.LeaveStatus;
+import employeehub.domain.enums.NotificationType;
 import employeehub.dto.ChangePasswordRequest;
 import employeehub.dto.EmployeeRequest;
 import employeehub.dto.EmployeeResponse;
+import employeehub.dto.OffboardEmployeeRequest;
 import employeehub.dto.UpdateMeRequest;
 import employeehub.exception.BusinessRuleException;
 import employeehub.exception.ResourceNotFoundException;
@@ -36,6 +42,9 @@ public class EmployeeService {
     private final LeaveRequestRepository leaveRequestRepository;
     private final LeaveTypeRepository leaveTypeRepository;
     private final NotificationRepository notificationRepository;
+    private final EmployeeBenefitRepository employeeBenefitRepository;
+    private final AuditService auditService;
+    private final NotificationService notificationService;
 
     @Transactional
     public Employee create(EmployeeRequest req) {
@@ -91,6 +100,67 @@ public class EmployeeService {
             employee.setEndDate(java.time.LocalDate.now());
         }
         return employeeRepository.save(employee);
+    }
+
+    /**
+     * Offboards an employee: sets the terminal employment state, cancels any
+     * leave requests still awaiting a decision (nothing should be approved for
+     * someone who is leaving), deactivates active benefit enrollments, notifies
+     * the employee's manager and the actor's own HR chain, and records the
+     * transition in the audit log. Unlike {@link #updateStatus}, which is a bare
+     * field setter shared by every status value, this method is offboarding-
+     * specific and refuses to run twice on the same employee.
+     */
+    @Transactional
+    public Employee offboard(String id, OffboardEmployeeRequest req, Employee actor) {
+        Employee employee = getById(id);
+        if (employee.getEmploymentStatus() == EmploymentStatus.TERMINATED) {
+            throw new BusinessRuleException("Employee is already terminated: " + id);
+        }
+
+        LocalDate lastWorkingDay = req.getLastWorkingDay() != null ? req.getLastWorkingDay() : LocalDate.now();
+        EmploymentStatus previousStatus = employee.getEmploymentStatus();
+
+        employee.setEmploymentStatus(EmploymentStatus.TERMINATED);
+        employee.setEndDate(lastWorkingDay);
+        Employee saved = employeeRepository.save(employee);
+
+        cancelPendingLeaveRequests(saved);
+        deactivateBenefits(saved);
+
+        auditService.log(actor, "OFFBOARD", "Employee", id,
+                previousStatus.name(), EmploymentStatus.TERMINATED.name());
+
+        if (saved.getManager() != null) {
+            notificationService.send(saved.getManager(),
+                    "Employee Offboarded",
+                    saved.getFirstName() + " " + saved.getLastName() + "'s last working day is " + lastWorkingDay,
+                    NotificationType.GENERAL, "Employee", saved.getId());
+        }
+
+        return saved;
+    }
+
+    private void cancelPendingLeaveRequests(Employee employee) {
+        List<LeaveRequest> pending = leaveRequestRepository.findByEmployeeId(employee.getId()).stream()
+                .filter(lr -> lr.getStatus() == LeaveStatus.PENDING)
+                .toList();
+        for (LeaveRequest request : pending) {
+            request.setStatus(LeaveStatus.CANCELLED);
+            request.setRejectionReason("Cancelled: employee offboarded");
+        }
+        leaveRequestRepository.saveAll(pending);
+    }
+
+    private void deactivateBenefits(Employee employee) {
+        List<EmployeeBenefit> active = employeeBenefitRepository.findByEmployeeId(employee.getId()).stream()
+                .filter(b -> b.getStatus() == BenefitStatus.ACTIVE || b.getStatus() == BenefitStatus.APPROVED)
+                .toList();
+        for (EmployeeBenefit benefit : active) {
+            benefit.setStatus(BenefitStatus.INACTIVE);
+            benefit.setEndDate(employee.getEndDate());
+        }
+        employeeBenefitRepository.saveAll(active);
     }
 
     public Employee updatePhoto(String id, String filename) {

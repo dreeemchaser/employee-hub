@@ -179,6 +179,24 @@ Update an employee. Requires `HR_ADMIN` or `SUPER_ADMIN` role.
 
 **Response (200 OK):** the updated `EmployeeResponse`. Note: because `idNumber` is not returned, it is only overwritten when a non-blank value is supplied — omitting it preserves the stored value.
 
+### POST /employees/{id}/offboard
+Offboard an employee. Requires `HR_ADMIN` or `SUPER_ADMIN` role. Distinct from `PATCH /employees/{id}/status`: this is a dedicated action that, in addition to setting `employmentStatus` to `TERMINATED`, cancels any `PENDING` leave requests for the employee, deactivates their `ACTIVE`/`APPROVED` benefit enrollments (setting each enrollment's `endDate` to the employee's last working day), notifies their manager, and records the transition in the audit log. Refuses to run on an employee who is already `TERMINATED`.
+
+**Request Body:**
+```json
+{
+  "reason": "Resignation",
+  "lastWorkingDay": "2024-06-30"
+}
+```
+`reason` is required. `lastWorkingDay` is optional and defaults to today; it cannot be in the past.
+
+**Response (200 OK):** the updated `EmployeeResponse`, with `employmentStatus: "TERMINATED"` and `endDate` set.
+
+**Response (400 Bad Request):** `reason` missing/blank, or `lastWorkingDay` is in the past.
+
+**Response (409 Conflict):** employee is already terminated.
+
 ### POST /employees/{id}/photo
 Upload an employee profile photo.
 

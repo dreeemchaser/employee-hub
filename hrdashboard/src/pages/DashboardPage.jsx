@@ -1,28 +1,44 @@
 import { useEffect, useState, useCallback } from 'react';
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+} from 'recharts';
 import TopBar from '../components/TopBar';
 import Spinner from '../components/Spinner';
-import { getEmployees, getAllLeaveRequests, getAllTimesheets, getAllDocuments } from '../api/HrService';
+import {
+  getEmployees, getAllLeaveRequests, getAllTimesheets, getAllDocuments, getDepartmentBreakdown,
+} from '../api/HrService';
 
 const STATUS_COLOR = { APPROVED: 'approved', REJECTED: 'rejected', PENDING: 'pending', SUBMITTED: 'pending', DRAFT: 'inactive', VERIFIED: 'approved' };
+
+// Series colours reuse the same CSS custom properties the stat cards use for
+// each category, so the chart reads consistently with the rest of the dashboard.
+const SERIES = [
+  { key: 'pendingLeave',      name: 'Pending Leave',      color: 'var(--brand)' },
+  { key: 'pendingTimesheets', name: 'Pending Timesheets', color: 'var(--amber)' },
+  { key: 'pendingDocuments',  name: 'Pending Docs',       color: 'var(--red)' },
+];
 
 export default function DashboardPage() {
   const [stats, setStats]       = useState(null);
   const [recentLeave, setLeave] = useState([]);
   const [recentTs, setTs]       = useState([]);
+  const [deptBreakdown, setDeptBreakdown] = useState([]);
   const [loading, setLoading]   = useState(true);
 
   const load = useCallback(async () => {
-    const [empRes, leaveRes, tsRes, docRes] = await Promise.allSettled([
+    const [empRes, leaveRes, tsRes, docRes, deptRes] = await Promise.allSettled([
       getEmployees(0, 1),
       getAllLeaveRequests(),
       getAllTimesheets(),
       getAllDocuments(),
+      getDepartmentBreakdown(),
     ]);
 
     const empData  = empRes.value?.data?.data ?? empRes.value?.data;
     const leaves   = leaveRes.status === 'fulfilled' ? (leaveRes.value.data?.data ?? []) : [];
     const tsheets  = tsRes.status    === 'fulfilled' ? (tsRes.value.data?.data ?? []) : [];
     const docs     = docRes.status   === 'fulfilled' ? (docRes.value.data?.data ?? []) : [];
+    const depts    = deptRes.status  === 'fulfilled' ? (deptRes.value.data?.data ?? []) : [];
 
     setStats({
       employees:          empRes.status === 'fulfilled' ? (empData?.totalElements ?? '—') : '—',
@@ -34,6 +50,7 @@ export default function DashboardPage() {
     });
     setLeave(leaves.filter(r => r.status === 'PENDING').slice(0, 5));
     setTs(tsheets.filter(t => t.status === 'SUBMITTED').slice(0, 5));
+    setDeptBreakdown(depts);
     setLoading(false);
   }, []);
 
@@ -109,6 +126,31 @@ export default function DashboardPage() {
                     <span className={`badge badge--${STATUS_COLOR[t.status] ?? 'pending'}`}>{t.status}</span>
                   </div>
                 ))}
+              </div>
+            </div>
+
+            {/* Pending items by department */}
+            <div className='card' style={{ marginTop: '1.25rem' }}>
+              <div className='card__header'>
+                <span className='card__title'>Pending Items by Department</span>
+              </div>
+              <div className='card__body'>
+                {deptBreakdown.length === 0 ? (
+                  <div className='empty-state'><i className='bi bi-bar-chart'></i><p>No departments to show.</p></div>
+                ) : (
+                  <ResponsiveContainer width='100%' height={320}>
+                    <BarChart data={deptBreakdown} margin={{ top: 8, right: 16, left: 0, bottom: 8 }}>
+                      <CartesianGrid strokeDasharray='3 3' stroke='var(--border)' vertical={false} />
+                      <XAxis dataKey='departmentName' tick={{ fontSize: 12, fill: 'var(--text-secondary)' }} />
+                      <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: 'var(--text-secondary)' }} />
+                      <Tooltip cursor={{ fill: 'var(--brand-light)' }} />
+                      <Legend wrapperStyle={{ fontSize: '0.8rem' }} />
+                      {SERIES.map(s => (
+                        <Bar key={s.key} dataKey={s.key} name={s.name} fill={s.color} radius={[4, 4, 0, 0]} maxBarSize={48} />
+                      ))}
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
               </div>
             </div>
           </>

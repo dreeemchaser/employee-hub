@@ -335,6 +335,11 @@ package "Documents" {
         verifiedAt : DateTime
         * status : Enum
         * createdAt : DateTime
+        expiryDate : Date
+        reminderSentAt30 : DateTime
+        reminderSentAt14 : DateTime
+        reminderSentAt7 : DateTime
+        hrExpiryNotifiedAt : DateTime
     }
 }
 

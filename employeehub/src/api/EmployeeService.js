@@ -212,8 +212,13 @@ export async function markAllNotificationsRead() {
 
 // ── Leave Calendar ────────────────────────────────────────────────────────────
 
-export async function getLeaveCalendar(year, month) {
-    return axios.get(`${BASE_URL}/leave/calendar?year=${year}&month=${month}`, authHeaders());
+export async function getLeaveCalendar(year, month, filters = {}) {
+    const params = new URLSearchParams({ year, month });
+    if (filters.leaveTypeId) params.append('leaveTypeId', filters.leaveTypeId);
+    if (filters.employeeId) params.append('employeeId', filters.employeeId);
+    if (filters.departmentId) params.append('departmentId', filters.departmentId);
+    if (filters.teamId) params.append('teamId', filters.teamId);
+    return axios.get(`${BASE_URL}/leave/calendar?${params}`, authHeaders());
 }
 
 // ── Salary Increase Requests ──────────────────────────────────────────────────

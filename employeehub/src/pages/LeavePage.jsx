@@ -2,8 +2,9 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import TopBar from '../components/TopBar';
 import {
   getMyLeaveBalances, getMyLeaveRequests,
-  submitLeaveRequest, cancelLeaveRequest, getLeaveCalendar,
+  submitLeaveRequest, cancelLeaveRequest, getLeaveCalendar, getTeamLeaveRequests,
 } from '../api/EmployeeService';
+import { getRole } from '../api/AuthService';
 
 const EMPTY_FORM = { leaveTypeId: '', startDate: '', endDate: '', reason: '', documentationConfirmed: false };
 const STATUS_COLOR = { APPROVED: 'approved', REJECTED: 'rejected', PENDING: 'pending', CANCELLED: 'inactive' };
@@ -66,6 +67,12 @@ export default function LeavePage() {
   const [calYear, setCalYear]   = useState(now.getFullYear());
   const [calMonth, setCalMonth] = useState(now.getMonth() + 1);
   const [calLeave, setCalLeave] = useState([]);
+  const [calTypeFilter, setCalTypeFilter] = useState('');
+  const [calLoading, setCalLoading] = useState(false);
+  const [calError, setCalError] = useState('');
+  const [calEmployeeFilter, setCalEmployeeFilter] = useState('');
+  const [directReports, setDirectReports] = useState([]);
+  const role = getRole();
 
   const load = useCallback(async () => {
     try {
@@ -75,12 +82,28 @@ export default function LeavePage() {
     } catch { /* silent */ }
   }, []);
 
+  useEffect(() => {
+    if (role !== 'MANAGER') return;
+    getTeamLeaveRequests().then(res => {
+      const unique = new Map();
+      (res.data?.data ?? []).forEach(request => {
+        if (request.employee?.id) unique.set(request.employee.id, request.employee);
+      });
+      setDirectReports([...unique.values()]);
+    }).catch(() => setDirectReports([]));
+  }, [role]);
+
   const loadCalendar = useCallback(async () => {
+    setCalLoading(true);
+    setCalError('');
     try {
-      const res = await getLeaveCalendar(calYear, calMonth);
+      const res = await getLeaveCalendar(calYear, calMonth, {
+        leaveTypeId: calTypeFilter, employeeId: calEmployeeFilter,
+      });
       setCalLeave(res.data?.data ?? []);
-    } catch { /* silent */ }
-  }, [calYear, calMonth]);
+    } catch { setCalError('Unable to load the shared calendar.'); }
+    finally { setCalLoading(false); }
+  }, [calYear, calMonth, calTypeFilter, calEmployeeFilter]);
 
   useEffect(() => { load(); }, [load]);
   useEffect(() => { if (tab === 'calendar') loadCalendar(); }, [tab, loadCalendar]);
@@ -533,6 +556,32 @@ export default function LeavePage() {
               </span>
             </div>
             <div className='card__body'>
+              <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem', alignItems: 'end' }}>
+                <label className='form-group' style={{ margin: 0, maxWidth: 240 }}>
+                  <span className='form-label'>Leave type</span>
+                  <select className='form-control' value={calTypeFilter} onChange={e => setCalTypeFilter(e.target.value)}>
+                    <option value=''>All leave types</option>
+                    {leaveTypes.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                  </select>
+                </label>
+                {role === 'MANAGER' && (
+                  <label className='form-group' style={{ margin: 0, maxWidth: 240 }}>
+                    <span className='form-label'>Direct report</span>
+                    <select className='form-control' value={calEmployeeFilter} onChange={e => setCalEmployeeFilter(e.target.value)}>
+                      <option value=''>All direct reports</option>
+                      {directReports.map(report => <option key={report.id} value={report.id}>{report.firstName} {report.lastName}</option>)}
+                    </select>
+                  </label>
+                )}
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                  {role === 'MANAGER' ? 'Showing approved leave for your direct reports' : 'Showing your approved leave'}
+                </span>
+              </div>
+              {calLoading && <p style={{ color: 'var(--text-muted)' }}>Loading calendar…</p>}
+              {calError && <p style={{ color: 'var(--red)' }}>{calError}</p>}
+              {!calLoading && !calError && calLeave.length === 0 && (
+                <p style={{ color: 'var(--text-muted)', marginBottom: '1rem' }}>No approved leave overlaps this month.</p>
+              )}
               {/* Legend — only the leave types present this month */}
               {calLegend.length > 0 && (
                 <div style={{

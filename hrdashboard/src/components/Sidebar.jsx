@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { logout } from '../api/AuthService';
+import { logout, isHrCalendarViewer } from '../api/AuthService';
 
 const NAV = [
   { section: 'Main', links: [
@@ -8,6 +8,7 @@ const NAV = [
   { section: 'HR Management', links: [
     { to: '/employees',           icon: 'bi-people',         label: 'Employees' },
     { to: '/leave-approvals',     icon: 'bi-calendar-check', label: 'Leave Approvals' },
+    { to: '/leave-calendar',      icon: 'bi-calendar3',      label: 'Shared Calendar' },
     { to: '/timesheet-approvals', icon: 'bi-clock-history',  label: 'Timesheet Approvals' },
     { to: '/documents',           icon: 'bi-folder2-open',   label: 'Documents' },
     { to: '/salary',              icon: 'bi-cash-coin',      label: 'Salary' },
@@ -19,6 +20,7 @@ const NAV = [
 
 const Sidebar = ({ onLogout }) => {
   const navigate = useNavigate();
+  const canViewSharedCalendar = isHrCalendarViewer();
 
   const handleLogout = async () => {
     await logout();
@@ -42,7 +44,7 @@ const Sidebar = ({ onLogout }) => {
         {NAV.map(({ section, links }) => (
           <div key={section}>
             <div className='sidebar__section-label'>{section}</div>
-            {links.map(({ to, icon, label }) => (
+            {links.filter(({ to }) => to !== '/leave-calendar' || canViewSharedCalendar).map(({ to, icon, label }) => (
               <NavLink
                 key={to}
                 to={to}

@@ -131,6 +131,19 @@ class LeaveRequestRepositoryIT extends AbstractRepositoryIT {
         assertThat(june.get(0).getStartDate()).isEqualTo(LocalDate.of(2026, 5, 28));
     }
 
+    @Test
+    void findApprovedForManagerInMonth_scopesToDirectReportsAndFiltersType() {
+        persist(employee, LocalDate.of(2026, 6, 1), LocalDate.of(2026, 6, 2), LeaveStatus.APPROVED);
+        persist(report, LocalDate.of(2026, 6, 3), LocalDate.of(2026, 6, 4), LeaveStatus.APPROVED);
+
+        List<LeaveRequest> results = leaveRequestRepository.findApprovedForManagerInMonth(
+                LocalDate.of(2026, 6, 1), LocalDate.of(2026, 6, 30),
+                employee.getId(), null, annual.getId());
+
+        assertThat(results).hasSize(1);
+        assertThat(results.get(0).getEmployee().getId()).isEqualTo(report.getId());
+    }
+
     private void persist(Employee owner, LocalDate start, LocalDate end, LeaveStatus status) {
         LeaveRequest lr = EntityFactory.leaveRequest(owner, annual, start, end);
         lr.setStatus(status);

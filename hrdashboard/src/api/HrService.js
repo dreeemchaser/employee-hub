@@ -53,6 +53,14 @@ export async function rejectLeave(id, reason) {
   return axios.patch(`${BASE_URL}/leave/requests/${id}/reject`, { reason }, auth());
 }
 
+export async function getLeaveCalendar(year, month, filters = {}) {
+  const params = new URLSearchParams({ year, month });
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value) params.append(key, value);
+  });
+  return axios.get(`${BASE_URL}/leave/calendar?${params}`, auth());
+}
+
 // ── Timesheets ───────────────────────────────────────────────────────────────
 
 export async function getAllTimesheets() {

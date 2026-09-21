@@ -16,6 +16,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.time.DateTimeException;
 
 @Service
 @RequiredArgsConstructor
@@ -201,10 +202,42 @@ public class LeaveService {
 
     // ── Leave Calendar ───────────────────────────────────────────────
 
-    public List<LeaveRequest> getCalendar(int year, int month) {
-        LocalDate firstDay = LocalDate.of(year, month, 1);
+    @Transactional(readOnly = true)
+    public List<LeaveRequest> getCalendar(Employee requester, int year, int month,
+                                          Long leaveTypeId, String employeeId,
+                                          Long departmentId, Long teamId) {
+        if (year < 2000 || year > 2100 || month < 1 || month > 12) {
+            throw new IllegalArgumentException("Calendar year must be between 2000 and 2100 and month must be between 1 and 12");
+        }
+        if (requester == null || requester.getRole() == null) {
+            throw new IllegalArgumentException("Authenticated employee is required");
+        }
+        boolean admin = requester.getRole() == Role.HR_ADMIN || requester.getRole() == Role.SUPER_ADMIN;
+        boolean manager = requester.getRole() == Role.MANAGER;
+        if (!admin && (departmentId != null || teamId != null)) {
+            throw new IllegalArgumentException("Department and team filters are restricted to HR administrators");
+        }
+        if (requester.getRole() == Role.EMPLOYEE && employeeId != null
+                && !requester.getId().equals(employeeId)) {
+            throw new IllegalArgumentException("Employees may only view their own leave");
+        }
+        LocalDate firstDay;
+        try {
+            firstDay = LocalDate.of(year, month, 1);
+        } catch (DateTimeException ex) {
+            throw new IllegalArgumentException("Invalid calendar date", ex);
+        }
         LocalDate lastDay  = firstDay.withDayOfMonth(firstDay.lengthOfMonth());
-        return leaveRequestRepository.findApprovedInMonth(firstDay, lastDay);
+        if (admin) {
+            return leaveRequestRepository.findApprovedForAdminInMonth(
+                    firstDay, lastDay, employeeId, leaveTypeId, departmentId, teamId);
+        }
+        if (manager) {
+            return leaveRequestRepository.findApprovedForManagerInMonth(
+                    firstDay, lastDay, requester.getId(), employeeId, leaveTypeId);
+        }
+        return leaveRequestRepository.findApprovedForEmployeeInMonth(
+                firstDay, lastDay, requester.getId(), leaveTypeId);
     }
 
     // ── Helpers ──────────────────────────────────────────────────────

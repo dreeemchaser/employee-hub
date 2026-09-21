@@ -1,7 +1,7 @@
 import './index.css';
 import { useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { isLoggedIn } from './api/AuthService';
+import { isLoggedIn, isHrCalendarViewer } from './api/AuthService';
 import LoginPage from './components/LoginPage';
 import ForgotPasswordPage from './components/ForgotPasswordPage';
 import ResetPasswordPage from './components/ResetPasswordPage';
@@ -13,9 +13,11 @@ import TimesheetApprovalsPage from './pages/TimesheetApprovalsPage';
 import DocumentsPage from './pages/DocumentsPage';
 import AuditLogsPage from './pages/AuditLogsPage';
 import SalaryPage from './pages/SalaryPage';
+import LeaveCalendarPage from './pages/LeaveCalendarPage';
 
 function App() {
   const [loggedIn, setLoggedIn] = useState(isLoggedIn());
+  const canViewSharedCalendar = isHrCalendarViewer();
 
   if (!loggedIn) {
     return (
@@ -37,6 +39,9 @@ function App() {
           <Route path='/dashboard'            element={<DashboardPage />} />
           <Route path='/employees'            element={<EmployeesPage />} />
           <Route path='/leave-approvals'      element={<LeaveApprovalsPage />} />
+          {canViewSharedCalendar && (
+            <Route path='/leave-calendar'     element={<LeaveCalendarPage />} />
+          )}
           <Route path='/timesheet-approvals'  element={<TimesheetApprovalsPage />} />
           <Route path='/documents'            element={<DocumentsPage />} />
           <Route path='/salary'               element={<SalaryPage />} />

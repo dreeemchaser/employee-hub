@@ -17,6 +17,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Optional;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -242,6 +243,36 @@ class LeaveServiceTest {
         assertThatThrownBy(() -> leaveService.cancel("req-1", "other-emp"))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("your own requests");
+    }
+
+    @Test
+    void calendar_employee_isScopedToOwnApprovedLeave() {
+        when(leaveRequestRepository.findApprovedForEmployeeInMonth(any(), any(), eq("emp-1"), isNull()))
+                .thenReturn(List.of());
+
+        leaveService.getCalendar(employee, 2026, 6, null, null, null, null);
+
+        verify(leaveRequestRepository).findApprovedForEmployeeInMonth(
+                eq(LocalDate.of(2026, 6, 1)), eq(LocalDate.of(2026, 6, 30)), eq("emp-1"), isNull());
+        verify(leaveRequestRepository, never()).findApprovedForAdminInMonth(any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void calendar_manager_isScopedToDirectReports() {
+        when(leaveRequestRepository.findApprovedForManagerInMonth(any(), any(), eq("mgr-1"), isNull(), eq(1L)))
+                .thenReturn(List.of());
+
+        leaveService.getCalendar(manager, 2026, 6, 1L, null, null, null);
+
+        verify(leaveRequestRepository).findApprovedForManagerInMonth(
+                eq(LocalDate.of(2026, 6, 1)), eq(LocalDate.of(2026, 6, 30)), eq("mgr-1"), isNull(), eq(1L));
+    }
+
+    @Test
+    void calendar_employee_cannotRequestAnotherEmployee() {
+        assertThatThrownBy(() -> leaveService.getCalendar(employee, 2026, 6, null, "other", null, null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("only view their own");
     }
 
 }

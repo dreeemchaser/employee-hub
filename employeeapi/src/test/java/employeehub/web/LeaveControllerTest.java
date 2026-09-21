@@ -12,6 +12,8 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -68,5 +70,17 @@ class LeaveControllerTest extends WebMvcTestSupport {
     void approve_asEmployee_isForbidden() throws Exception {
         mockMvc.perform(patch("/leave/requests/req-1/approve").with(csrf()))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = "user@employeehub.com", roles = "EMPLOYEE")
+    void calendar_asEmployee_usesCallerScope() throws Exception {
+        stubCaller();
+        when(leaveService.getCalendar(any(), eq(2026), eq(6), isNull(), isNull(), isNull(), isNull()))
+                .thenReturn(List.of());
+
+        mockMvc.perform(get("/leave/calendar").param("year", "2026").param("month", "6"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data").isArray());
     }
 }

@@ -89,6 +89,12 @@ export async function updateEmployeeStatus(id, status) {
     return axios.patch(`${BASE_URL}/employees/${id}/status`, { status }, authHeaders());
 }
 
+// Terminates the employee, cancels their pending leave requests, and
+// deactivates their active benefit enrollments (see EmployeeService.offboard).
+export async function offboardEmployee(id, reason, lastWorkingDay) {
+    return axios.post(`${BASE_URL}/employees/${id}/offboard`, { reason, lastWorkingDay }, authHeaders());
+}
+
 export function getPhotoUrl(filename) {
     return `${BASE_URL}/employees/photo/${filename}`;
 }

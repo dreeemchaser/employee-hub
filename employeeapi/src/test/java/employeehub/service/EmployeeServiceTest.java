@@ -11,7 +11,13 @@ import employeehub.dto.EmployeeRequest;
 import employeehub.dto.EmployeeResponse;
 import employeehub.exception.BusinessRuleException;
 import employeehub.exception.ResourceNotFoundException;
+import employeehub.domain.EmployeeBenefit;
+import employeehub.domain.LeaveRequest;
+import employeehub.domain.enums.BenefitStatus;
+import employeehub.domain.enums.LeaveStatus;
+import employeehub.dto.OffboardEmployeeRequest;
 import employeehub.repository.DepartmentRepository;
+import employeehub.repository.EmployeeBenefitRepository;
 import employeehub.repository.EmployeeRepository;
 import employeehub.repository.LeaveBalanceRepository;
 import employeehub.repository.LeaveRequestRepository;
@@ -49,6 +55,9 @@ class EmployeeServiceTest {
     @Mock LeaveRequestRepository leaveRequestRepository;
     @Mock LeaveTypeRepository leaveTypeRepository;
     @Mock NotificationRepository notificationRepository;
+    @Mock EmployeeBenefitRepository employeeBenefitRepository;
+    @Mock AuditService auditService;
+    @Mock NotificationService notificationService;
 
     @InjectMocks EmployeeService employeeService;
 
@@ -213,5 +222,107 @@ class EmployeeServiceTest {
         assertThat(reportDto.getManager()).isEqualTo("Alex Smith");
         assertThat(reportDto.getManagerId()).isEqualTo("mgr-1");
         assertThat(reportDto.getEmail()).isEqualTo("kim.lee@test.com");
+    }
+
+    @Test
+    void offboard_shouldTerminateAndCascade() {
+        Employee manager = new Employee();
+        manager.setId("mgr-1");
+
+        Employee employee = new Employee();
+        employee.setId("emp-1");
+        employee.setFirstName("Kim");
+        employee.setLastName("Lee");
+        employee.setEmploymentStatus(EmploymentStatus.ACTIVE);
+        employee.setManager(manager);
+
+        LeaveRequest pending = new LeaveRequest();
+        pending.setId("lr-1");
+        pending.setStatus(LeaveStatus.PENDING);
+        LeaveRequest approved = new LeaveRequest();
+        approved.setId("lr-2");
+        approved.setStatus(LeaveStatus.APPROVED);
+
+        EmployeeBenefit activeBenefit = new EmployeeBenefit();
+        activeBenefit.setId("ben-1");
+        activeBenefit.setStatus(BenefitStatus.ACTIVE);
+
+        Employee actor = new Employee();
+        actor.setId("hr-1");
+
+        when(employeeRepository.findById("emp-1")).thenReturn(Optional.of(employee));
+        when(employeeRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(leaveRequestRepository.findByEmployeeId("emp-1")).thenReturn(List.of(pending, approved));
+        when(leaveRequestRepository.saveAll(any())).thenAnswer(i -> i.getArgument(0));
+        when(employeeBenefitRepository.findByEmployeeId("emp-1")).thenReturn(List.of(activeBenefit));
+        when(employeeBenefitRepository.saveAll(any())).thenAnswer(i -> i.getArgument(0));
+
+        OffboardEmployeeRequest req = new OffboardEmployeeRequest();
+        req.setReason("Resignation");
+        req.setLastWorkingDay(LocalDate.now());
+
+        Employee result = employeeService.offboard("emp-1", req, actor);
+
+        assertThat(result.getEmploymentStatus()).isEqualTo(EmploymentStatus.TERMINATED);
+        assertThat(result.getEndDate()).isEqualTo(req.getLastWorkingDay());
+        assertThat(pending.getStatus()).isEqualTo(LeaveStatus.CANCELLED);
+        assertThat(approved.getStatus()).isEqualTo(LeaveStatus.APPROVED); // untouched
+        assertThat(activeBenefit.getStatus()).isEqualTo(BenefitStatus.INACTIVE);
+        assertThat(activeBenefit.getEndDate()).isEqualTo(req.getLastWorkingDay());
+
+        verify(auditService).log(eq(actor), eq("OFFBOARD"), eq("Employee"), eq("emp-1"), eq("ACTIVE"), eq("TERMINATED"));
+        verify(notificationService).send(eq(manager), anyString(), anyString(), any(), anyString(), any());
+    }
+
+    @Test
+    void offboard_shouldDefaultLastWorkingDayToToday_whenOmitted() {
+        Employee employee = new Employee();
+        employee.setId("emp-1");
+        employee.setEmploymentStatus(EmploymentStatus.ACTIVE);
+        when(employeeRepository.findById("emp-1")).thenReturn(Optional.of(employee));
+        when(employeeRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(leaveRequestRepository.findByEmployeeId("emp-1")).thenReturn(List.of());
+        when(employeeBenefitRepository.findByEmployeeId("emp-1")).thenReturn(List.of());
+
+        OffboardEmployeeRequest req = new OffboardEmployeeRequest();
+        req.setReason("Resignation");
+
+        Employee result = employeeService.offboard("emp-1", req, new Employee());
+
+        assertThat(result.getEndDate()).isEqualTo(LocalDate.now());
+    }
+
+    @Test
+    void offboard_shouldThrow_whenAlreadyTerminated() {
+        Employee employee = new Employee();
+        employee.setId("emp-1");
+        employee.setEmploymentStatus(EmploymentStatus.TERMINATED);
+        when(employeeRepository.findById("emp-1")).thenReturn(Optional.of(employee));
+
+        OffboardEmployeeRequest req = new OffboardEmployeeRequest();
+        req.setReason("Resignation");
+
+        assertThatThrownBy(() -> employeeService.offboard("emp-1", req, new Employee()))
+                .isInstanceOf(BusinessRuleException.class)
+                .hasMessageContaining("already terminated");
+    }
+
+    @Test
+    void offboard_shouldNotNotify_whenEmployeeHasNoManager() {
+        Employee employee = new Employee();
+        employee.setId("emp-1");
+        employee.setEmploymentStatus(EmploymentStatus.ACTIVE);
+        // no manager set
+        when(employeeRepository.findById("emp-1")).thenReturn(Optional.of(employee));
+        when(employeeRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(leaveRequestRepository.findByEmployeeId("emp-1")).thenReturn(List.of());
+        when(employeeBenefitRepository.findByEmployeeId("emp-1")).thenReturn(List.of());
+
+        OffboardEmployeeRequest req = new OffboardEmployeeRequest();
+        req.setReason("Resignation");
+
+        employeeService.offboard("emp-1", req, new Employee());
+
+        verify(notificationService, never()).send(any(), anyString(), anyString(), any(), anyString(), any());
     }
 }

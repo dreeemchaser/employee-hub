@@ -4,6 +4,7 @@ import employeehub.controller.EmployeeController;
 import employeehub.domain.Employee;
 import employeehub.domain.enums.EmploymentStatus;
 import employeehub.domain.enums.Role;
+import employeehub.exception.BusinessRuleException;
 import employeehub.exception.ResourceNotFoundException;
 import employeehub.service.EmployeeService;
 import employeehub.service.PhotoService;
@@ -93,5 +94,53 @@ class EmployeeControllerTest extends WebMvcTestSupport {
                         .contentType("application/json")
                         .content("{\"email\":\"x@y.com\"}"))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = "hr@employeehub.com", roles = "HR_ADMIN")
+    void offboard_asHrAdmin_returnsOk() throws Exception {
+        Employee actor = sampleEmployee();
+        actor.setId("hr-1");
+        when(employeeService.getByEmail(any())).thenReturn(actor);
+        Employee terminated = sampleEmployee();
+        terminated.setEmploymentStatus(EmploymentStatus.TERMINATED);
+        when(employeeService.offboard(any(), any(), any())).thenReturn(terminated);
+
+        mockMvc.perform(post("/employees/emp-1/offboard").with(csrf())
+                        .contentType("application/json")
+                        .content("{\"reason\":\"Resignation\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.employmentStatus").value("TERMINATED"));
+    }
+
+    @Test
+    @WithMockUser(roles = "EMPLOYEE")
+    void offboard_asEmployee_isForbidden() throws Exception {
+        mockMvc.perform(post("/employees/emp-1/offboard").with(csrf())
+                        .contentType("application/json")
+                        .content("{\"reason\":\"Resignation\"}"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = "hr@employeehub.com", roles = "HR_ADMIN")
+    void offboard_whenAlreadyTerminated_returnsConflict() throws Exception {
+        when(employeeService.getByEmail(any())).thenReturn(sampleEmployee());
+        when(employeeService.offboard(any(), any(), any()))
+                .thenThrow(new BusinessRuleException("Employee is already terminated: emp-1"));
+
+        mockMvc.perform(post("/employees/emp-1/offboard").with(csrf())
+                        .contentType("application/json")
+                        .content("{\"reason\":\"Resignation\"}"))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    @WithMockUser(username = "hr@employeehub.com", roles = "HR_ADMIN")
+    void offboard_withBlankReason_isBadRequest() throws Exception {
+        mockMvc.perform(post("/employees/emp-1/offboard").with(csrf())
+                        .contentType("application/json")
+                        .content("{\"reason\":\"\"}"))
+                .andExpect(status().isBadRequest());
     }
 }

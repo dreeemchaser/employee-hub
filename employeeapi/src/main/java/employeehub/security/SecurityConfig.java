@@ -42,6 +42,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/employees/**").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/employees/**").hasAnyRole("HR_ADMIN", "SUPER_ADMIN")
                         .requestMatchers(HttpMethod.POST, "/employees").hasAnyRole("HR_ADMIN", "SUPER_ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/employees/*/offboard").hasAnyRole("HR_ADMIN", "SUPER_ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/employees/**").hasAnyRole("HR_ADMIN", "SUPER_ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/employees/**").hasAnyRole("HR_ADMIN", "SUPER_ADMIN")
                         .requestMatchers(HttpMethod.GET, "/leave/requests").hasAnyRole("HR_ADMIN", "SUPER_ADMIN", "MANAGER")

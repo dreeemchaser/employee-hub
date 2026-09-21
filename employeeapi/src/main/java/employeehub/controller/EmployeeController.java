@@ -4,16 +4,21 @@ import employeehub.domain.enums.EmploymentStatus;
 import employeehub.dto.ApiResponse;
 import employeehub.dto.EmployeeRequest;
 import employeehub.dto.EmployeeResponse;
+import employeehub.dto.OffboardEmployeeRequest;
 import employeehub.service.EmployeeService;
 import employeehub.service.PhotoService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -71,6 +76,19 @@ public class EmployeeController {
             @RequestBody Map<String, String> body) {
         EmploymentStatus status = EmploymentStatus.valueOf(body.get("status"));
         return ResponseEntity.ok(ApiResponse.ok(new EmployeeResponse(employeeService.updateStatus(id, status))));
+    }
+
+    @PostMapping("/{id}/offboard")
+    @Operation(summary = "Offboard an employee: terminate, cancel pending leave, deactivate benefits")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Employee is already terminated")
+    })
+    public ResponseEntity<ApiResponse<EmployeeResponse>> offboard(
+            @PathVariable String id,
+            @Valid @RequestBody OffboardEmployeeRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        var actor = employeeService.getByEmail(userDetails.getUsername());
+        return ResponseEntity.ok(ApiResponse.ok(new EmployeeResponse(employeeService.offboard(id, request, actor))));
     }
 
     @PostMapping("/{id}/photo")

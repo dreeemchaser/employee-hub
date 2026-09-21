@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   getEmployee, updateEmployee, updateEmployeePhoto, deleteEmployee,
-  getDepartments, getTeams,
+  getDepartments, getTeams, offboardEmployee,
 } from '../api/EmployeeService';
 import { isHrOrAdmin } from '../api/AuthService';
 import Spinner from '../components/Spinner';
@@ -44,6 +44,10 @@ const EmployeeDetailsPage = () => {
   const [success, setSuccess]       = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [activeTab, setActiveTab]   = useState('Personal');
+  const [offboardModal, setOffboardModal] = useState(false);
+  const [offboardReason, setOffboardReason] = useState('');
+  const [offboardLastDay, setOffboardLastDay] = useState('');
+  const [offboarding, setOffboarding] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -151,8 +155,29 @@ const EmployeeDetailsPage = () => {
     }
   };
 
+  const openOffboard = () => { setOffboardModal(true); setOffboardReason(''); setOffboardLastDay(''); };
+  const closeOffboard = () => setOffboardModal(false);
+
+  const handleOffboard = async () => {
+    if (!offboardReason.trim()) return;
+    setOffboarding(true);
+    setError(null);
+    try {
+      await offboardEmployee(id, offboardReason, offboardLastDay || undefined);
+      setSuccess('Employee offboarded successfully.');
+      closeOffboard();
+      await load();
+    } catch (err) {
+      setError(err.response?.data?.message ?? 'Failed to offboard employee.');
+    } finally {
+      setOffboarding(false);
+    }
+  };
+
   const isActive = employee.employmentStatus?.toLowerCase() === 'active';
+  const isTerminated = employee.employmentStatus?.toLowerCase() === 'terminated';
   const canDelete = isHrOrAdmin();
+  const canOffboard = isHrOrAdmin();
 
   const deptOptions = departments.map(d => ({ value: d.id, label: d.name }));
   const teamOptions = teams.map(t => ({ value: t.id, label: t.name }));
@@ -298,6 +323,11 @@ const EmployeeDetailsPage = () => {
                   <i className='bi bi-trash'></i> Delete
                 </button>
               )}
+              {canOffboard && !isTerminated && (
+                <button onClick={openOffboard} className='btn btn-ghost btn-sm' style={{ color: 'var(--red)' }}>
+                  <i className='bi bi-box-arrow-right'></i> Offboard
+                </button>
+              )}
               <button onClick={handleSave} className='btn btn-sm' disabled={saving}>
                 {saving ? 'Saving...' : <><i className='bi bi-save'></i> Save Changes</>}
               </button>
@@ -315,6 +345,36 @@ const EmployeeDetailsPage = () => {
             <div className='confirm-box__actions'>
               <button onClick={() => setConfirmDelete(false)} className='btn btn-ghost'>Cancel</button>
               <button onClick={handleDelete} className='btn btn-danger'>Yes, Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {offboardModal && (
+        <div className='confirm-overlay'>
+          <div className='confirm-box' style={{ textAlign: 'left' }}>
+            <div className='confirm-box__icon'><i className='bi bi-box-arrow-right'></i></div>
+            <h3>Offboard {fullName}</h3>
+            <p style={{ marginBottom: '1rem' }}>
+              This terminates the employee, cancels their pending leave requests, and deactivates
+              their active benefit enrollments. This cannot be undone.
+            </p>
+            <div className='form-group' style={{ marginBottom: '1rem' }}>
+              <label className='form-label'>Reason <span style={{ color: 'var(--red)' }}>*</span></label>
+              <textarea className='form-control' rows={2} placeholder='Resignation, redundancy, end of contract...'
+                value={offboardReason} onChange={e => setOffboardReason(e.target.value)} autoFocus />
+            </div>
+            <div className='form-group' style={{ marginBottom: '1.25rem' }}>
+              <label className='form-label'>Last Working Day</label>
+              <input className='form-control' type='date' value={offboardLastDay}
+                onChange={e => setOffboardLastDay(e.target.value)} min={new Date().toISOString().split('T')[0]} />
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>Defaults to today if left blank.</p>
+            </div>
+            <div className='confirm-box__actions'>
+              <button onClick={closeOffboard} className='btn btn-ghost'>Cancel</button>
+              <button onClick={handleOffboard} className='btn btn-danger' disabled={offboarding || !offboardReason.trim()}>
+                {offboarding ? 'Offboarding...' : 'Offboard Employee'}
+              </button>
             </div>
           </div>
         </div>

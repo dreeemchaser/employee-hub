@@ -46,10 +46,10 @@
   },
   "overrides": {
     "react-scripts": {
-      "typescript": "$typescript"
+      "typescript": "5.9.3"
     },
     "fork-ts-checker-webpack-plugin": {
-      "typescript": "$typescript"
+      "typescript": "5.9.3"
     }
   }
 }

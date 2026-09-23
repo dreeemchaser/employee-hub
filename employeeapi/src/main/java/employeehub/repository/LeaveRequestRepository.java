@@ -56,6 +56,17 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Stri
             @Param("employeeId") String employeeId, @Param("leaveTypeId") Long leaveTypeId,
             @Param("departmentId") Long departmentId, @Param("teamId") Long teamId);
 
+    @Query("SELECT lr FROM LeaveRequest lr JOIN FETCH lr.employee JOIN FETCH lr.leaveType "
+           + "WHERE lr.status = 'APPROVED' "
+           + "AND lr.startDate <= :endDate AND lr.endDate >= :startDate "
+           + "AND lr.employee.team.id = :teamId "
+           + "AND lr.employee.id <> :excludeEmployeeId")
+    List<LeaveRequest> findApprovedOverlappingForTeam(
+            @Param("teamId") Long teamId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            @Param("excludeEmployeeId") String excludeEmployeeId);
+
     /**
      * Returns any PENDING or APPROVED requests for the given employee whose date
      * range overlaps [startDate, endDate]. Used to detect duplicate submissions.

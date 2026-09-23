@@ -3,6 +3,7 @@ import TopBar from '../components/TopBar';
 import {
   getMyLeaveBalances, getMyLeaveRequests,
   submitLeaveRequest, cancelLeaveRequest, getLeaveCalendar, getTeamLeaveRequests,
+  getLeaveForecast, getLeaveConflicts,
 } from '../api/EmployeeService';
 import { getRole } from '../api/AuthService';
 
@@ -72,13 +73,19 @@ export default function LeavePage() {
   const [calError, setCalError] = useState('');
   const [calEmployeeFilter, setCalEmployeeFilter] = useState('');
   const [directReports, setDirectReports] = useState([]);
+  const [forecast, setForecast] = useState([]);
+  const [conflicts, setConflicts] = useState([]);
   const role = getRole();
+  const calendarTabLabel = role === 'MANAGER' ? 'Team Calendar' : 'My Calendar';
 
   const load = useCallback(async () => {
     try {
-      const [balRes, reqRes] = await Promise.all([getMyLeaveBalances(), getMyLeaveRequests()]);
+      const [balRes, reqRes, forecastRes] = await Promise.all([
+        getMyLeaveBalances(), getMyLeaveRequests(), getLeaveForecast(),
+      ]);
       setBalances(balRes.data?.data ?? []);
       setRequests(reqRes.data?.data ?? []);
+      setForecast(forecastRes.data?.data ?? []);
     } catch { /* silent */ }
   }, []);
 
@@ -107,6 +114,18 @@ export default function LeavePage() {
 
   useEffect(() => { load(); }, [load]);
   useEffect(() => { if (tab === 'calendar') loadCalendar(); }, [tab, loadCalendar]);
+
+  useEffect(() => {
+    if (!form.startDate || !form.endDate || form.endDate < form.startDate) {
+      setConflicts([]);
+      return;
+    }
+    let cancelled = false;
+    getLeaveConflicts(form.startDate, form.endDate)
+      .then(res => { if (!cancelled) setConflicts(res.data?.data ?? []); })
+      .catch(() => { if (!cancelled) setConflicts([]); });
+    return () => { cancelled = true; };
+  }, [form.startDate, form.endDate]);
 
   // ── Derived form state ─────────────────────────────────────────
   const leaveTypes = useMemo(
@@ -180,8 +199,21 @@ export default function LeavePage() {
       });
     }
 
+    // Team clash — highlight busy periods; submission still allowed (manager/auto-approve decide)
+    if (conflicts.length > 0) {
+      const names = [...new Set(conflicts.map(c => `${c.employee?.firstName ?? ''} ${c.employee?.lastName ?? ''}`.trim()))]
+        .filter(Boolean)
+        .slice(0, 4)
+        .join(', ');
+      w.push({
+        type: 'warning',
+        msg: `${conflicts.length} teammate(s) already have approved leave overlapping these dates (${names}). This period is marked busy.`,
+        icon: 'bi-people',
+      });
+    }
+
     return w;
-  }, [form, workingDays, remaining, daysUntilStart, selectedBalance, selectedTypeName]);
+  }, [form, workingDays, remaining, daysUntilStart, selectedBalance, selectedTypeName, conflicts]);
 
   const hasBlockingWarning = warnings.some(w => w.type === 'error');
 
@@ -205,7 +237,12 @@ export default function LeavePage() {
         reason:                 form.reason,
         documentationConfirmed: form.documentationConfirmed,
       });
-      setFeedback({ type: 'success', msg: 'Leave request submitted successfully.' });
+      setFeedback({
+        type: 'success',
+        msg: submitted.status === 'APPROVED'
+          ? 'Leave request auto-approved — your balance has been updated.'
+          : 'Leave request submitted successfully.',
+      });
       setForm(EMPTY_FORM);
       await load();
       setTimeout(() => setTab('history'), 1400);

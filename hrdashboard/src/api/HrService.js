@@ -61,6 +61,19 @@ export async function getLeaveCalendar(year, month, filters = {}) {
   return axios.get(`${BASE_URL}/leave/calendar?${params}`, auth());
 }
 
+export async function getDepartments() {
+  return axios.get(`${BASE_URL}/departments`, auth());
+}
+
+export async function getTeams(departmentId) {
+  const query = departmentId ? `?departmentId=${departmentId}` : '';
+  return axios.get(`${BASE_URL}/teams${query}`, auth());
+}
+
+export async function getLeaveTypes() {
+  return axios.get(`${BASE_URL}/leave/types`, auth());
+}
+
 // ── Timesheets ───────────────────────────────────────────────────────────────
 
 export async function getAllTimesheets() {

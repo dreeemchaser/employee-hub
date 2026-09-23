@@ -2,8 +2,10 @@ package employeehub.controller;
 
 import employeehub.dto.ApiResponse;
 import employeehub.dto.LeaveBalanceResponse;
+import employeehub.dto.LeaveForecastResponse;
 import employeehub.dto.LeaveRequestDto;
 import employeehub.dto.LeaveRequestResponse;
+import employeehub.dto.LeaveTypeSummary;
 import employeehub.service.EmployeeService;
 import employeehub.service.LeaveService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -16,6 +18,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -88,6 +91,20 @@ public class LeaveController {
         return ResponseEntity.ok(ApiResponse.ok(LeaveBalanceResponse.from(leaveService.getMyBalances(employee.getId()))));
     }
 
+    @GetMapping("/balances/forecast")
+    @Operation(summary = "Project remaining leave at cycle end, including pending requests")
+    public ResponseEntity<ApiResponse<List<LeaveForecastResponse>>> getForecast(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        var employee = employeeService.getByEmail(userDetails.getUsername());
+        return ResponseEntity.ok(ApiResponse.ok(leaveService.getForecast(employee.getId())));
+    }
+
+    @GetMapping("/types")
+    @Operation(summary = "List leave types for filters and apply forms")
+    public ResponseEntity<ApiResponse<List<LeaveTypeSummary>>> getLeaveTypes() {
+        return ResponseEntity.ok(ApiResponse.ok(LeaveTypeSummary.from(leaveService.getLeaveTypes())));
+    }
+
     @GetMapping("/calendar")
     @Operation(summary = "Get approved leaves for a given month (team calendar)")
     public ResponseEntity<ApiResponse<List<LeaveRequestResponse>>> getCalendar(
@@ -101,5 +118,16 @@ public class LeaveController {
         var requester = employeeService.getByEmail(userDetails.getUsername());
         return ResponseEntity.ok(ApiResponse.ok(LeaveRequestResponse.from(
                 leaveService.getCalendar(requester, year, month, leaveTypeId, employeeId, departmentId, teamId))));
+    }
+
+    @GetMapping("/conflicts")
+    @Operation(summary = "Approved team leave overlapping a date range (busy-period preview)")
+    public ResponseEntity<ApiResponse<List<LeaveRequestResponse>>> getConflicts(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam LocalDate startDate,
+            @RequestParam LocalDate endDate) {
+        var requester = employeeService.getByEmail(userDetails.getUsername());
+        return ResponseEntity.ok(ApiResponse.ok(LeaveRequestResponse.from(
+                leaveService.getConflicts(requester, startDate, endDate))));
     }
 }

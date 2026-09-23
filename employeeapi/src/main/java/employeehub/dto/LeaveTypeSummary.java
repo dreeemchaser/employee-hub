@@ -3,6 +3,8 @@ package employeehub.dto;
 import employeehub.domain.LeaveType;
 import lombok.Getter;
 
+import java.util.List;
+
 /**
  * Safe projection of {@link LeaveType} for embedding inside leave response
  * DTOs. Preserves the nested {@code {id, name, requiresDocumentation}} shape the
@@ -28,5 +30,9 @@ public class LeaveTypeSummary {
 
     public static LeaveTypeSummary of(LeaveType t) {
         return t != null ? new LeaveTypeSummary(t) : null;
+    }
+
+    public static List<LeaveTypeSummary> from(List<LeaveType> types) {
+        return types.stream().map(LeaveTypeSummary::new).toList();
     }
 }

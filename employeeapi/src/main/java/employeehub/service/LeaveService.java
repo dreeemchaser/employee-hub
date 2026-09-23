@@ -4,6 +4,7 @@ import employeehub.domain.*;
 import employeehub.domain.enums.LeaveStatus;
 import employeehub.domain.enums.NotificationType;
 import employeehub.domain.enums.Role;
+import employeehub.dto.LeaveForecastResponse;
 import employeehub.dto.LeaveRequestDto;
 import employeehub.exception.BusinessRuleException;
 import employeehub.exception.ResourceNotFoundException;
@@ -13,10 +14,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Clock;
+import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.time.DateTimeException;
 
 @Service
 @RequiredArgsConstructor
@@ -28,12 +31,17 @@ public class LeaveService {
     // Sick leave beyond this threshold flags a documentation requirement
     private static final int SICK_LEAVE_DOC_THRESHOLD = 3;
 
+    // Short annual leave with no team clash is approved without a manager step
+    private static final int AUTO_APPROVE_MAX_WORKING_DAYS = 2;
+    private static final String AUTO_APPROVE_LEAVE_TYPE = "Annual Leave";
+
     private final LeaveRequestRepository leaveRequestRepository;
     private final LeaveBalanceRepository leaveBalanceRepository;
     private final LeaveTypeRepository leaveTypeRepository;
     private final EmployeeRepository employeeRepository;
     private final NotificationService notificationService;
     private final AuditService auditService;
+    private final Clock clock;
 
     // ── Leave Requests ──────────────────────────────────────────────
 
@@ -60,9 +68,7 @@ public class LeaveService {
 
         // ── Annual leave: 14-day advance notice ──────────────────────
         if (leaveType.getName().equalsIgnoreCase("Annual Leave")) {
-            long daysUntilStart = LocalDate.now().until(start).getDays() +
-                    (long) LocalDate.now().until(start).getMonths() * 30 +
-                    (long) LocalDate.now().until(start).getYears() * 365;
+            long daysUntilStart = ChronoUnit.DAYS.between(LocalDate.now(clock), start);
             if (daysUntilStart < ANNUAL_LEAVE_NOTICE_DAYS) {
                 throw new IllegalArgumentException(
                     "Annual leave requires at least " + ANNUAL_LEAVE_NOTICE_DAYS +
@@ -124,6 +130,10 @@ public class LeaveService {
                     saved.getId(), null, "Employee confirmed documentation emailed to manager");
         }
 
+        if (isEligibleForAutoApproval(employee, leaveType, days, start, end)) {
+            return autoApprove(saved, employee);
+        }
+
         if (employee.getManager() != null) {
             notificationService.send(employee.getManager(),
                     "Leave Request Submitted",
@@ -150,7 +160,7 @@ public class LeaveService {
 
         request.setStatus(LeaveStatus.APPROVED);
         request.setApprovedBy(approver);
-        request.setApprovedAt(LocalDateTime.now());
+        request.setApprovedAt(LocalDateTime.now(clock));
         deductBalance(request);
         LeaveRequest saved = leaveRequestRepository.save(request);
 
@@ -170,7 +180,7 @@ public class LeaveService {
 
         request.setStatus(LeaveStatus.REJECTED);
         request.setApprovedBy(approver);
-        request.setApprovedAt(LocalDateTime.now());
+        request.setApprovedAt(LocalDateTime.now(clock));
         request.setRejectionReason(reason);
         LeaveRequest saved = leaveRequestRepository.save(request);
 
@@ -240,6 +250,46 @@ public class LeaveService {
                 firstDay, lastDay, requester.getId(), leaveTypeId);
     }
 
+    @Transactional(readOnly = true)
+    public List<LeaveRequest> getConflicts(Employee requester, LocalDate start, LocalDate end) {
+        if (requester == null) {
+            throw new IllegalArgumentException("Authenticated employee is required");
+        }
+        if (start == null || end == null) {
+            throw new IllegalArgumentException("Start date and end date are required");
+        }
+        if (end.isBefore(start)) {
+            throw new IllegalArgumentException("End date cannot be before start date");
+        }
+        if (requester.getTeam() == null) {
+            return List.of();
+        }
+        return leaveRequestRepository.findApprovedOverlappingForTeam(
+                requester.getTeam().getId(), start, end, requester.getId());
+    }
+
+    @Transactional(readOnly = true)
+    public List<LeaveForecastResponse> getForecast(String employeeId) {
+        LocalDate today = LocalDate.now(clock);
+        List<LeaveRequest> pending = leaveRequestRepository.findByEmployeeId(employeeId).stream()
+                .filter(request -> request.getStatus() == LeaveStatus.PENDING)
+                .toList();
+        return leaveBalanceRepository.findByEmployeeId(employeeId).stream()
+                .map(balance -> {
+                    BigDecimal pendingDays = pending.stream()
+                            .filter(request -> request.getLeaveType().getId().equals(balance.getLeaveType().getId()))
+                            .map(LeaveRequest::getTotalDays)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    return new LeaveForecastResponse(balance, pendingDays, today);
+                })
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<LeaveType> getLeaveTypes() {
+        return leaveTypeRepository.findAll();
+    }
+
     // ── Helpers ──────────────────────────────────────────────────────
 
     private void validateApprover(LeaveRequest request, Employee approver) {
@@ -276,6 +326,53 @@ public class LeaveService {
                 .filter(d -> d.getDayOfWeek().getValue() < 6)
                 .count();
         return BigDecimal.valueOf(days);
+    }
+
+    /**
+     * Annual leave of two working days or fewer is approved immediately when
+     * nobody else on the same team already has approved leave on those dates.
+     * Anything else (sick/maternity, documentation-required types, or a busy
+     * team) stays PENDING for the manager.
+     */
+    private boolean isEligibleForAutoApproval(Employee employee, LeaveType leaveType,
+                                              BigDecimal days, LocalDate start, LocalDate end) {
+        if (!AUTO_APPROVE_LEAVE_TYPE.equalsIgnoreCase(leaveType.getName())) {
+            return false;
+        }
+        if (Boolean.TRUE.equals(leaveType.getRequiresDocumentation())) {
+            return false;
+        }
+        if (days.compareTo(BigDecimal.valueOf(AUTO_APPROVE_MAX_WORKING_DAYS)) > 0) {
+            return false;
+        }
+        if (employee.getTeam() == null) {
+            return true;
+        }
+        return leaveRequestRepository.findApprovedOverlappingForTeam(
+                employee.getTeam().getId(), start, end, employee.getId()).isEmpty();
+    }
+
+    private LeaveRequest autoApprove(LeaveRequest request, Employee employee) {
+        request.setStatus(LeaveStatus.APPROVED);
+        request.setApprovedBy(employee);
+        request.setApprovedAt(LocalDateTime.now(clock));
+        deductBalance(request);
+        LeaveRequest saved = leaveRequestRepository.save(request);
+
+        notificationService.send(employee,
+                "Leave Request Auto-Approved",
+                "Your " + request.getLeaveType().getName() + " request was approved automatically "
+                        + "(two working days or fewer, no team clash).",
+                NotificationType.LEAVE, "LeaveRequest", saved.getId());
+        if (employee.getManager() != null) {
+            notificationService.send(employee.getManager(),
+                    "Leave Auto-Approved",
+                    employee.getFirstName() + " " + employee.getLastName()
+                            + " had a short annual-leave request approved automatically",
+                    NotificationType.LEAVE, "LeaveRequest", saved.getId());
+        }
+        auditService.log(employee, "AUTO_APPROVE", "LeaveRequest", saved.getId(), "PENDING", "APPROVED");
+        return saved;
     }
 
     private Employee findEmployee(String id) {

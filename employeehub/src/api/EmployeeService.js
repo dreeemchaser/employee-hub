@@ -221,6 +221,19 @@ export async function getLeaveCalendar(year, month, filters = {}) {
     return axios.get(`${BASE_URL}/leave/calendar?${params}`, authHeaders());
 }
 
+export async function getLeaveForecast() {
+    return axios.get(`${BASE_URL}/leave/balances/forecast`, authHeaders());
+}
+
+export async function getLeaveConflicts(startDate, endDate) {
+    const params = new URLSearchParams({ startDate, endDate });
+    return axios.get(`${BASE_URL}/leave/conflicts?${params}`, authHeaders());
+}
+
+export async function getLeaveTypes() {
+    return axios.get(`${BASE_URL}/leave/types`, authHeaders());
+}
+
 // ── Salary Increase Requests ──────────────────────────────────────────────────
 
 export async function getMyIncreaseRequests() {

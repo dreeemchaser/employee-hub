@@ -15,13 +15,17 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Optional;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
 class LeaveServiceTest {
@@ -32,6 +36,7 @@ class LeaveServiceTest {
     @Mock EmployeeRepository employeeRepository;
     @Mock NotificationService notificationService;
     @Mock AuditService auditService;
+    @Mock Clock clock;
 
     @InjectMocks LeaveService leaveService;
 
@@ -43,6 +48,10 @@ class LeaveServiceTest {
 
     @BeforeEach
     void setUp() {
+        ZoneId zone = ZoneId.of("Africa/Johannesburg");
+        lenient().when(clock.getZone()).thenReturn(zone);
+        lenient().when(clock.instant()).thenReturn(Instant.now());
+
         manager = new Employee();
         manager.setId("mgr-1");
         manager.setRole(Role.MANAGER);
@@ -275,4 +284,100 @@ class LeaveServiceTest {
                 .hasMessageContaining("only view their own");
     }
 
+    @Test
+    void submit_autoApprovesShortAnnualLeaveWhenTeamIsQuiet() {
+        Team team = new Team();
+        team.setId(9L);
+        employee.setTeam(team);
+        dto.setEndDate(dto.getStartDate());
+
+        when(employeeRepository.findById("emp-1")).thenReturn(Optional.of(employee));
+        when(leaveTypeRepository.findById(1L)).thenReturn(Optional.of(leaveType));
+        when(leaveBalanceRepository.findByEmployeeIdAndLeaveTypeId("emp-1", 1L)).thenReturn(Optional.of(balance));
+        when(leaveRequestRepository.findOverlapping(eq("emp-1"), any(), any())).thenReturn(List.of());
+        when(leaveRequestRepository.findApprovedOverlappingForTeam(eq(9L), any(), any(), eq("emp-1")))
+                .thenReturn(List.of());
+        when(leaveRequestRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        LeaveRequest result = leaveService.submit("emp-1", dto);
+
+        assertThat(result.getStatus()).isEqualTo(LeaveStatus.APPROVED);
+        assertThat(result.getApprovedBy()).isEqualTo(employee);
+        verify(auditService).log(eq(employee), eq("AUTO_APPROVE"), eq("LeaveRequest"), any(), eq("PENDING"), eq("APPROVED"));
+        verify(notificationService).send(eq(employee), contains("Auto-Approved"), anyString(), any(), anyString(), any());
+        verify(notificationService).send(eq(manager), contains("Auto-Approved"), anyString(), any(), anyString(), any());
+    }
+
+    @Test
+    void submit_staysPendingWhenTeammateAlreadyOnLeave() {
+        Team team = new Team();
+        team.setId(9L);
+        employee.setTeam(team);
+        dto.setEndDate(dto.getStartDate());
+
+        LeaveRequest clash = new LeaveRequest();
+        clash.setId("other-req");
+
+        when(employeeRepository.findById("emp-1")).thenReturn(Optional.of(employee));
+        when(leaveTypeRepository.findById(1L)).thenReturn(Optional.of(leaveType));
+        when(leaveBalanceRepository.findByEmployeeIdAndLeaveTypeId("emp-1", 1L)).thenReturn(Optional.of(balance));
+        when(leaveRequestRepository.findOverlapping(eq("emp-1"), any(), any())).thenReturn(List.of());
+        when(leaveRequestRepository.findApprovedOverlappingForTeam(eq(9L), any(), any(), eq("emp-1")))
+                .thenReturn(List.of(clash));
+        when(leaveRequestRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        LeaveRequest result = leaveService.submit("emp-1", dto);
+
+        assertThat(result.getStatus()).isEqualTo(LeaveStatus.PENDING);
+        verify(auditService, never()).log(any(), eq("AUTO_APPROVE"), any(), any(), any(), any());
+        verify(notificationService).send(eq(manager), contains("Submitted"), anyString(), any(), anyString(), any());
+    }
+
+    @Test
+    void getForecast_subtractsPendingAndFlagsUnusedLeave() {
+        LocalDate today = LocalDate.of(2026, 11, 1);
+        lenient().when(clock.getZone()).thenReturn(ZoneId.of("UTC"));
+        lenient().when(clock.instant()).thenReturn(today.atStartOfDay(ZoneId.of("UTC")).toInstant());
+
+        balance.setCycleEndDate(LocalDate.of(2026, 12, 15));
+        balance.setRemainingDays(BigDecimal.valueOf(10));
+
+        LeaveRequest pending = new LeaveRequest();
+        pending.setLeaveType(leaveType);
+        pending.setStatus(LeaveStatus.PENDING);
+        pending.setTotalDays(BigDecimal.valueOf(2));
+
+        when(leaveRequestRepository.findByEmployeeId("emp-1")).thenReturn(List.of(pending));
+        when(leaveBalanceRepository.findByEmployeeId("emp-1")).thenReturn(List.of(balance));
+
+        var forecast = leaveService.getForecast("emp-1");
+
+        assertThat(forecast).hasSize(1);
+        assertThat(forecast.get(0).getPendingDays()).isEqualByComparingTo("2");
+        assertThat(forecast.get(0).getProjectedYearEndDays()).isEqualByComparingTo("8");
+        assertThat(forecast.get(0).isUnusedLeaveAtRisk()).isTrue();
+        assertThat(forecast.get(0).getSuggestion()).contains("still unused");
+    }
+
+    @Test
+    void getConflicts_queriesCallersTeamExcludingSelf() {
+        Team team = new Team();
+        team.setId(4L);
+        employee.setTeam(team);
+        when(leaveRequestRepository.findApprovedOverlappingForTeam(
+                eq(4L), eq(LocalDate.of(2026, 6, 1)), eq(LocalDate.of(2026, 6, 5)), eq("emp-1")))
+                .thenReturn(List.of());
+
+        leaveService.getConflicts(employee, LocalDate.of(2026, 6, 1), LocalDate.of(2026, 6, 5));
+
+        verify(leaveRequestRepository).findApprovedOverlappingForTeam(
+                4L, LocalDate.of(2026, 6, 1), LocalDate.of(2026, 6, 5), "emp-1");
+    }
+
+    @Test
+    void getConflicts_whenEndBeforeStart_throws() {
+        assertThatThrownBy(() -> leaveService.getConflicts(employee, LocalDate.of(2026, 6, 10), LocalDate.of(2026, 6, 1)))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("End date cannot be before start date");
+    }
 }

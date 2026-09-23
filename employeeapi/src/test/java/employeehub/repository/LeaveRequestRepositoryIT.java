@@ -144,6 +144,25 @@ class LeaveRequestRepositoryIT extends AbstractRepositoryIT {
         assertThat(results.get(0).getEmployee().getId()).isEqualTo(report.getId());
     }
 
+    @Test
+    void findApprovedOverlappingForTeam_excludesSelfAndOtherTeams() {
+        Department otherDept = em.persist(EntityFactory.department("Other"));
+        Team otherTeam = em.persist(EntityFactory.team("Other team", otherDept));
+        Employee outsider = EntityFactory.employee("EMP-003", "out@x.com", otherDept, otherTeam);
+        em.persist(outsider);
+
+        persist(employee, LocalDate.of(2026, 6, 1), LocalDate.of(2026, 6, 3), LeaveStatus.APPROVED);
+        persist(report, LocalDate.of(2026, 6, 2), LocalDate.of(2026, 6, 4), LeaveStatus.APPROVED);
+        persist(outsider, LocalDate.of(2026, 6, 2), LocalDate.of(2026, 6, 3), LeaveStatus.APPROVED);
+
+        List<LeaveRequest> clashes = leaveRequestRepository.findApprovedOverlappingForTeam(
+                report.getTeam().getId(),
+                LocalDate.of(2026, 6, 1), LocalDate.of(2026, 6, 5),
+                report.getId());
+
+        assertThat(clashes).extracting(lr -> lr.getEmployee().getEmail()).containsExactly("mgr@x.com");
+    }
+
     private void persist(Employee owner, LocalDate start, LocalDate end, LeaveStatus status) {
         LeaveRequest lr = EntityFactory.leaveRequest(owner, annual, start, end);
         lr.setStatus(status);

@@ -83,4 +83,37 @@ class LeaveControllerTest extends WebMvcTestSupport {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data").isArray());
     }
+
+    @Test
+    @WithMockUser(username = "user@employeehub.com", roles = "EMPLOYEE")
+    void forecast_asEmployee_returnsOk() throws Exception {
+        stubCaller();
+        when(leaveService.getForecast("emp-1")).thenReturn(List.of());
+
+        mockMvc.perform(get("/leave/balances/forecast"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+    }
+
+    @Test
+    @WithMockUser(username = "user@employeehub.com", roles = "EMPLOYEE")
+    void conflicts_asEmployee_returnsOk() throws Exception {
+        stubCaller();
+        when(leaveService.getConflicts(any(), any(), any())).thenReturn(List.of());
+
+        mockMvc.perform(get("/leave/conflicts")
+                        .param("startDate", "2026-06-01")
+                        .param("endDate", "2026-06-05"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data").isArray());
+    }
+
+    @Test
+    @WithMockUser(username = "user@employeehub.com", roles = "EMPLOYEE")
+    void types_asEmployee_returnsOk() throws Exception {
+        when(leaveService.getLeaveTypes()).thenReturn(List.of());
+
+        mockMvc.perform(get("/leave/types"))
+                .andExpect(status().isOk());
+    }
 }

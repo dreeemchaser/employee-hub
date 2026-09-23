@@ -100,6 +100,7 @@
 |--------|----------|--------|-------------|
 | GET | `/leave/balances/me` | ALL | Get own leave balances |
 | GET | `/leave/balances/{employeeId}` | MANAGER, HR_ADMIN, SUPER_ADMIN | Get employee leave balances |
+| GET | `/leave/balances/forecast` | ALL (authenticated) | Project own remaining leave at cycle end, factoring in pending requests |
 
 ### Leave Requests
 
@@ -113,6 +114,14 @@
 | PUT | `/leave/requests/{id}/approve` | MANAGER, HR_ADMIN | Approve leave request |
 | PUT | `/leave/requests/{id}/reject` | MANAGER, HR_ADMIN | Reject leave request |
 | PUT | `/leave/requests/{id}/cancel` | ALL | Cancel own leave request |
+
+### Team Leave Calendar
+
+| Method | Endpoint | Access | Description |
+|--------|----------|--------|-------------|
+| GET | `/leave/types` | ALL (authenticated) | List leave types for filters and apply forms |
+| GET | `/leave/calendar` | EMPLOYEE, MANAGER, HR_ADMIN, SUPER_ADMIN | Approved leave for a given month, filterable by leave type / employee / department / team |
+| GET | `/leave/conflicts` | EMPLOYEE, MANAGER, HR_ADMIN, SUPER_ADMIN | Approved team leave overlapping a `startDate`/`endDate` range, excluding the caller (busy-period preview) |
 
 ---
 

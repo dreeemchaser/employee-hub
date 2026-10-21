@@ -1981,6 +1981,77 @@
         }
       }
     },
+    "/notifications/preferences": {
+      "get": {
+        "tags": [
+          "Notifications"
+        ],
+        "summary": "Get current employee's notification preferences",
+        "operationId": "getPreferences",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseListNotificationPreferenceResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notifications/preferences/{type}": {
+      "patch": {
+        "tags": [
+          "Notifications"
+        ],
+        "summary": "Update email preference for a notification type",
+        "operationId": "updatePreference",
+        "parameters": [
+          {
+            "name": "type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "LEAVE",
+                "TIMESHEET",
+                "SALARY",
+                "DOCUMENT",
+                "GENERAL",
+                "ATTENDANCE",
+                "OFFBOARDING"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotificationPreferenceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseNotificationPreferenceResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/notifications/my": {
       "get": {
         "tags": [
@@ -3686,6 +3757,68 @@
             "format": "date-time"
           }
         }
+      },
+      "ApiResponseListNotificationPreferenceResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationPreferenceResponse"
+            }
+          }
+        }
+      },
+      "ApiResponseNotificationPreferenceResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/NotificationPreferenceResponse"
+          }
+        }
+      },
+      "NotificationPreferenceResponse": {
+        "type": "object",
+        "properties": {
+          "notificationType": {
+            "type": "string",
+            "enum": [
+              "LEAVE",
+              "TIMESHEET",
+              "SALARY",
+              "DOCUMENT",
+              "GENERAL",
+              "ATTENDANCE",
+              "OFFBOARDING"
+            ]
+          },
+          "emailEnabled": {
+            "type": "boolean"
+          }
+        }
+      },
+      "NotificationPreferenceRequest": {
+        "type": "object",
+        "properties": {
+          "emailEnabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "emailEnabled"
+        ]
       },
       "UpdateMeRequest": {
         "type": "object",

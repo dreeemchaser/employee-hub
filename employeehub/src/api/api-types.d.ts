@@ -849,6 +849,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/notifications/preferences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get current employee's notification preferences */
+        get: operations["getPreferences"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/notifications/preferences/{type}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update email preference for a notification type */
+        patch: operations["updatePreference"];
+        trace?: never;
+    };
     "/notifications/my": {
         parameters: {
             query?: never;
@@ -1571,6 +1605,24 @@ export interface components {
             relatedEntityId?: string;
             /** Format: date-time */
             createdAt?: string;
+        };
+        ApiResponseListNotificationPreferenceResponse: {
+            success?: boolean;
+            message?: string;
+            data?: components["schemas"]["NotificationPreferenceResponse"][];
+        };
+        ApiResponseNotificationPreferenceResponse: {
+            success?: boolean;
+            message?: string;
+            data?: components["schemas"]["NotificationPreferenceResponse"];
+        };
+        NotificationPreferenceResponse: {
+            /** @enum {string} */
+            notificationType?: "LEAVE" | "TIMESHEET" | "SALARY" | "DOCUMENT" | "GENERAL" | "ATTENDANCE" | "OFFBOARDING";
+            emailEnabled?: boolean;
+        };
+        NotificationPreferenceRequest: {
+            emailEnabled: boolean;
         };
         UpdateMeRequest: {
             firstName?: string;
@@ -3209,6 +3261,52 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ApiResponseListPerformanceGoalResponse"];
+                };
+            };
+        };
+    };
+    getPreferences: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseListNotificationPreferenceResponse"];
+                };
+            };
+        };
+    };
+    updatePreference: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                type: "LEAVE" | "TIMESHEET" | "SALARY" | "DOCUMENT" | "GENERAL" | "ATTENDANCE" | "OFFBOARDING";
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NotificationPreferenceRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseNotificationPreferenceResponse"];
                 };
             };
         };

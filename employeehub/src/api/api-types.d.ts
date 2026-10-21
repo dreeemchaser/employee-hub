@@ -3356,6 +3356,7 @@ export interface operations {
             query: {
                 year: number;
                 month: number;
+                leaveTypeId?: number;
             };
             header?: never;
             path?: never;

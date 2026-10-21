@@ -201,10 +201,21 @@ public class LeaveService {
 
     // ── Leave Calendar ───────────────────────────────────────────────
 
-    public List<LeaveRequest> getCalendar(int year, int month) {
+    @Transactional(readOnly = true)
+    public List<LeaveRequest> getCalendar(int year, int month, Long leaveTypeId, String requesterId) {
         LocalDate firstDay = LocalDate.of(year, month, 1);
         LocalDate lastDay  = firstDay.withDayOfMonth(firstDay.lengthOfMonth());
-        return leaveRequestRepository.findApprovedInMonth(firstDay, lastDay);
+        Employee requester = employeeRepository.findById(requesterId)
+                .orElseThrow(() -> new ResourceNotFoundException("Employee not found: " + requesterId));
+        String employeeId = null;
+        String managerId = null;
+        if (requester.getRole() == Role.MANAGER) {
+            managerId = requesterId;
+        } else if (requester.getRole() != Role.HR_ADMIN && requester.getRole() != Role.SUPER_ADMIN) {
+            employeeId = requesterId;
+        }
+        return leaveRequestRepository.findApprovedInRange(
+                firstDay, lastDay, employeeId, managerId, leaveTypeId);
     }
 
     // ── Helpers ──────────────────────────────────────────────────────

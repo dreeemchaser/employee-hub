@@ -220,8 +220,10 @@ export async function updateNotificationPreference(type, emailEnabled) {
 
 // ── Leave Calendar ────────────────────────────────────────────────────────────
 
-export async function getLeaveCalendar(year, month) {
-    return axios.get(`${BASE_URL}/leave/calendar?year=${year}&month=${month}`, authHeaders());
+export async function getLeaveCalendar(year, month, leaveTypeId) {
+    const params = new URLSearchParams({ year, month });
+    if (leaveTypeId) params.append('leaveTypeId', leaveTypeId);
+    return axios.get(`${BASE_URL}/leave/calendar?${params}`, authHeaders());
 }
 
 // ── Salary Increase Requests ──────────────────────────────────────────────────

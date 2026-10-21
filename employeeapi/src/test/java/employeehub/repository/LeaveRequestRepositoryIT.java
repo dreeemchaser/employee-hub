@@ -132,6 +132,26 @@ class LeaveRequestRepositoryIT extends AbstractRepositoryIT {
         assertThat(june.get(0).getStartDate()).isEqualTo(LocalDate.of(2026, 5, 28));
     }
 
+    @Test
+    void findApprovedInRange_scopesByEmployeeAndLeaveType() {
+        LeaveType sick = em.persist(EntityFactory.leaveType("Sick"));
+        LeaveRequest own = EntityFactory.leaveRequest(employee, sick,
+                LocalDate.of(2026, 6, 10), LocalDate.of(2026, 6, 12));
+        own.setStatus(LeaveStatus.APPROVED);
+        em.persist(own);
+        LeaveRequest other = EntityFactory.leaveRequest(report, annual,
+                LocalDate.of(2026, 6, 10), LocalDate.of(2026, 6, 12));
+        other.setStatus(LeaveStatus.APPROVED);
+        em.persist(other);
+        em.flush();
+
+        List<LeaveRequest> filtered = leaveRequestRepository.findApprovedInRange(
+                LocalDate.of(2026, 6, 1), LocalDate.of(2026, 6, 30),
+                employee.getId(), null, sick.getId());
+
+        assertThat(filtered).extracting(LeaveRequest::getEmployee).containsExactly(employee);
+    }
+
     // ── countByDepartmentAndStatus ────────────────────────────────────
 
     @Test

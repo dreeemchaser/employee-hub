@@ -2,8 +2,10 @@ package employeehub.service;
 
 import employeehub.domain.Document;
 import employeehub.domain.Employee;
+import employeehub.domain.enums.DocumentAccessLevel;
 import employeehub.domain.enums.DocumentStatus;
 import employeehub.domain.enums.DocumentType;
+import employeehub.domain.enums.Role;
 import employeehub.exception.ResourceNotFoundException;
 import employeehub.repository.DocumentRepository;
 import employeehub.repository.EmployeeRepository;
@@ -68,6 +70,7 @@ class DocumentServiceTest {
         assertThat(result.getDocumentType()).isEqualTo(DocumentType.CONTRACT);
         assertThat(result.getFileUrl()).isEqualTo("stored-uuid.pdf");
         assertThat(result.getExpiryDate()).isNull();
+        assertThat(result.getAccessLevel()).isEqualTo(DocumentAccessLevel.STANDARD);
     }
 
     @Test
@@ -83,6 +86,19 @@ class DocumentServiceTest {
         Document result = documentService.upload("emp-1", DocumentType.ID, file, expiry);
 
         assertThat(result.getExpiryDate()).isEqualTo(expiry);
+    }
+
+    @Test
+    void upload_payslipDefaultsToPayrollOnly() {
+        MockMultipartFile file = new MockMultipartFile("file", "payslip.pdf",
+                "application/pdf", "content".getBytes());
+        when(employeeRepository.findById("emp-1")).thenReturn(Optional.of(employee));
+        when(photoService.save(any())).thenReturn("stored-uuid.pdf");
+        when(documentRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        Document result = documentService.upload("emp-1", DocumentType.PAYSLIP, file, null);
+
+        assertThat(result.getAccessLevel()).isEqualTo(DocumentAccessLevel.PAYROLL_ONLY);
     }
 
     @Test
@@ -116,7 +132,31 @@ class DocumentServiceTest {
     void download_shouldThrow_whenDocumentNotFound() {
         when(documentRepository.findById("missing")).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> documentService.download("missing"))
+        assertThatThrownBy(() -> documentService.download("missing", "emp-1"))
                 .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    void download_shouldRejectAnotherEmployee() {
+        Employee other = new Employee();
+        other.setId("emp-2");
+        when(documentRepository.findById("doc-1")).thenReturn(Optional.of(document));
+        when(employeeRepository.findById("emp-2")).thenReturn(Optional.of(other));
+
+        assertThatThrownBy(() -> documentService.download("doc-1", "emp-2"))
+                .isInstanceOf(ResourceNotFoundException.class);
+        verifyNoInteractions(photoService);
+    }
+
+    @Test
+    void download_shouldAllowHrAdminAndAuditAccess() {
+        hrAdmin.setRole(Role.HR_ADMIN);
+        when(documentRepository.findById("doc-1")).thenReturn(Optional.of(document));
+        when(employeeRepository.findById("hr-1")).thenReturn(Optional.of(hrAdmin));
+        when(photoService.load("stored-uuid.pdf")).thenReturn("content".getBytes());
+
+        assertThat(documentService.download("doc-1", "hr-1")).containsExactly("content".getBytes());
+        verify(auditService).log(eq(hrAdmin), eq("DOWNLOAD"), eq("Document"),
+                eq("doc-1"), isNull(), anyString());
     }
 }

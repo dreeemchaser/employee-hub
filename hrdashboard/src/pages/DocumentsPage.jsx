@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import TopBar from '../components/TopBar';
 import Spinner from '../components/Spinner';
-import { getAllDocuments, verifyDocument } from '../api/HrService';
+import { getAllDocuments, verifyDocument, updateDocumentAccessLevel } from '../api/HrService';
 
 const STATUS_COLOR = { VERIFIED: 'verified', PENDING: 'pending', REJECTED: 'rejected' };
 
@@ -44,6 +44,16 @@ export default function DocumentsPage() {
     }
   };
 
+  const handleAccessLevel = async (id, accessLevel) => {
+    setActing(id);
+    try {
+      await updateDocumentAccessLevel(id, accessLevel);
+      setDocuments(prev => prev.map(d => d.id === id ? { ...d, accessLevel } : d));
+    } finally {
+      setActing(null);
+    }
+  };
+
   return (
     <>
       <TopBar title='Documents' breadcrumb='HR Admin / Documents' />
@@ -66,13 +76,14 @@ export default function DocumentsPage() {
                     <th>File</th>
                     <th>Uploaded</th>
                     <th>Expires</th>
+                    <th>Visibility</th>
                     <th>Status</th>
                     <th></th>
                   </tr>
                 </thead>
                 <tbody>
                   {visibleDocuments.length === 0 ? (
-                    <tr><td colSpan={7} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>
+                    <tr><td colSpan={8} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>
                       {expiringOnly ? 'No expiring or expired documents.' : 'No documents found.'}
                     </td></tr>
                   ) : visibleDocuments.map(d => (
@@ -90,6 +101,19 @@ export default function DocumentsPage() {
                         ) : (
                           <span style={{ color: 'var(--text-muted)' }}>—</span>
                         )}
+                      </td>
+                      <td>
+                        <select
+                          value={d.accessLevel ?? 'STANDARD'}
+                          disabled={acting === d.id}
+                          onChange={e => handleAccessLevel(d.id, e.target.value)}
+                          aria-label={`Visibility for ${d.fileName}`}
+                          style={{ fontSize: '0.78rem' }}
+                        >
+                          <option value='STANDARD'>Standard</option>
+                          <option value='CONFIDENTIAL'>Confidential</option>
+                          <option value='PAYROLL_ONLY'>Payroll only</option>
+                        </select>
                       </td>
                       <td><span className={`badge badge--${STATUS_COLOR[d.status] ?? 'pending'}`}>{d.status}</span></td>
                       <td>

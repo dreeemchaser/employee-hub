@@ -60,6 +60,7 @@ Chronological record of work shipped to `master` during this build cycle. ✅ = 
 | 17 | Employee offboarding workflow (B.6 **complete**) | ✅ **DONE** | PR #21: dedicated `POST /employees/{id}/offboard`, distinct from the generic `PATCH /employees/{id}/status`. Cancels `PENDING` leave requests, deactivates active benefits, notifies the employee's manager, and logs the transition via `AuditService`; refuses to re-run on an already-terminated employee. Verified against live Postgres (403/400/200/409 paths, manager notification, audit log attribution all confirmed). Closes B.6. |
 | 18 | API client type generation (B.4) | ✅ **DONE** | PR #22: `openapi-typescript` generates a types-only `api-types.d.ts` in both frontends (no runtime code, zero new deps); existing hand-written axios calls annotated with JSDoc against the generated types; `npm run spec:update` refreshes spec + types. Fixed a Springdoc `Page<T>` type-collapsing bug for the audit log endpoint along the way. |
 | 19 | Document expiration tracking + renewal reminders (Feature 7, sub-item 1) | ✅ **DONE** | PR #23: nullable `expiryDate` on `Document` (expiry is orthogonal to verification status, not a new `DocumentStatus`); `DocumentExpiryReminderService` scheduled job emails employees at 30/14/7 days before expiry (idempotent via persisted `reminderSentAt30/14/7` timestamps) and notifies all HR/Admin on verified-document expiry; dashboard widgets in both frontends show expiring documents. Scope explicitly excludes DocuSign, OCR, and templates (Feature 7 sub-items 2-4). |
+| 20 | Document access control & audit trail (Feature 8) | ✅ **DONE** | Added `STANDARD`/`CONFIDENTIAL`/`PAYROLL_ONLY` visibility, owner/admin/payroll object-level authorization for downloads, HR-only visibility changes, and audit events for uploads/downloads/access changes. Existing payslips are migrated to `PAYROLL_ONLY`. |
 
 ---
 
@@ -383,8 +384,8 @@ Independent of the longer roadmap, these deliver the most value relative to effo
 ### Feature 8: Document Access Control & Audit Trail
 
 **Current State:**  
-- All documents accessible to user and HR
-- Limited audit logging for document actions
+- ✅ **MVP DONE (see Progress Log #20)** — document visibility levels, object-level download authorization, HR visibility controls, and document access audit events are shipped.
+- Digital signatures, OCR classification, secure sharing links, and archival retention remain separate future work.
 
 **Proposed Changes:**
 

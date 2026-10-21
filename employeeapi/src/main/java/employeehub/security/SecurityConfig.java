@@ -54,7 +54,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/attendance/my").authenticated()
                         .requestMatchers(HttpMethod.GET, "/attendance").hasAnyRole("HR_ADMIN", "SUPER_ADMIN", "MANAGER")
                         .requestMatchers(HttpMethod.GET, "/documents").hasAnyRole("HR_ADMIN", "SUPER_ADMIN")
-                        .requestMatchers("/documents/{id}/verify", "/documents/{id}/reject").hasAnyRole("HR_ADMIN", "SUPER_ADMIN")
+                        .requestMatchers("/documents/{id}/verify", "/documents/{id}/reject",
+                                "/documents/{id}/access-level").hasAnyRole("HR_ADMIN", "SUPER_ADMIN")
                         .requestMatchers("/audit-logs/**").hasAnyRole("HR_ADMIN", "SUPER_ADMIN")
                         .requestMatchers("/dashboard/**").hasAnyRole("HR_ADMIN", "SUPER_ADMIN")
                         .requestMatchers(HttpMethod.GET, "/salary/payslips/my").authenticated()

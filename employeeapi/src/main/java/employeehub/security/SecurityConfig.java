@@ -54,6 +54,12 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/attendance/my").authenticated()
                         .requestMatchers(HttpMethod.GET, "/attendance").hasAnyRole("HR_ADMIN", "SUPER_ADMIN", "MANAGER")
                         .requestMatchers(HttpMethod.GET, "/documents").hasAnyRole("HR_ADMIN", "SUPER_ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/tax-brackets").hasAnyRole(
+                                "PAYROLL_ADMIN", "HR_ADMIN", "SUPER_ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/tax-brackets").hasAnyRole(
+                                "PAYROLL_ADMIN", "HR_ADMIN", "SUPER_ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/tax-brackets/**").hasAnyRole(
+                                "PAYROLL_ADMIN", "HR_ADMIN", "SUPER_ADMIN")
                         .requestMatchers(HttpMethod.GET, "/notifications/preferences",
                                 "/notifications/preferences/**").authenticated()
                         .requestMatchers(HttpMethod.PATCH, "/notifications/preferences/**").authenticated()

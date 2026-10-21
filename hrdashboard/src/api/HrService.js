@@ -81,6 +81,19 @@ export async function updateDocumentAccessLevel(id, accessLevel) {
   return axios.patch(`${BASE_URL}/documents/${id}/access-level`, { accessLevel }, auth());
 }
 
+export async function getTaxBrackets(taxYear) {
+  const query = taxYear ? `?taxYear=${taxYear}&size=100&sort=minIncome,asc` : '?size=100&sort=taxYear,desc&sort=minIncome,asc';
+  return axios.get(`${BASE_URL}/tax-brackets${query}`, auth());
+}
+
+export async function createTaxBracket(bracket) {
+  return axios.post(`${BASE_URL}/tax-brackets`, bracket, auth());
+}
+
+export async function updateTaxBracket(id, bracket) {
+  return axios.put(`${BASE_URL}/tax-brackets/${id}`, bracket, auth());
+}
+
 // ── Audit Logs ───────────────────────────────────────────────────────────────
 
 /**

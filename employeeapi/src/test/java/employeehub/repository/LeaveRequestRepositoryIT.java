@@ -6,6 +6,7 @@ import employeehub.domain.LeaveRequest;
 import employeehub.domain.LeaveType;
 import employeehub.domain.Team;
 import employeehub.domain.enums.LeaveStatus;
+import employeehub.repository.support.DepartmentCountProjection;
 import employeehub.repository.support.EntityFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -129,6 +130,31 @@ class LeaveRequestRepositoryIT extends AbstractRepositoryIT {
 
         assertThat(june).hasSize(1);
         assertThat(june.get(0).getStartDate()).isEqualTo(LocalDate.of(2026, 5, 28));
+    }
+
+    // ── countByDepartmentAndStatus ────────────────────────────────────
+
+    @Test
+    void countByDepartmentAndStatus_groupsByEmployeesDepartment_forMatchingStatusOnly() {
+        persist(employee, LocalDate.of(2026, 4, 1), LocalDate.of(2026, 4, 2), LeaveStatus.PENDING);
+        persist(report, LocalDate.of(2026, 4, 3), LocalDate.of(2026, 4, 4), LeaveStatus.PENDING);
+        persist(report, LocalDate.of(2026, 4, 5), LocalDate.of(2026, 4, 6), LeaveStatus.APPROVED);
+
+        // employee and report share the same department (set up in setUp()).
+        List<DepartmentCountProjection> counts = leaveRequestRepository.countByDepartmentAndStatus(LeaveStatus.PENDING);
+
+        assertThat(counts).hasSize(1);
+        assertThat(counts.get(0).getDepartmentName()).isEqualTo("Dept");
+        assertThat(counts.get(0).getCount()).isEqualTo(2L);
+    }
+
+    @Test
+    void countByDepartmentAndStatus_whenNoRequestsMatchStatus_returnsEmpty() {
+        persist(employee, LocalDate.of(2026, 4, 1), LocalDate.of(2026, 4, 2), LeaveStatus.APPROVED);
+
+        List<DepartmentCountProjection> counts = leaveRequestRepository.countByDepartmentAndStatus(LeaveStatus.PENDING);
+
+        assertThat(counts).isEmpty();
     }
 
     private void persist(Employee owner, LocalDate start, LocalDate end, LeaveStatus status) {

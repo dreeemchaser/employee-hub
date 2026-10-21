@@ -4,10 +4,12 @@ import employeehub.domain.enums.DocumentStatus;
 import employeehub.domain.enums.LeaveStatus;
 import employeehub.domain.enums.TimesheetStatus;
 import employeehub.dto.ApiResponse;
+import employeehub.dto.DepartmentBreakdownEntry;
 import employeehub.repository.DocumentRepository;
 import employeehub.repository.EmployeeRepository;
 import employeehub.repository.LeaveRequestRepository;
 import employeehub.repository.TimesheetRepository;
+import employeehub.service.DashboardAggregationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -28,6 +31,7 @@ public class DashboardController {
     private final LeaveRequestRepository leaveRequestRepository;
     private final TimesheetRepository timesheetRepository;
     private final DocumentRepository documentRepository;
+    private final DashboardAggregationService dashboardAggregationService;
 
     @GetMapping("/stats")
     @Operation(summary = "Get dashboard stats (HR/Admin)")
@@ -46,5 +50,11 @@ public class DashboardController {
                 "pendingDocuments",   pendingDocuments
         );
         return ResponseEntity.ok(ApiResponse.ok(stats));
+    }
+
+    @GetMapping("/department-breakdown")
+    @Operation(summary = "Get pending leave/timesheet/document counts grouped by department (HR/Admin)")
+    public ResponseEntity<ApiResponse<List<DepartmentBreakdownEntry>>> getDepartmentBreakdown() {
+        return ResponseEntity.ok(ApiResponse.ok(dashboardAggregationService.getDepartmentBreakdown()));
     }
 }

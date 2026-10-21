@@ -7,6 +7,7 @@ import employeehub.domain.Team;
 import employeehub.domain.enums.DocumentStatus;
 import employeehub.domain.enums.DocumentType;
 import employeehub.domain.enums.Role;
+import employeehub.repository.support.DepartmentCountProjection;
 import employeehub.repository.support.EntityFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,10 +29,11 @@ class DocumentRepositoryIT extends AbstractRepositoryIT {
     DocumentRepository documentRepository;
 
     private Employee employee;
+    private Department dept;
 
     @BeforeEach
     void setUp() {
-        Department dept = em.persist(EntityFactory.department("Dept"));
+        dept = em.persist(EntityFactory.department("Dept"));
         Team team = em.persist(EntityFactory.team("Team", dept));
         employee = EntityFactory.employee("EMP-001", "doc-repo-it@x.com", dept, team);
         em.persist(employee);
@@ -137,5 +139,48 @@ class DocumentRepositoryIT extends AbstractRepositoryIT {
         List<Document> result = documentRepository.findNewlyExpiredVerified(DocumentStatus.VERIFIED, today);
 
         assertThat(result).isEmpty();
+    }
+
+    // ── countByDepartmentAndStatus ────────────────────────────────────
+
+    @Test
+    void countByDepartmentAndStatus_groupsByEmployeesDepartment_forMatchingStatusOnly() {
+        // A second department with its own employee + a PENDING document.
+        Department otherDept = em.persist(EntityFactory.department("Other"));
+        Team otherTeam = em.persist(EntityFactory.team("OtherTeam", otherDept));
+        Employee otherEmp = EntityFactory.employee("EMP-002", "other-doc@x.com", otherDept, otherTeam);
+        em.persist(otherEmp);
+
+        persistDoc(employee, DocumentStatus.PENDING);
+        persistDoc(employee, DocumentStatus.PENDING);
+        persistDoc(employee, DocumentStatus.VERIFIED); // different status, excluded
+        persistDoc(otherEmp, DocumentStatus.PENDING);
+        em.flush();
+
+        List<DepartmentCountProjection> counts =
+                documentRepository.countByDepartmentAndStatus(DocumentStatus.PENDING);
+
+        assertThat(counts)
+                .extracting(DepartmentCountProjection::getDepartmentName, DepartmentCountProjection::getCount)
+                .containsExactlyInAnyOrder(
+                        org.assertj.core.groups.Tuple.tuple("Dept", 2L),
+                        org.assertj.core.groups.Tuple.tuple("Other", 1L));
+    }
+
+    @Test
+    void countByDepartmentAndStatus_whenNoDocumentsMatchStatus_returnsEmpty() {
+        persistDoc(employee, DocumentStatus.VERIFIED);
+        em.flush();
+
+        List<DepartmentCountProjection> counts =
+                documentRepository.countByDepartmentAndStatus(DocumentStatus.PENDING);
+
+        assertThat(counts).isEmpty();
+    }
+
+    private void persistDoc(Employee owner, DocumentStatus status) {
+        Document d = EntityFactory.document(owner, DocumentType.ID);
+        d.setStatus(status);
+        em.persist(d);
     }
 }

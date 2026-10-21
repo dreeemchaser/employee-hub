@@ -156,6 +156,20 @@ export function getRole() {
     }
 }
 
+// The JWT `sub` claim is the employee's email (see JwtUtil.generateToken).
+// Used as a stable per-account key so client-side preferences (e.g. dashboard
+// layout in localStorage) don't leak between accounts on a shared browser.
+export function getAccountKey() {
+    const token = getToken();
+    if (!token) return 'anonymous';
+    try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        return (payload.sub ?? 'anonymous').toLowerCase();
+    } catch {
+        return 'anonymous';
+    }
+}
+
 export function isHrOrAdmin() {
     const role = getRole();
     return role === 'HR_ADMIN' || role === 'SUPER_ADMIN' || role === 'PAYROLL_ADMIN';

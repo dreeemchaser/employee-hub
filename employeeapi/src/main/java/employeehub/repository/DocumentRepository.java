@@ -2,6 +2,7 @@ package employeehub.repository;
 
 import employeehub.domain.Document;
 import employeehub.domain.enums.DocumentStatus;
+import employeehub.repository.support.DepartmentCountProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -28,4 +29,9 @@ public interface DocumentRepository extends JpaRepository<Document, String> {
     // that HR has not already been notified about (hrExpiryNotifiedAt IS NULL).
     @Query("SELECT d FROM Document d WHERE d.status = :status AND d.expiryDate = :today AND d.hrExpiryNotifiedAt IS NULL")
     List<Document> findNewlyExpiredVerified(@Param("status") DocumentStatus status, @Param("today") LocalDate today);
+
+    @Query("SELECT d.employee.department.name AS departmentName, COUNT(d) AS count " +
+           "FROM Document d WHERE d.status = :status " +
+           "GROUP BY d.employee.department.name")
+    List<DepartmentCountProjection> countByDepartmentAndStatus(@Param("status") DocumentStatus status);
 }

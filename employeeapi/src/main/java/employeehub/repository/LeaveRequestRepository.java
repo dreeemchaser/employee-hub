@@ -2,6 +2,7 @@ package employeehub.repository;
 
 import employeehub.domain.LeaveRequest;
 import employeehub.domain.enums.LeaveStatus;
+import employeehub.repository.support.DepartmentCountProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -38,4 +39,9 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Stri
             @Param("employeeId") String employeeId,
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate);
+
+    @Query("SELECT lr.employee.department.name AS departmentName, COUNT(lr) AS count " +
+           "FROM LeaveRequest lr WHERE lr.status = :status " +
+           "GROUP BY lr.employee.department.name")
+    List<DepartmentCountProjection> countByDepartmentAndStatus(@Param("status") LeaveStatus status);
 }

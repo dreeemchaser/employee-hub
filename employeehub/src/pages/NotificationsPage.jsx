@@ -1,6 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import TopBar from '../components/TopBar';
-import { getMyNotifications, markNotificationRead, markAllNotificationsRead } from '../api/EmployeeService';
+import {
+  getMyNotifications, markNotificationRead, markAllNotificationsRead,
+  getNotificationPreferences, updateNotificationPreference,
+} from '../api/EmployeeService';
 
 const TYPE_ICON = {
   LEAVE:     'bi-calendar-check',
@@ -8,17 +11,31 @@ const TYPE_ICON = {
   SALARY:    'bi-cash-coin',
   DOCUMENT:  'bi-folder2-open',
   SYSTEM:    'bi-bell',
+  GENERAL:   'bi-bell',
+  ATTENDANCE:'bi-clock',
+  OFFBOARDING:'bi-person-dash',
+};
+
+const TYPE_LABEL = {
+  LEAVE: 'Leave', TIMESHEET: 'Timesheets', SALARY: 'Salary',
+  DOCUMENT: 'Documents', GENERAL: 'General', ATTENDANCE: 'Attendance',
+  OFFBOARDING: 'Offboarding',
 };
 
 export default function NotificationsPage() {
   const [notifications, setNotifs] = useState([]);
   const [loading, setLoading]      = useState(true);
   const [marking, setMarking]      = useState(false);
+  const [preferences, setPreferences] = useState([]);
+  const [preferenceBusy, setPreferenceBusy] = useState(null);
 
   const load = useCallback(async () => {
     try {
-      const res = await getMyNotifications();
-      setNotifs(res.data?.data ?? []);
+      const [notificationRes, preferenceRes] = await Promise.all([
+        getMyNotifications(), getNotificationPreferences(),
+      ]);
+      setNotifs(notificationRes.data?.data ?? []);
+      setPreferences(preferenceRes.data?.data ?? []);
     } catch { /* silent */ } finally { setLoading(false); }
   }, []);
 
@@ -40,6 +57,16 @@ export default function NotificationsPage() {
   };
 
   const unread = notifications.filter(n => !n.isRead).length;
+
+  const handlePreference = async (type, enabled) => {
+    setPreferenceBusy(type);
+    try {
+      await updateNotificationPreference(type, enabled);
+      setPreferences(prev => prev.map(p => p.notificationType === type
+        ? { ...p, emailEnabled: enabled } : p));
+    } catch { /* keep the previous setting visible */ }
+    finally { setPreferenceBusy(null); }
+  };
 
   return (
     <>
@@ -99,6 +126,37 @@ export default function NotificationsPage() {
               ))}
             </div>
           )}
+        </div>
+        <div className='card' style={{ marginTop: '1rem' }}>
+          <div className='card__header'>
+            <span className='card__title'>Email preferences</span>
+          </div>
+          <div className='card__body'>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.82rem', marginBottom: '1rem' }}>
+              In-app notifications are always enabled. Choose which event types may also send email.
+            </p>
+            <div style={{ display: 'grid', gap: '0.65rem' }}>
+              {preferences.map(preference => (
+                <label key={preference.notificationType} style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  padding: '0.7rem 0.85rem', border: '1px solid var(--border)',
+                  borderRadius: 'var(--radius-sm)', cursor: 'pointer',
+                }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                    <i className={`bi ${TYPE_ICON[preference.notificationType] ?? 'bi-bell'}`}></i>
+                    {TYPE_LABEL[preference.notificationType] ?? preference.notificationType}
+                  </span>
+                  <input
+                    type='checkbox'
+                    checked={preference.emailEnabled}
+                    disabled={preferenceBusy === preference.notificationType}
+                    onChange={e => handlePreference(preference.notificationType, e.target.checked)}
+                    aria-label={`Email ${TYPE_LABEL[preference.notificationType] ?? preference.notificationType} notifications`}
+                  />
+                </label>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </>

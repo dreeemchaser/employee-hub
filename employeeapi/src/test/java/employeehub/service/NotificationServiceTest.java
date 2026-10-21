@@ -2,7 +2,10 @@ package employeehub.service;
 
 import employeehub.domain.Employee;
 import employeehub.domain.Notification;
+import employeehub.domain.NotificationPreference;
 import employeehub.domain.enums.NotificationType;
+import employeehub.repository.EmployeeRepository;
+import employeehub.repository.NotificationPreferenceRepository;
 import employeehub.exception.ResourceNotFoundException;
 import employeehub.repository.NotificationRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,6 +26,9 @@ import static org.mockito.Mockito.*;
 class NotificationServiceTest {
 
     @Mock NotificationRepository notificationRepository;
+    @Mock NotificationPreferenceRepository preferenceRepository;
+    @Mock EmployeeRepository employeeRepository;
+    @Mock EmailService emailService;
 
     @InjectMocks NotificationService notificationService;
 
@@ -52,6 +58,7 @@ class NotificationServiceTest {
                 n.getTitle().equals("Title") &&
                 !n.getIsRead()
         ));
+        verifyNoInteractions(emailService);
     }
 
     @Test
@@ -97,5 +104,45 @@ class NotificationServiceTest {
         notificationService.markAllAsRead("emp-1");
 
         verify(notificationRepository).markAllAsRead("emp-1");
+    }
+
+    @Test
+    void send_shouldEmailWhenPreferenceEnabled() {
+        NotificationPreference preference = new NotificationPreference();
+        preference.setEmailEnabled(true);
+        when(preferenceRepository.findByEmployeeIdAndNotificationType("emp-1", NotificationType.LEAVE))
+                .thenReturn(Optional.of(preference));
+        recipient.setEmail("employee@example.com");
+
+        notificationService.send(recipient, "Title", "Message",
+                NotificationType.LEAVE, "LeaveRequest", "req-1");
+
+        verify(emailService).sendPlainText("employee@example.com", "Title", "Message");
+    }
+
+    @Test
+    void getMyPreferences_shouldReturnDefaultsForEveryType() {
+        when(preferenceRepository.findByEmployeeIdOrderByNotificationType("emp-1"))
+                .thenReturn(List.of());
+
+        List<NotificationPreference> result = notificationService.getMyPreferences("emp-1");
+
+        assertThat(result).extracting(NotificationPreference::getNotificationType)
+                .containsExactly(NotificationType.values());
+        assertThat(result).allMatch(preference -> !preference.isEmailEnabled());
+    }
+
+    @Test
+    void updatePreference_shouldPersistForCurrentEmployee() {
+        when(employeeRepository.findById("emp-1")).thenReturn(Optional.of(recipient));
+        when(preferenceRepository.findByEmployeeIdAndNotificationType("emp-1", NotificationType.LEAVE))
+                .thenReturn(Optional.empty());
+        when(preferenceRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        NotificationPreference result = notificationService.updatePreference(
+                "emp-1", NotificationType.LEAVE, true);
+
+        assertThat(result.isEmailEnabled()).isTrue();
+        assertThat(result.getEmployee()).isEqualTo(recipient);
     }
 }

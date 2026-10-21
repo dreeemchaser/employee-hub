@@ -2,6 +2,8 @@ package employeehub.controller;
 
 import employeehub.dto.ApiResponse;
 import employeehub.dto.NotificationResponse;
+import employeehub.dto.NotificationPreferenceRequest;
+import employeehub.dto.NotificationPreferenceResponse;
 import employeehub.service.EmployeeService;
 import employeehub.service.NotificationService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -11,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import java.util.List;
 
@@ -45,5 +48,25 @@ public class NotificationController {
         var employee = employeeService.getByEmail(userDetails.getUsername());
         notificationService.markAllAsRead(employee.getId());
         return ResponseEntity.ok(ApiResponse.ok("All notifications marked as read", null));
+    }
+
+    @GetMapping("/preferences")
+    @Operation(summary = "Get current employee's notification preferences")
+    public ResponseEntity<ApiResponse<List<NotificationPreferenceResponse>>> getPreferences(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        var employee = employeeService.getByEmail(userDetails.getUsername());
+        return ResponseEntity.ok(ApiResponse.ok(NotificationPreferenceResponse.from(
+                notificationService.getMyPreferences(employee.getId()))));
+    }
+
+    @PatchMapping("/preferences/{type}")
+    @Operation(summary = "Update email preference for a notification type")
+    public ResponseEntity<ApiResponse<NotificationPreferenceResponse>> updatePreference(
+            @PathVariable employeehub.domain.enums.NotificationType type,
+            @Valid @RequestBody NotificationPreferenceRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        var employee = employeeService.getByEmail(userDetails.getUsername());
+        return ResponseEntity.ok(ApiResponse.ok(NotificationPreferenceResponse.from(
+                notificationService.updatePreference(employee.getId(), type, request.getEmailEnabled()))));
     }
 }

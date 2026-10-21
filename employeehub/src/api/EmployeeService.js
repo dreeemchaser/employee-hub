@@ -210,6 +210,14 @@ export async function markAllNotificationsRead() {
     return axios.patch(`${BASE_URL}/notifications/read-all`, {}, authHeaders());
 }
 
+export async function getNotificationPreferences() {
+    return axios.get(`${BASE_URL}/notifications/preferences`, authHeaders());
+}
+
+export async function updateNotificationPreference(type, emailEnabled) {
+    return axios.patch(`${BASE_URL}/notifications/preferences/${type}`, { emailEnabled }, authHeaders());
+}
+
 // ── Leave Calendar ────────────────────────────────────────────────────────────
 
 export async function getLeaveCalendar(year, month) {

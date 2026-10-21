@@ -1,6 +1,7 @@
 package employeehub.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import employeehub.domain.enums.DocumentAccessLevel;
 import employeehub.domain.enums.DocumentStatus;
 import employeehub.domain.enums.DocumentType;
 import jakarta.persistence.*;
@@ -58,6 +59,10 @@ public class Document {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private DocumentStatus status = DocumentStatus.PENDING;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private DocumentAccessLevel accessLevel = DocumentAccessLevel.STANDARD;
 
     // Not every document type expires (a payslip has no expiry; an ID document
     // or work permit does) so this is optional for every DocumentType, not

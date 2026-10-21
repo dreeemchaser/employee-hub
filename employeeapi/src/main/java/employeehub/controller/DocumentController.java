@@ -1,14 +1,15 @@
 package employeehub.controller;
 
-import employeehub.domain.Document;
 import employeehub.domain.enums.DocumentType;
 import employeehub.dto.ApiResponse;
+import employeehub.dto.DocumentAccessLevelRequest;
 import employeehub.dto.DocumentResponse;
 import employeehub.service.EmployeeService;
 import employeehub.service.DocumentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.FutureOrPresent;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
@@ -63,14 +64,28 @@ public class DocumentController {
 
     @GetMapping("/{id}/download")
     @Operation(summary = "Download a document")
-    public ResponseEntity<byte[]> download(@PathVariable String id) {
-        Document doc = documentService.getDocument(id);
-        byte[] data = documentService.download(id);
+    public ResponseEntity<byte[]> download(
+            @PathVariable String id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        var requester = employeeService.getByEmail(userDetails.getUsername());
+        var doc = documentService.getDocument(id, requester.getId());
+        byte[] data = documentService.download(id, requester.getId());
         String disposition = "attachment; filename=\"" + doc.getFileName() + "\"";
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .header(HttpHeaders.CONTENT_DISPOSITION, disposition)
                 .body(data);
+    }
+
+    @PatchMapping("/{id}/access-level")
+    @Operation(summary = "Change document visibility (HR only)")
+    public ResponseEntity<ApiResponse<DocumentResponse>> updateAccessLevel(
+            @PathVariable String id,
+            @Valid @RequestBody DocumentAccessLevelRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        var actor = employeeService.getByEmail(userDetails.getUsername());
+        return ResponseEntity.ok(ApiResponse.ok(new DocumentResponse(
+                documentService.updateAccessLevel(id, request.getAccessLevel(), actor.getId()))));
     }
 
     @PatchMapping("/{id}/verify")

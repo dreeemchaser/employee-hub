@@ -3,8 +3,10 @@ package employeehub.service;
 import employeehub.domain.Document;
 import employeehub.domain.Employee;
 import employeehub.domain.enums.DocumentStatus;
+import employeehub.domain.enums.DocumentAccessLevel;
 import employeehub.domain.enums.DocumentType;
 import employeehub.domain.enums.NotificationType;
+import employeehub.domain.enums.Role;
 import employeehub.exception.ResourceNotFoundException;
 import employeehub.repository.DocumentRepository;
 import employeehub.repository.EmployeeRepository;
@@ -28,6 +30,7 @@ public class DocumentService {
     private final NotificationService notificationService;
     private final AuditService auditService;
 
+    @Transactional
     public Document upload(String employeeId, DocumentType type, MultipartFile file, LocalDate expiryDate) {
         Employee employee = findEmployee(employeeId);
         String filename = photoService.save(file);
@@ -40,7 +43,10 @@ public class DocumentService {
         doc.setFileUrl(filename);
         doc.setFileSize(BigDecimal.valueOf(file.getSize()));
         doc.setExpiryDate(expiryDate);
-        return documentRepository.save(doc);
+        doc.setAccessLevel(defaultAccessLevel(type));
+        Document saved = documentRepository.save(doc);
+        auditService.log(employee, "UPLOAD", "Document", saved.getId(), null, saved.getAccessLevel().name());
+        return saved;
     }
 
     public List<Document> getMy(String employeeId) {
@@ -51,13 +57,35 @@ public class DocumentService {
         return documentRepository.findAll();
     }
 
-    public byte[] download(String documentId) {
+    @Transactional
+    public byte[] download(String documentId, String requesterId) {
         Document doc = findDocument(documentId);
+        Employee requester = findEmployee(requesterId);
+        authorizeRead(doc, requester);
+        auditService.log(requester, "DOWNLOAD", "Document", doc.getId(), null, doc.getAccessLevel().name());
         return photoService.load(doc.getFileUrl());
     }
 
-    public Document getDocument(String documentId) {
-        return findDocument(documentId);
+    @Transactional(readOnly = true)
+    public Document getDocument(String documentId, String requesterId) {
+        Document doc = findDocument(documentId);
+        authorizeRead(doc, findEmployee(requesterId));
+        return doc;
+    }
+
+    @Transactional
+    public Document updateAccessLevel(String documentId, DocumentAccessLevel accessLevel, String actorId) {
+        Document doc = findDocument(documentId);
+        Employee actor = findEmployee(actorId);
+        if (!isAdmin(actor)) {
+            throw new ResourceNotFoundException("Document not found: " + documentId);
+        }
+        DocumentAccessLevel previous = doc.getAccessLevel();
+        doc.setAccessLevel(accessLevel);
+        Document saved = documentRepository.save(doc);
+        auditService.log(actor, "ACCESS_LEVEL_CHANGE", "Document", saved.getId(),
+                previous.name(), accessLevel.name());
+        return saved;
     }
 
     @Transactional
@@ -102,5 +130,26 @@ public class DocumentService {
     private Employee findEmployee(String id) {
         return employeeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found: " + id));
+    }
+
+    private void authorizeRead(Document doc, Employee requester) {
+        if (requester.getId().equals(doc.getEmployee().getId())
+                || isAdmin(requester)
+                || (requester.getRole() == Role.PAYROLL_ADMIN
+                    && doc.getAccessLevel() == DocumentAccessLevel.PAYROLL_ONLY)) {
+            return;
+        }
+        throw new ResourceNotFoundException("Document not found: " + doc.getId());
+    }
+
+    private boolean isAdmin(Employee employee) {
+        return employee.getRole() == Role.HR_ADMIN
+                || employee.getRole() == Role.SUPER_ADMIN;
+    }
+
+    private DocumentAccessLevel defaultAccessLevel(DocumentType type) {
+        return type == DocumentType.PAYSLIP
+                ? DocumentAccessLevel.PAYROLL_ONLY
+                : DocumentAccessLevel.STANDARD;
     }
 }

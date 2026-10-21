@@ -77,6 +77,10 @@ export async function verifyDocument(id) {
   return axios.patch(`${BASE_URL}/documents/${id}/verify`, {}, auth());
 }
 
+export async function updateDocumentAccessLevel(id, accessLevel) {
+  return axios.patch(`${BASE_URL}/documents/${id}/access-level`, { accessLevel }, auth());
+}
+
 // ── Audit Logs ───────────────────────────────────────────────────────────────
 
 /**

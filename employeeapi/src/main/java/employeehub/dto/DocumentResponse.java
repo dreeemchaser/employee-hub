@@ -1,6 +1,7 @@
 package employeehub.dto;
 
 import employeehub.domain.Document;
+import employeehub.domain.enums.DocumentAccessLevel;
 import employeehub.domain.enums.DocumentStatus;
 import employeehub.domain.enums.DocumentType;
 import lombok.Getter;
@@ -29,6 +30,7 @@ public class DocumentResponse {
     private final EmployeeSummary verifiedBy;
     private final LocalDateTime verifiedAt;
     private final DocumentStatus status;
+    private final DocumentAccessLevel accessLevel;
     private final LocalDateTime createdAt;
     private final LocalDate expiryDate;
     // Computed at construction time, never persisted -- expiry is a function of
@@ -45,6 +47,7 @@ public class DocumentResponse {
         this.verifiedBy = EmployeeSummary.of(d.getVerifiedBy());
         this.verifiedAt = d.getVerifiedAt();
         this.status = d.getStatus();
+        this.accessLevel = d.getAccessLevel();
         this.createdAt = d.getCreatedAt();
         this.expiryDate = d.getExpiryDate();
         this.isExpired = d.getExpiryDate() != null && d.getExpiryDate().isBefore(LocalDate.now());

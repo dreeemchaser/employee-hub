@@ -28,6 +28,18 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Stri
             @Param("firstDay") LocalDate firstDay,
             @Param("lastDay") LocalDate lastDay);
 
+    @Query("SELECT lr FROM LeaveRequest lr WHERE lr.status = 'APPROVED' AND " +
+           "lr.startDate <= :lastDay AND lr.endDate >= :firstDay AND " +
+           "(:employeeId IS NULL OR lr.employee.id = :employeeId) AND " +
+           "(:managerId IS NULL OR lr.employee.manager.id = :managerId) AND " +
+           "(:leaveTypeId IS NULL OR lr.leaveType.id = :leaveTypeId)")
+    List<LeaveRequest> findApprovedInRange(
+            @Param("firstDay") LocalDate firstDay,
+            @Param("lastDay") LocalDate lastDay,
+            @Param("employeeId") String employeeId,
+            @Param("managerId") String managerId,
+            @Param("leaveTypeId") Long leaveTypeId);
+
     /**
      * Returns any PENDING or APPROVED requests for the given employee whose date
      * range overlaps [startDate, endDate]. Used to detect duplicate submissions.

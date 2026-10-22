@@ -244,4 +244,46 @@ class LeaveServiceTest {
                 .hasMessageContaining("your own requests");
     }
 
+    @Test
+    void calendar_employeeIsScopedToOwnApprovedLeave() {
+        when(employeeRepository.findById("emp-1")).thenReturn(Optional.of(employee));
+        when(leaveRequestRepository.findApprovedInRange(any(), any(), eq("emp-1"), isNull(), isNull()))
+                .thenReturn(java.util.List.of());
+
+        leaveService.getCalendar(2026, 6, null, "emp-1");
+
+        verify(leaveRequestRepository).findApprovedInRange(
+                LocalDate.of(2026, 6, 1), LocalDate.of(2026, 6, 30),
+                "emp-1", null, null);
+    }
+
+    @Test
+    void calendar_managerIsScopedToDirectReports() {
+        when(employeeRepository.findById("mgr-1")).thenReturn(Optional.of(manager));
+        when(leaveRequestRepository.findApprovedInRange(any(), any(), isNull(), eq("mgr-1"), eq(1L)))
+                .thenReturn(java.util.List.of());
+
+        leaveService.getCalendar(2026, 2, 1L, "mgr-1");
+
+        verify(leaveRequestRepository).findApprovedInRange(
+                LocalDate.of(2026, 2, 1), LocalDate.of(2026, 2, 28),
+                null, "mgr-1", 1L);
+    }
+
+    @Test
+    void calendar_hrAdminCanSeeAllApprovedLeave() {
+        Employee hr = new Employee();
+        hr.setId("hr-1");
+        hr.setRole(Role.HR_ADMIN);
+        when(employeeRepository.findById("hr-1")).thenReturn(Optional.of(hr));
+        when(leaveRequestRepository.findApprovedInRange(any(), any(), isNull(), isNull(), isNull()))
+                .thenReturn(java.util.List.of());
+
+        leaveService.getCalendar(2026, 2, null, "hr-1");
+
+        verify(leaveRequestRepository).findApprovedInRange(
+                LocalDate.of(2026, 2, 1), LocalDate.of(2026, 2, 28),
+                null, null, null);
+    }
+
 }

@@ -92,7 +92,11 @@ public class LeaveController {
     @Operation(summary = "Get approved leaves for a given month (team calendar)")
     public ResponseEntity<ApiResponse<List<LeaveRequestResponse>>> getCalendar(
             @RequestParam int year,
-            @RequestParam int month) {
-        return ResponseEntity.ok(ApiResponse.ok(LeaveRequestResponse.from(leaveService.getCalendar(year, month))));
+            @RequestParam int month,
+            @RequestParam(required = false) Long leaveTypeId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        var requester = employeeService.getByEmail(userDetails.getUsername());
+        return ResponseEntity.ok(ApiResponse.ok(LeaveRequestResponse.from(
+                leaveService.getCalendar(year, month, leaveTypeId, requester.getId()))));
     }
 }

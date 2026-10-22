@@ -11,6 +11,7 @@ const NAV = [
     { to: '/timesheet-approvals', icon: 'bi-clock-history',  label: 'Timesheet Approvals' },
     { to: '/documents',           icon: 'bi-folder2-open',   label: 'Documents' },
     { to: '/salary',              icon: 'bi-cash-coin',      label: 'Salary' },
+    { to: '/tax-brackets',        icon: 'bi-percent',        label: 'Tax Tables' },
   ]},
   { section: 'System', links: [
     { to: '/audit-logs', icon: 'bi-journal-text', label: 'Audit Logs' },

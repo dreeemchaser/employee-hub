@@ -63,6 +63,7 @@ Chronological record of work shipped to `master` during this build cycle. ✅ = 
 | 20 | Document access control & audit trail (Feature 8) | ✅ **DONE** | Added `STANDARD`/`CONFIDENTIAL`/`PAYROLL_ONLY` visibility, owner/admin/payroll object-level authorization for downloads, HR-only visibility changes, and audit events for uploads/downloads/access changes. Existing payslips are migrated to `PAYROLL_ONLY`. |
 | 21 | Notification preferences (Feature 17, MVP) | ✅ **DONE** | Added per-employee email preferences for every notification type, authenticated preference endpoints, config-gated email delivery through `NotificationService`, and employee portal controls. SMS, WebSockets, digests, and quiet hours remain out of scope. |
 | 22 | Secure leave calendar (Feature 3, MVP) | ✅ **DONE** | Scoped approved leave visibility by caller role, added leave-type filtering, and marked busy days in the employee calendar. Leave forecasting, automated approvals, and calendar export remain out of scope. |
+| 23 | Tax table administration (Feature 12, MVP) | ✅ **DONE** | Added paged/filterable tax-bracket administration for HR/payroll, overlap and range validation, audit logging, and an HR dashboard editor. PAYE calculation behavior and historical tax years remain unchanged. |
 
 ---
 
@@ -532,9 +533,8 @@ Independent of the longer roadmap, these deliver the most value relative to effo
 ### Feature 12: Advanced Tax & Deduction Management
 
 **Current State:**  
-- SA-specific PAYE/UIF calculations
-- Fixed benefit deductions
-- Limited flexibility
+- ✅ **MVP DONE (see Progress Log #23)** — the existing PAYE brackets can be safely managed by HR/payroll with tax-year filtering, validation, audit logging, and an HR editor.
+- Multiple jurisdictions, flexible deductions, and compliance reporting remain future work.
 
 **Proposed Changes:**
 

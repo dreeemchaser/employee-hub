@@ -651,6 +651,105 @@
         }
       }
     },
+    "/tax-brackets": {
+      "get": {
+        "tags": ["Tax Brackets"],
+        "summary": "List tax brackets, optionally filtered by tax year",
+        "operationId": "getAll_6",
+        "parameters": [
+          {
+            "name": "taxYear",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "format": "int32" }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "format": "int32", "default": 0 }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "format": "int32", "default": 20 }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "array", "items": { "type": "string" } }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/ApiResponsePageTaxBracketResponse" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Tax Brackets"],
+        "summary": "Create a tax bracket",
+        "operationId": "createTaxBracket",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/TaxBracketRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/ApiResponseTaxBracketResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tax-brackets/{id}": {
+      "put": {
+        "tags": ["Tax Brackets"],
+        "summary": "Update a tax bracket",
+        "operationId": "updateTaxBracket",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/TaxBracketRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/ApiResponseTaxBracketResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/leave/requests": {
       "get": {
         "tags": [
@@ -2832,6 +2931,65 @@
             "type": "string"
           }
         }
+      },
+      "ApiResponsePageTaxBracketResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "message": { "type": "string" },
+          "data": { "$ref": "#/components/schemas/PageTaxBracketResponse" }
+        }
+      },
+      "PageTaxBracketResponse": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/TaxBracketResponse" }
+          },
+          "pageable": { "$ref": "#/components/schemas/PageableObject" },
+          "totalElements": { "type": "integer", "format": "int64" },
+          "totalPages": { "type": "integer", "format": "int32" },
+          "last": { "type": "boolean" },
+          "size": { "type": "integer", "format": "int32" },
+          "number": { "type": "integer", "format": "int32" },
+          "sort": { "$ref": "#/components/schemas/SortObject" },
+          "numberOfElements": { "type": "integer", "format": "int32" },
+          "first": { "type": "boolean" },
+          "empty": { "type": "boolean" }
+        }
+      },
+      "ApiResponseTaxBracketResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "message": { "type": "string" },
+          "data": { "$ref": "#/components/schemas/TaxBracketResponse" }
+        }
+      },
+      "TaxBracketResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "format": "int64" },
+          "taxYear": { "type": "integer", "format": "int32" },
+          "minIncome": { "type": "number" },
+          "maxIncome": { "type": "number", "nullable": true },
+          "baseTax": { "type": "number" },
+          "marginalRate": { "type": "number" },
+          "rebate": { "type": "number" }
+        }
+      },
+      "TaxBracketRequest": {
+        "type": "object",
+        "properties": {
+          "taxYear": { "type": "integer", "format": "int32", "minimum": 2000 },
+          "minIncome": { "type": "number", "minimum": 0 },
+          "maxIncome": { "type": "number", "minimum": 0, "nullable": true },
+          "baseTax": { "type": "number", "minimum": 0 },
+          "marginalRate": { "type": "number", "maximum": 100, "minimum": 0 },
+          "rebate": { "type": "number", "minimum": 0 }
+        },
+        "required": ["taxYear", "minIncome", "baseTax", "marginalRate", "rebate"]
       },
       "TimesheetResponse": {
         "type": "object",

@@ -216,6 +216,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/tax-brackets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List tax brackets, optionally filtered by tax year */
+        get: operations["getAll_6"];
+        put?: never;
+        /** Create a tax bracket */
+        post: operations["createTaxBracket"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tax-brackets/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Update a tax bracket */
+        put: operations["updateTaxBracket"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/leave/requests": {
         parameters: {
             query?: never;
@@ -1270,6 +1305,54 @@ export interface components {
             description?: string;
             projectOrTask?: string;
         };
+        ApiResponsePageTaxBracketResponse: {
+            success?: boolean;
+            message?: string;
+            data?: components["schemas"]["PageTaxBracketResponse"];
+        };
+        PageTaxBracketResponse: {
+            content?: components["schemas"]["TaxBracketResponse"][];
+            pageable?: components["schemas"]["PageableObject"];
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
+            last?: boolean;
+            /** Format: int32 */
+            size?: number;
+            /** Format: int32 */
+            number?: number;
+            sort?: components["schemas"]["SortObject"];
+            /** Format: int32 */
+            numberOfElements?: number;
+            first?: boolean;
+            empty?: boolean;
+        };
+        ApiResponseTaxBracketResponse: {
+            success?: boolean;
+            message?: string;
+            data?: components["schemas"]["TaxBracketResponse"];
+        };
+        TaxBracketResponse: {
+            /** Format: int64 */
+            id?: number;
+            /** Format: int32 */
+            taxYear?: number;
+            minIncome?: number;
+            maxIncome?: number | null;
+            baseTax?: number;
+            marginalRate?: number;
+            rebate?: number;
+        };
+        TaxBracketRequest: {
+            /** Format: int32 */
+            taxYear: number;
+            minIncome: number;
+            maxIncome?: number | null;
+            baseTax: number;
+            marginalRate: number;
+            rebate: number;
+        };
         TimesheetResponse: {
             id?: string;
             employee?: components["schemas"]["EmployeeSummary"];
@@ -2300,6 +2383,81 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ApiResponsePerformanceCycle"];
+                };
+            };
+        };
+    };
+    getAll_6: {
+        parameters: {
+            query?: {
+                taxYear?: number;
+                page?: number;
+                size?: number;
+                sort?: string[];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponsePageTaxBracketResponse"];
+                };
+            };
+        };
+    };
+    createTaxBracket: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaxBracketRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseTaxBracketResponse"];
+                };
+            };
+        };
+    };
+    updateTaxBracket: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaxBracketRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseTaxBracketResponse"];
                 };
             };
         };

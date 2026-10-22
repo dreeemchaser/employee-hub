@@ -62,7 +62,8 @@ Chronological record of work shipped to `master` during this build cycle. ✅ = 
 | 19 | Document expiration tracking + renewal reminders (Feature 7, sub-item 1) | ✅ **DONE** | PR #23: nullable `expiryDate` on `Document` (expiry is orthogonal to verification status, not a new `DocumentStatus`); `DocumentExpiryReminderService` scheduled job emails employees at 30/14/7 days before expiry (idempotent via persisted `reminderSentAt30/14/7` timestamps) and notifies all HR/Admin on verified-document expiry; dashboard widgets in both frontends show expiring documents. Scope explicitly excludes DocuSign, OCR, and templates (Feature 7 sub-items 2-4). |
 | 20 | Document access control & audit trail (Feature 8) | ✅ **DONE** | Added `STANDARD`/`CONFIDENTIAL`/`PAYROLL_ONLY` visibility, owner/admin/payroll object-level authorization for downloads, HR-only visibility changes, and audit events for uploads/downloads/access changes. Existing payslips are migrated to `PAYROLL_ONLY`. |
 | 21 | Notification preferences (Feature 17, MVP) | ✅ **DONE** | Added per-employee email preferences for every notification type, authenticated preference endpoints, config-gated email delivery through `NotificationService`, and employee portal controls. SMS, WebSockets, digests, and quiet hours remain out of scope. |
-| 22 | Tax table administration (Feature 12, MVP) | ✅ **DONE** | Added paged/filterable tax-bracket administration for HR/payroll, overlap and range validation, audit logging, and an HR dashboard editor. PAYE calculation behavior and historical tax years remain unchanged. |
+| 22 | Secure leave calendar (Feature 3, MVP) | ✅ **DONE** | Scoped approved leave visibility by caller role, added leave-type filtering, and marked busy days in the employee calendar. Leave forecasting, automated approvals, and calendar export remain out of scope. |
+| 23 | Tax table administration (Feature 12, MVP) | ✅ **DONE** | Added paged/filterable tax-bracket administration for HR/payroll, overlap and range validation, audit logging, and an HR dashboard editor. PAYE calculation behavior and historical tax years remain unchanged. |
 
 ---
 
@@ -208,9 +209,8 @@ Independent of the longer roadmap, these deliver the most value relative to effo
 ### Feature 3: Advanced Leave Calendar With Team View
 
 **Current State:**  
-- Leave calendar shows personal leave only
-- Team visibility limited to HR/Managers
-- No visual conflict detection
+- ✅ **MVP DONE (see Progress Log #22)** — role-scoped approved leave calendar with leave-type filtering and busy-day indicators.
+- Leave forecasting, automated approvals, iCalendar export, and scheduling integrations remain unbuilt.
 
 **Proposed Changes:**
 
@@ -533,7 +533,7 @@ Independent of the longer roadmap, these deliver the most value relative to effo
 ### Feature 12: Advanced Tax & Deduction Management
 
 **Current State:**  
-- ✅ **MVP DONE (see Progress Log #22)** — the existing PAYE brackets can be safely managed by HR/payroll with tax-year filtering, validation, audit logging, and an HR editor.
+- ✅ **MVP DONE (see Progress Log #23)** — the existing PAYE brackets can be safely managed by HR/payroll with tax-year filtering, validation, audit logging, and an HR editor.
 - Multiple jurisdictions, flexible deductions, and compliance reporting remain future work.
 
 **Proposed Changes:**

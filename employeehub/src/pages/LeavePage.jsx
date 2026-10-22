@@ -66,6 +66,7 @@ export default function LeavePage() {
   const [calYear, setCalYear]   = useState(now.getFullYear());
   const [calMonth, setCalMonth] = useState(now.getMonth() + 1);
   const [calLeave, setCalLeave] = useState([]);
+  const [calType, setCalType]   = useState('');
 
   const load = useCallback(async () => {
     try {
@@ -77,10 +78,10 @@ export default function LeavePage() {
 
   const loadCalendar = useCallback(async () => {
     try {
-      const res = await getLeaveCalendar(calYear, calMonth);
+      const res = await getLeaveCalendar(calYear, calMonth, calType || undefined);
       setCalLeave(res.data?.data ?? []);
     } catch { /* silent */ }
-  }, [calYear, calMonth]);
+  }, [calYear, calMonth, calType]);
 
   useEffect(() => { load(); }, [load]);
   useEffect(() => { if (tab === 'calendar') loadCalendar(); }, [tab, loadCalendar]);
@@ -554,6 +555,20 @@ export default function LeavePage() {
                   })}
                 </div>
               )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.85rem' }}>
+                <label htmlFor='calendar-leave-type' style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                  Filter by leave type
+                </label>
+                <select
+                  id='calendar-leave-type'
+                  value={calType}
+                  onChange={e => setCalType(e.target.value)}
+                  style={{ fontSize: '0.78rem' }}
+                >
+                  <option value=''>All types</option>
+                  {leaveTypes.map(type => <option key={type.id} value={type.id}>{type.name}</option>)}
+                </select>
+              </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 4, marginBottom: 4 }}>
                 {['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d => (
                   <div key={d} style={{ textAlign: 'center', fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)', padding: '0.3rem 0' }}>{d}</div>
@@ -562,6 +577,7 @@ export default function LeavePage() {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 4 }}>
                 {cells.map((day, i) => {
                   const entries = day ? leaveByDay[day] : [];
+                  const isBusy = entries?.length > 1;
                   const today   = new Date();
                   const isToday = day && today.getFullYear() === calYear && today.getMonth() + 1 === calMonth && today.getDate() === day;
                   const isWeekend = i % 7 >= 5; // Sat/Sun columns
@@ -570,11 +586,13 @@ export default function LeavePage() {
                       minHeight: 64, padding: '0.3rem',
                       borderRadius: 'var(--radius-sm)',
                       background: !day ? 'transparent' : isWeekend ? 'hsla(214,17%,90%,0.4)' : 'var(--surface)',
-                      border: day ? `1px solid ${isToday ? 'var(--brand)' : 'var(--border)'}` : 'none',
+                      border: day ? `1px solid ${isToday ? 'var(--brand)' : isBusy ? 'var(--amber)' : 'var(--border)'}` : 'none',
                     }}>
                       {day && (
                         <>
-                          <span style={{ fontSize: '0.72rem', fontWeight: isToday ? 700 : 400, color: isToday ? 'var(--brand)' : isWeekend ? 'var(--text-muted)' : 'var(--text-secondary)' }}>{day}</span>
+                          <span style={{ fontSize: '0.72rem', fontWeight: isToday ? 700 : 400, color: isToday ? 'var(--brand)' : isWeekend ? 'var(--text-muted)' : 'var(--text-secondary)' }}>
+                            {day}{isBusy && <span title='Multiple team members are away' aria-label='Busy day' style={{ color: 'var(--amber)', marginLeft: 3 }}>●</span>}
+                          </span>
                           <div style={{ marginTop: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
                             {entries?.slice(0, 2).map((r, j) => {
                               const st = leaveStyle(r.leaveType?.name);

@@ -101,8 +101,22 @@ export async function updateTaxBracket(id, bracket) {
  * @param {number} [size]
  * @returns {Promise<{data: {success?: boolean, message?: string, data?: {content?: AuditLogResponse[], totalElements?: number, totalPages?: number}}}>}
  */
-export async function getAuditLogs(page = 0, size = 20) {
-  return axios.get(`${BASE_URL}/audit-logs?page=${page}&size=${size}`, auth());
+export async function getAuditLogs(page = 0, size = 20, filters = {}) {
+  const params = new URLSearchParams({ page, size });
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value) params.set(key, value);
+  });
+  return axios.get(`${BASE_URL}/audit-logs?${params}`, auth());
+}
+
+export async function exportAuditLogs(filters = {}) {
+  const params = new URLSearchParams({ limit: 5000 });
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value) params.set(key, value);
+  });
+  return axios.get(`${BASE_URL}/audit-logs/export?${params}`, {
+    ...auth(), responseType: 'blob',
+  });
 }
 
 // ── Salary ────────────────────────────────────────────────────────────────────

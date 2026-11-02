@@ -40,6 +40,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/departments/**", "/teams/**").authenticated()
                         .requestMatchers("/departments/**", "/teams/**").hasAnyRole("HR_ADMIN", "SUPER_ADMIN")
                         .requestMatchers(HttpMethod.GET, "/employees/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/organization/**").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/employees/**").hasAnyRole("HR_ADMIN", "SUPER_ADMIN")
                         .requestMatchers(HttpMethod.POST, "/employees").hasAnyRole("HR_ADMIN", "SUPER_ADMIN")
                         .requestMatchers(HttpMethod.POST, "/employees/*/offboard").hasAnyRole("HR_ADMIN", "SUPER_ADMIN")

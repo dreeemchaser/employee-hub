@@ -7,6 +7,7 @@ const NAV = [
   ]},
   { section: 'HR Management', links: [
     { to: '/employees',           icon: 'bi-people',         label: 'Employees' },
+    { to: '/organization',        icon: 'bi-diagram-3',      label: 'Organization' },
     { to: '/leave-approvals',     icon: 'bi-calendar-check', label: 'Leave Approvals' },
     { to: '/timesheet-approvals', icon: 'bi-clock-history',  label: 'Timesheet Approvals' },
     { to: '/documents',           icon: 'bi-folder2-open',   label: 'Documents' },

@@ -32,6 +32,10 @@ public class LeaveBalance {
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private LeaveType leaveType;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "policy_version_id")
+    private LeavePolicyVersion policyVersion;
+
     @Column(nullable = false)
     private BigDecimal totalDays;
 

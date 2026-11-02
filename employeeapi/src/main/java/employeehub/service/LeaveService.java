@@ -15,14 +15,12 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class LeaveService {
-
-    // Annual leave requires at least this many days advance notice
-    private static final int ANNUAL_LEAVE_NOTICE_DAYS = 14;
 
     // Sick leave beyond this threshold flags a documentation requirement
     private static final int SICK_LEAVE_DOC_THRESHOLD = 3;
@@ -33,6 +31,7 @@ public class LeaveService {
     private final EmployeeRepository employeeRepository;
     private final NotificationService notificationService;
     private final AuditService auditService;
+    private final LeavePolicyService leavePolicyService;
 
     // ── Leave Requests ──────────────────────────────────────────────
 
@@ -57,23 +56,22 @@ public class LeaveService {
                 "The selected date range contains no working days. Please choose weekdays.");
         }
 
-        // ── Annual leave: 14-day advance notice ──────────────────────
-        if (leaveType.getName().equalsIgnoreCase("Annual Leave")) {
-            long daysUntilStart = LocalDate.now().until(start).getDays() +
-                    (long) LocalDate.now().until(start).getMonths() * 30 +
-                    (long) LocalDate.now().until(start).getYears() * 365;
-            if (daysUntilStart < ANNUAL_LEAVE_NOTICE_DAYS) {
+        var policy = leavePolicyService.effective(leaveType.getId(), start);
+
+        // ── Policy-configured advance notice ─────────────────────────
+        long daysUntilStart = ChronoUnit.DAYS.between(LocalDate.now(), start);
+        if (daysUntilStart < policy.getNoticePeriodDays()) {
                 throw new IllegalArgumentException(
-                    "Annual leave requires at least " + ANNUAL_LEAVE_NOTICE_DAYS +
+                    policy.getName() + " requires at least " + policy.getNoticePeriodDays() +
                     " days advance notice. Please plan ahead or speak to your manager.");
-            }
         }
 
         // ── Sick leave > 3 days requires documentation ───────────────
         // The employee may proceed once they confirm (via the form checkbox)
         // that they have emailed their manager the supporting documentation.
-        boolean requiresDocConfirmation = leaveType.getName().equalsIgnoreCase("Sick Leave")
-                && days.compareTo(BigDecimal.valueOf(SICK_LEAVE_DOC_THRESHOLD)) > 0;
+        boolean requiresDocConfirmation = Boolean.TRUE.equals(policy.getRequiresDocumentation())
+                || (leaveType.getName().equalsIgnoreCase("Sick Leave")
+                && days.compareTo(BigDecimal.valueOf(SICK_LEAVE_DOC_THRESHOLD)) > 0);
         if (requiresDocConfirmation && !dto.isDocumentationConfirmed()) {
             throw new IllegalArgumentException(
                 "REQUIRES_DOCUMENTATION: Sick leave exceeding " + SICK_LEAVE_DOC_THRESHOLD +
@@ -81,7 +79,7 @@ public class LeaveService {
         }
 
         // ── requiresDocumentation flag on other leave types ──────────
-        if (Boolean.TRUE.equals(leaveType.getRequiresDocumentation())
+        if (Boolean.TRUE.equals(policy.getRequiresDocumentation())
                 && !leaveType.getName().equalsIgnoreCase("Sick Leave")) {
             // For other doc-required types (e.g. Maternity, Study), pass through but flag
             // The frontend already warns the user; we allow submission
@@ -110,6 +108,7 @@ public class LeaveService {
         LeaveRequest request = new LeaveRequest();
         request.setEmployee(employee);
         request.setLeaveType(leaveType);
+        request.setPolicyVersion(policy);
         request.setStartDate(start);
         request.setEndDate(end);
         request.setTotalDays(days);

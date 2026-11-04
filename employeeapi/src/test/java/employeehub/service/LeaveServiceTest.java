@@ -84,7 +84,7 @@ class LeaveServiceTest {
         dto.setStartDate(start);
         dto.setEndDate(start.plusDays(2)); // Mon -> Wed = 3 working days
         dto.setReason("Holiday");
-        when(leavePolicyService.effective(anyLong(), any())).thenAnswer(invocation -> {
+        lenient().when(leavePolicyService.effective(anyLong(), any())).thenAnswer(invocation -> {
             if (((Long) invocation.getArgument(0)) == 1L) {
                 return policy;
             }

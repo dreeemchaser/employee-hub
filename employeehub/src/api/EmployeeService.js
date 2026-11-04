@@ -231,6 +231,14 @@ export async function markAllNotificationsRead() {
     return axios.patch(`${BASE_URL}/notifications/read-all`, {}, authHeaders());
 }
 
+export async function getReceivedFeedback() {
+    return axios.get(`${BASE_URL}/feedback/received`, authHeaders());
+}
+
+export async function submitFeedback(feedback) {
+    return axios.post(`${BASE_URL}/feedback`, feedback, authHeaders());
+}
+
 export async function getNotificationPreferences() {
     return axios.get(`${BASE_URL}/notifications/preferences`, authHeaders());
 }

@@ -18,6 +18,7 @@ import BenefitsPage from './pages/BenefitsPage';
 import ProfilePage from './pages/ProfilePage';
 import NotificationsPage from './pages/NotificationsPage';
 import TeamApprovalsPage from './pages/TeamApprovalsPage';
+import FeedbackPage from './pages/FeedbackPage';
 import OrganizationPage from './pages/OrganizationPage';
 
 function App() {
@@ -54,6 +55,7 @@ function App() {
           <Route path='/salary' element={<SalaryPage />} />
           <Route path='/benefits' element={<BenefitsPage />} />
           <Route path='/notifications' element={<NotificationsPage />} />
+          <Route path='/feedback' element={<FeedbackPage />} />
           <Route path='/organization' element={<OrganizationPage />} />
           {isManager() && (
             <Route path='/team-approvals' element={<TeamApprovalsPage />} />

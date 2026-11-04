@@ -3,6 +3,8 @@ package employeehub.web;
 import employeehub.controller.AuditLogController;
 import employeehub.dto.AuditLogResponse;
 import employeehub.service.AuditService;
+import employeehub.service.EmployeeService;
+import employeehub.domain.Employee;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.data.domain.Page;
@@ -23,11 +25,15 @@ class AuditLogControllerTest extends WebMvcTestSupport {
     @MockitoBean
     AuditService auditService;
 
+    @MockitoBean
+    EmployeeService employeeService;
+
     @Test
     @WithMockUser(username = "hr@employeehub.com", roles = "HR_ADMIN")
     void getAll_asHrAdmin_returnsOk() throws Exception {
         Page<employeehub.domain.AuditLog> empty = new PageImpl<>(List.of());
-        when(auditService.getAll(any(), any(), any(), any(), any())).thenReturn(empty);
+        when(employeeService.getByEmail("hr@employeehub.com")).thenReturn(new Employee());
+        when(auditService.getAll(any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(empty);
 
         mockMvc.perform(get("/audit-logs"))
                 .andExpect(status().isOk());

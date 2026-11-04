@@ -18,6 +18,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -87,5 +88,44 @@ class AuditServiceTest {
         Page<AuditLog> result = auditService.getAll(null, null, null, null, Pageable.unpaged());
 
         assertThat(result).isEmpty();
+    }
+
+    @Test
+    void retentionDryRun_shouldCountWithoutDeleting() {
+        when(auditLogRepository.countByTimestampBefore(any(LocalDateTime.class))).thenReturn(12L);
+
+        var result = auditService.retentionDryRun(365, performer);
+
+        assertThat(result.getEligibleRecords()).isEqualTo(12L);
+        assertThat(result.isDestructive()).isFalse();
+        verify(auditLogRepository, never()).delete(any());
+    }
+
+    @Test
+    void retentionDryRun_whenBelowMinimum_rejectsRequest() {
+        assertThatThrownBy(() -> auditService.retentionDryRun(29, performer))
+                .isInstanceOf(IllegalArgumentException.class);
+        verifyNoInteractions(auditLogRepository);
+    }
+
+    @Test
+    void export_escapesCsvValuesAndAddsAuditEvent() {
+        AuditLog entry = new AuditLog();
+        entry.setId("log-1");
+        entry.setAction("UPDATE");
+        entry.setEntityType("Employee");
+        entry.setEntityId("emp-1");
+        entry.setOldValue("=unsafe");
+        entry.setNewValue("approved, \"yes\"");
+        entry.setPerformedBy(performer);
+        when(auditLogRepository.findAllFiltered(any(), any(), any(), any(), any(), any(), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(entry)));
+
+        String csv = new String(auditService.export(null, null, null, null, null, null, 10, performer),
+                java.nio.charset.StandardCharsets.UTF_8);
+
+        assertThat(csv).contains("\"'=unsafe\"");
+        assertThat(csv).contains("\"approved, \"\"yes\"\"\"");
+        verify(auditLogRepository, times(1)).save(any(AuditLog.class));
     }
 }

@@ -26,4 +26,22 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, String> {
             @Param("from") LocalDateTime from,
             @Param("to") LocalDateTime to,
             Pageable pageable);
+
+    @Query("SELECT a FROM AuditLog a WHERE " +
+           "(:entityType IS NULL OR a.entityType = :entityType) AND " +
+           "(:action IS NULL OR a.action = :action) AND " +
+           "(:actorId IS NULL OR a.performedBy.id = :actorId) AND " +
+           "(:entityId IS NULL OR a.entityId = :entityId) AND " +
+           "(CAST(:from AS timestamp) IS NULL OR a.timestamp >= :from) AND " +
+           "(CAST(:to AS timestamp) IS NULL OR a.timestamp <= :to)")
+    Page<AuditLog> findAllFiltered(
+            @Param("entityType") String entityType,
+            @Param("action") String action,
+            @Param("actorId") String actorId,
+            @Param("entityId") String entityId,
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to,
+            Pageable pageable);
+
+    long countByTimestampBefore(LocalDateTime cutoff);
 }

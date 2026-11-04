@@ -14,6 +14,7 @@ import DocumentsPage from './pages/DocumentsPage';
 import AuditLogsPage from './pages/AuditLogsPage';
 import SalaryPage from './pages/SalaryPage';
 import TaxBracketsPage from './pages/TaxBracketsPage';
+import OrganizationPage from './pages/OrganizationPage';
 
 function App() {
   const [loggedIn, setLoggedIn] = useState(isLoggedIn());
@@ -42,6 +43,7 @@ function App() {
           <Route path='/documents'            element={<DocumentsPage />} />
           <Route path='/salary'               element={<SalaryPage />} />
           <Route path='/tax-brackets'         element={<TaxBracketsPage />} />
+          <Route path='/organization'          element={<OrganizationPage />} />
           <Route path='/audit-logs'           element={<AuditLogsPage />} />
           <Route path='*'                     element={<Navigate to='/dashboard' />} />
         </Routes>

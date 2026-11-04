@@ -46,6 +46,7 @@ const Sidebar = ({ onLogout }) => {
             { to: '/benefits',     icon: 'bi-shield-check',    label: 'Benefits' },
             { to: '/notifications',icon: 'bi-bell',            label: 'Notifications' },
             { to: '/feedback',    icon: 'bi-chat-square-text',  label: 'Feedback' },
+            { to: '/organization',icon: 'bi-diagram-3',         label: 'Organization' },
           ].map(({ to, icon, label }) => (
             <NavLink key={to} to={to} className={({ isActive }) => `sidebar__link${isActive ? ' active' : ''}`}>
               <i className={`bi ${icon}`}></i> {label}

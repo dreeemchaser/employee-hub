@@ -19,6 +19,7 @@ import ProfilePage from './pages/ProfilePage';
 import NotificationsPage from './pages/NotificationsPage';
 import TeamApprovalsPage from './pages/TeamApprovalsPage';
 import FeedbackPage from './pages/FeedbackPage';
+import OrganizationPage from './pages/OrganizationPage';
 
 function App() {
   const [loggedIn, setLoggedIn] = useState(isLoggedIn());
@@ -55,6 +56,7 @@ function App() {
           <Route path='/benefits' element={<BenefitsPage />} />
           <Route path='/notifications' element={<NotificationsPage />} />
           <Route path='/feedback' element={<FeedbackPage />} />
+          <Route path='/organization' element={<OrganizationPage />} />
           {isManager() && (
             <Route path='/team-approvals' element={<TeamApprovalsPage />} />
           )}

@@ -38,9 +38,13 @@ public class SecurityConfig {
                                 "/employees/photo/**"
                         ).permitAll()
                         .requestMatchers(HttpMethod.GET, "/departments/**", "/teams/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/leave/policies").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/leave/policies/admin").hasAnyRole("HR_ADMIN", "SUPER_ADMIN")
+                        .requestMatchers("/leave/policies/**").hasAnyRole("HR_ADMIN", "SUPER_ADMIN")
                         .requestMatchers("/departments/**", "/teams/**").hasAnyRole("HR_ADMIN", "SUPER_ADMIN")
                         .requestMatchers("/feedback/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/employees/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/organization/**").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/employees/**").hasAnyRole("HR_ADMIN", "SUPER_ADMIN")
                         .requestMatchers(HttpMethod.POST, "/employees").hasAnyRole("HR_ADMIN", "SUPER_ADMIN")
                         .requestMatchers(HttpMethod.POST, "/employees/*/offboard").hasAnyRole("HR_ADMIN", "SUPER_ADMIN")

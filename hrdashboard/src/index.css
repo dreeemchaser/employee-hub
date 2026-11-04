@@ -465,6 +465,28 @@ tbody tr:hover td { background: var(--bg); }
 .empty-state i { font-size: 2.5rem; color: var(--border); }
 .empty-state p { font-size: 0.88rem; }
 
+/* ── Organization chart ── */
+.organization-tree {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding-left: 1.25rem;
+  border-left: 1px solid var(--border);
+}
+
+.organization-node { margin: 0.75rem 0; }
+.organization-node__button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+  width: min(100%, 32rem);
+  padding: 1rem;
+  text-align: left;
+}
+
+.organization-node__button span,
+.organization-node__button small { color: var(--text-muted); }
+
 /* ── Pagination ── */
 .pagination {
   display: flex;

@@ -1,27 +1,42 @@
 import { useEffect, useState, useCallback } from 'react';
 import TopBar from '../components/TopBar';
 import Spinner from '../components/Spinner';
-import { getAuditLogs } from '../api/HrService';
+import { exportAuditLogs, getAuditLogs } from '../api/HrService';
 
 export default function AuditLogsPage() {
   const [data, setData]       = useState({ content: [], totalPages: 0 });
   const [page, setPage]       = useState(0);
   const [loading, setLoading] = useState(true);
+  const [filters, setFilters] = useState({ action: '', entityType: '' });
 
   const load = useCallback(async (p = 0) => {
     setLoading(true);
     try {
-      const res = await getAuditLogs(p);
+      const res = await getAuditLogs(p, 20, filters);
       setData(res.data?.data ?? res.data);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [filters]);
 
   useEffect(() => { load(page); }, [load, page]);
 
   const logs = data.content ?? [];
   const totalPages = data.totalPages ?? 0;
+  const updateFilter = event => {
+    setPage(0);
+    setFilters(current => ({ ...current, [event.target.name]: event.target.value }));
+  };
+
+  const download = async () => {
+    const response = await exportAuditLogs(filters);
+    const url = URL.createObjectURL(response.data);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'audit-logs.csv';
+    link.click();
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <>
@@ -30,6 +45,11 @@ export default function AuditLogsPage() {
         <div className='card'>
           <div className='card__header'>
             <span className='card__title'>System Audit Trail</span>
+            <div className='form-grid'>
+              <input className='form-control' name='action' placeholder='Action' value={filters.action} onChange={updateFilter} />
+              <input className='form-control' name='entityType' placeholder='Entity type' value={filters.entityType} onChange={updateFilter} />
+              <button className='btn btn-sm' onClick={download}>Export CSV</button>
+            </div>
           </div>
           {loading ? <Spinner /> : (
             <div className='table-wrap'>

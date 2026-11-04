@@ -28,6 +28,23 @@ const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
 
 const auth = () => ({ headers: { Authorization: `Bearer ${getToken()}` } });
 
+export async function getOrganizationTree(page = 0, size = 20, filters = {}) {
+  const params = new URLSearchParams({ page, size });
+  if (filters.departmentId) params.set('departmentId', filters.departmentId);
+  if (filters.teamId) params.set('teamId', filters.teamId);
+  if (filters.status) params.set('status', filters.status);
+  return axios.get(`${BASE_URL}/organization/tree?${params}`, auth());
+}
+
+export async function searchOrganization(query, page = 0, size = 20, filters = {}) {
+  const params = new URLSearchParams({ page, size });
+  if (query) params.set('q', query);
+  if (filters.departmentId) params.set('departmentId', filters.departmentId);
+  if (filters.teamId) params.set('teamId', filters.teamId);
+  if (filters.status) params.set('status', filters.status);
+  return axios.get(`${BASE_URL}/organization/search?${params}`, auth());
+}
+
 // ── Employees ────────────────────────────────────────────────────────────────
 
 /**
@@ -101,8 +118,22 @@ export async function updateTaxBracket(id, bracket) {
  * @param {number} [size]
  * @returns {Promise<{data: {success?: boolean, message?: string, data?: {content?: AuditLogResponse[], totalElements?: number, totalPages?: number}}}>}
  */
-export async function getAuditLogs(page = 0, size = 20) {
-  return axios.get(`${BASE_URL}/audit-logs?page=${page}&size=${size}`, auth());
+export async function getAuditLogs(page = 0, size = 20, filters = {}) {
+  const params = new URLSearchParams({ page, size });
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value) params.set(key, value);
+  });
+  return axios.get(`${BASE_URL}/audit-logs?${params}`, auth());
+}
+
+export async function exportAuditLogs(filters = {}) {
+  const params = new URLSearchParams({ limit: 5000 });
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value) params.set(key, value);
+  });
+  return axios.get(`${BASE_URL}/audit-logs/export?${params}`, {
+    ...auth(), responseType: 'blob',
+  });
 }
 
 // ── Salary ────────────────────────────────────────────────────────────────────

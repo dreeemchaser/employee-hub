@@ -31,6 +31,7 @@ class LeaveServiceTest {
     @Mock EmployeeRepository employeeRepository;
     @Mock NotificationService notificationService;
     @Mock AuditService auditService;
+    @Mock LeavePolicyService leavePolicyService;
 
     @InjectMocks LeaveService leaveService;
 
@@ -39,6 +40,7 @@ class LeaveServiceTest {
     private LeaveType leaveType;
     private LeaveBalance balance;
     private LeaveRequestDto dto;
+    private employeehub.domain.LeavePolicyVersion policy;
 
     @BeforeEach
     void setUp() {
@@ -58,6 +60,12 @@ class LeaveServiceTest {
         leaveType.setName("Annual Leave");
         leaveType.setDefaultDays(15);
 
+        policy = new employeehub.domain.LeavePolicyVersion();
+        policy.setLeaveType(leaveType);
+        policy.setName("Annual Leave");
+        policy.setNoticePeriodDays(14);
+        policy.setRequiresDocumentation(false);
+
         balance = new LeaveBalance();
         balance.setEmployee(employee);
         balance.setLeaveType(leaveType);
@@ -76,6 +84,16 @@ class LeaveServiceTest {
         dto.setStartDate(start);
         dto.setEndDate(start.plusDays(2)); // Mon -> Wed = 3 working days
         dto.setReason("Holiday");
+        lenient().when(leavePolicyService.effective(anyLong(), any())).thenAnswer(invocation -> {
+            if (((Long) invocation.getArgument(0)) == 1L) {
+                return policy;
+            }
+            var sickPolicy = new employeehub.domain.LeavePolicyVersion();
+            sickPolicy.setName("Sick Leave");
+            sickPolicy.setNoticePeriodDays(0);
+            sickPolicy.setRequiresDocumentation(false);
+            return sickPolicy;
+        });
     }
 
     @Test

@@ -51,6 +51,27 @@ export async function getTeams(departmentId) {
     return axios.get(`${BASE_URL}/teams${query}`, authHeaders());
 }
 
+export async function getOrganizationTree(page = 0, size = 20, filters = {}) {
+    const params = new URLSearchParams({ page, size });
+    if (filters.departmentId) params.set('departmentId', filters.departmentId);
+    if (filters.teamId) params.set('teamId', filters.teamId);
+    if (filters.status) params.set('status', filters.status);
+    return axios.get(`${BASE_URL}/organization/tree?${params}`, authHeaders());
+}
+
+export async function searchOrganization(query, page = 0, size = 20, filters = {}) {
+    const params = new URLSearchParams({ page, size });
+    if (query) params.set('q', query);
+    if (filters.departmentId) params.set('departmentId', filters.departmentId);
+    if (filters.teamId) params.set('teamId', filters.teamId);
+    if (filters.status) params.set('status', filters.status);
+    return axios.get(`${BASE_URL}/organization/search?${params}`, authHeaders());
+}
+
+export async function getOrganizationNode(employeeId) {
+    return axios.get(`${BASE_URL}/organization/nodes/${employeeId}`, authHeaders());
+}
+
 // ── Employees ────────────────────────────────────────────────────────────────
 
 /**

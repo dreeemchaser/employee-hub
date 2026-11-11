@@ -6,4 +6,4 @@
 - [x] Audit upload, download, and access-level changes.
 - [x] Add service authorization/defaulting tests.
 - [x] Run backend unit/WebMvc suite.
-- [ ] Run frontend builds in an environment with npm dependencies installed.
+- [x] Run frontend builds in an environment with npm dependencies installed.

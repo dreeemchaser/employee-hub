@@ -22,6 +22,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/tax-brackets/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Update a tax bracket */
+        put: operations["update_1"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/leave/policies/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Update a draft leave policy version */
+        put: operations["update_2"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/employees/{id}": {
         parameters: {
             query?: never;
@@ -32,7 +66,7 @@ export interface paths {
         /** Get employee by ID */
         get: operations["getById"];
         /** Update an employee */
-        put: operations["update_1"];
+        put: operations["update_3"];
         post?: never;
         /** Delete an employee */
         delete: operations["delete_1"];
@@ -50,7 +84,7 @@ export interface paths {
         };
         get?: never;
         /** Update a department */
-        put: operations["update_2"];
+        put: operations["update_4"];
         post?: never;
         /** Delete a department */
         delete: operations["delete_2"];
@@ -106,6 +140,24 @@ export interface paths {
         put?: never;
         /** Create a team under a department */
         post: operations["create_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tax-brackets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List tax brackets, optionally filtered by tax year */
+        get: operations["getAll_2"];
+        put?: never;
+        /** Create a tax bracket */
+        post: operations["create_2"];
         delete?: never;
         options?: never;
         head?: never;
@@ -216,41 +268,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/tax-brackets": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List tax brackets, optionally filtered by tax year */
-        get: operations["getAll_6"];
-        put?: never;
-        /** Create a tax bracket */
-        post: operations["createTaxBracket"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/tax-brackets/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /** Update a tax bracket */
-        put: operations["updateTaxBracket"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/leave/requests": {
         parameters: {
             query?: never;
@@ -259,10 +276,45 @@ export interface paths {
             cookie?: never;
         };
         /** Get all leave requests (HR/Manager filtered) */
-        get: operations["getAll_2"];
+        get: operations["getAll_3"];
         put?: never;
         /** Submit a leave request */
         post: operations["submit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/leave/policies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get active leave policies */
+        get: operations["getActive"];
+        put?: never;
+        /** Create a draft leave policy version */
+        post: operations["create_3"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/feedback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submit feedback for an employee */
+        post: operations["create_4"];
         delete?: never;
         options?: never;
         head?: never;
@@ -277,10 +329,10 @@ export interface paths {
             cookie?: never;
         };
         /** Get all employees (paginated, filterable) */
-        get: operations["getAll_3"];
+        get: operations["getAll_4"];
         put?: never;
         /** Create a new employee */
-        post: operations["create_2"];
+        post: operations["create_5"];
         delete?: never;
         options?: never;
         head?: never;
@@ -330,7 +382,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Upload a document */
+        /** Upload a document, optionally with an expiry date */
         post: operations["upload"];
         delete?: never;
         options?: never;
@@ -346,10 +398,10 @@ export interface paths {
             cookie?: never;
         };
         /** Get all departments */
-        get: operations["getAll_4"];
+        get: operations["getAll_5"];
         put?: never;
         /** Create a department */
-        post: operations["create_3"];
+        post: operations["create_6"];
         delete?: never;
         options?: never;
         head?: never;
@@ -469,6 +521,23 @@ export interface paths {
         put?: never;
         /** Change own password */
         post: operations["changePassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/attendance/clock-in": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Clock in for today */
+        post: operations["clockIn"];
         delete?: never;
         options?: never;
         head?: never;
@@ -628,6 +697,23 @@ export interface paths {
         patch: operations["markAllAsRead"];
         trace?: never;
     };
+    "/notifications/preferences/{type}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update email preference for a notification type */
+        patch: operations["updatePreference"];
+        trace?: never;
+    };
     "/leave/requests/{id}/reject": {
         parameters: {
             query?: never;
@@ -660,6 +746,40 @@ export interface paths {
         head?: never;
         /** Approve a leave request */
         patch: operations["approve_1"];
+        trace?: never;
+    };
+    "/leave/policies/{id}/retire": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Retire a leave policy version */
+        patch: operations["retire"];
+        trace?: never;
+    };
+    "/leave/policies/{id}/activate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Activate a leave policy version */
+        patch: operations["activate"];
         trace?: never;
     };
     "/employees/{id}/status": {
@@ -713,6 +833,23 @@ export interface paths {
         patch: operations["reject_2"];
         trace?: never;
     };
+    "/documents/{id}/access-level": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Change document visibility (HR only) */
+        patch: operations["updateAccessLevel"];
+        trace?: never;
+    };
     "/benefits/applications/{id}/reject": {
         parameters: {
             query?: never;
@@ -763,6 +900,23 @@ export interface paths {
         head?: never;
         /** Update own profile (name, phone, address, nationality, gender) */
         patch: operations["updateMe"];
+        trace?: never;
+    };
+    "/attendance/clock-out": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Clock out of the current open session */
+        patch: operations["clockOut"];
         trace?: never;
     };
     "/timesheets/my": {
@@ -884,6 +1038,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/organization/tree": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the caller's permitted organization roots */
+        get: operations["getTree"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/organization/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Search permitted organization nodes */
+        get: operations["search"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/organization/nodes/{employeeId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a permitted organization node and direct reports */
+        get: operations["getNode"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/notifications/preferences": {
         parameters: {
             query?: never;
@@ -899,23 +1104,6 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
-        trace?: never;
-    };
-    "/notifications/preferences/{type}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /** Update email preference for a notification type */
-        patch: operations["updatePreference"];
         trace?: never;
     };
     "/notifications/my": {
@@ -944,6 +1132,23 @@ export interface paths {
         };
         /** Get current employee's leave requests */
         get: operations["getMy_2"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/leave/policies/admin": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get all leave policy versions */
+        get: operations["getAll_6"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1018,6 +1223,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/feedback/received": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get feedback received by the current employee */
+        get: operations["received"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/feedback/authored": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get feedback authored by the current employee */
+        get: operations["authored"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/employees/photo/{filename}": {
         parameters: {
             query?: never;
@@ -1043,7 +1282,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get all documents (HR_ADMIN only) */
-        get: operations["getAll_5"];
+        get: operations["getAll_7"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1103,6 +1342,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/dashboard/department-breakdown": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get pending leave/timesheet/document counts grouped by department (HR/Admin) */
+        get: operations["getDepartmentBreakdown"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/benefits": {
         parameters: {
             query?: never;
@@ -1145,7 +1401,75 @@ export interface paths {
             cookie?: never;
         };
         /** Get audit logs (HR_ADMIN/SUPER_ADMIN), filterable by entity type, employee, date range */
-        get: operations["getAll_6"];
+        get: operations["getAll_8"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/audit-logs/retention/dry-run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Report audit records eligible for retention without deleting them */
+        get: operations["retentionDryRun"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/audit-logs/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Export a bounded audit log CSV */
+        get: operations["export"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/attendance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get attendance records (Manager scoped to direct reports, HR/Admin see all) */
+        get: operations["getAll_9"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/attendance/my": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get current employee's attendance history */
+        get: operations["getMy_5"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1209,6 +1533,71 @@ export interface components {
             success?: boolean;
             message?: string;
             data?: components["schemas"]["Team"];
+        };
+        TaxBracketRequest: {
+            /** Format: int32 */
+            taxYear: number;
+            minIncome: number;
+            maxIncome?: number;
+            baseTax: number;
+            marginalRate: number;
+            rebate: number;
+        };
+        ApiResponseTaxBracketResponse: {
+            success?: boolean;
+            message?: string;
+            data?: components["schemas"]["TaxBracketResponse"];
+        };
+        TaxBracketResponse: {
+            /** Format: int64 */
+            id?: number;
+            /** Format: int32 */
+            taxYear?: number;
+            minIncome?: number;
+            maxIncome?: number;
+            baseTax?: number;
+            marginalRate?: number;
+            rebate?: number;
+        };
+        LeavePolicyRequest: {
+            /** Format: int64 */
+            leaveTypeId: number;
+            name: string;
+            paid: boolean;
+            /** Format: int32 */
+            defaultEntitlement: number;
+            requiresDocumentation: boolean;
+            /** Format: int32 */
+            noticePeriodDays: number;
+            /** Format: date */
+            effectiveFrom: string;
+            /** Format: date */
+            effectiveTo?: string;
+        };
+        ApiResponseLeavePolicyResponse: {
+            success?: boolean;
+            message?: string;
+            data?: components["schemas"]["LeavePolicyResponse"];
+        };
+        LeavePolicyResponse: {
+            id?: string;
+            /** Format: int64 */
+            leaveTypeId?: number;
+            name?: string;
+            /** Format: int32 */
+            versionNumber?: number;
+            paid?: boolean;
+            /** Format: int32 */
+            defaultEntitlement?: number;
+            requiresDocumentation?: boolean;
+            /** Format: int32 */
+            noticePeriodDays?: number;
+            /** Format: date */
+            effectiveFrom?: string;
+            /** Format: date */
+            effectiveTo?: string;
+            /** @enum {string} */
+            status?: "DRAFT" | "ACTIVE" | "RETIRED";
         };
         EmployeeRequest: {
             firstName?: string;
@@ -1304,54 +1693,6 @@ export interface components {
             hoursWorked?: number;
             description?: string;
             projectOrTask?: string;
-        };
-        ApiResponsePageTaxBracketResponse: {
-            success?: boolean;
-            message?: string;
-            data?: components["schemas"]["PageTaxBracketResponse"];
-        };
-        PageTaxBracketResponse: {
-            content?: components["schemas"]["TaxBracketResponse"][];
-            pageable?: components["schemas"]["PageableObject"];
-            /** Format: int64 */
-            totalElements?: number;
-            /** Format: int32 */
-            totalPages?: number;
-            last?: boolean;
-            /** Format: int32 */
-            size?: number;
-            /** Format: int32 */
-            number?: number;
-            sort?: components["schemas"]["SortObject"];
-            /** Format: int32 */
-            numberOfElements?: number;
-            first?: boolean;
-            empty?: boolean;
-        };
-        ApiResponseTaxBracketResponse: {
-            success?: boolean;
-            message?: string;
-            data?: components["schemas"]["TaxBracketResponse"];
-        };
-        TaxBracketResponse: {
-            /** Format: int64 */
-            id?: number;
-            /** Format: int32 */
-            taxYear?: number;
-            minIncome?: number;
-            maxIncome?: number | null;
-            baseTax?: number;
-            marginalRate?: number;
-            rebate?: number;
-        };
-        TaxBracketRequest: {
-            /** Format: int32 */
-            taxYear: number;
-            minIncome: number;
-            maxIncome?: number | null;
-            baseTax: number;
-            marginalRate: number;
-            rebate: number;
         };
         TimesheetResponse: {
             id?: string;
@@ -1591,6 +1932,32 @@ export interface components {
             requiresDocumentation?: boolean;
             isPaid?: boolean;
         };
+        FeedbackRequest: {
+            subjectId: string;
+            comment: string;
+            /** Format: int32 */
+            rating?: number;
+            /** @enum {string} */
+            visibility: "PRIVATE" | "SUBJECT" | "ANONYMOUS" | "HR";
+        };
+        ApiResponseFeedbackResponse: {
+            success?: boolean;
+            message?: string;
+            data?: components["schemas"]["FeedbackResponse"];
+        };
+        FeedbackResponse: {
+            id?: string;
+            subjectId?: string;
+            subjectName?: string;
+            authorName?: string;
+            comment?: string;
+            /** Format: int32 */
+            rating?: number;
+            /** @enum {string} */
+            visibility?: "PRIVATE" | "SUBJECT" | "ANONYMOUS" | "HR";
+            /** Format: date-time */
+            createdAt?: string;
+        };
         OffboardEmployeeRequest: {
             reason: string;
             /** Format: date */
@@ -1614,8 +1981,13 @@ export interface components {
             verifiedAt?: string;
             /** @enum {string} */
             status?: "PENDING" | "VERIFIED" | "REJECTED";
+            /** @enum {string} */
+            accessLevel?: "STANDARD" | "CONFIDENTIAL" | "PAYROLL_ONLY";
             /** Format: date-time */
             createdAt?: string;
+            /** Format: date */
+            expiryDate?: string;
+            expired?: boolean;
         };
         ApiResponseBenefitApplicationResponse: {
             success?: boolean;
@@ -1671,6 +2043,26 @@ export interface components {
             currentPassword?: string;
             newPassword?: string;
         };
+        ApiResponseAttendanceResponse: {
+            success?: boolean;
+            message?: string;
+            data?: components["schemas"]["AttendanceResponse"];
+        };
+        AttendanceResponse: {
+            id?: string;
+            employee?: components["schemas"]["EmployeeSummary"];
+            /** Format: date */
+            workDate?: string;
+            /** Format: date-time */
+            clockInAt?: string;
+            /** Format: date-time */
+            clockOutAt?: string;
+            /** @enum {string} */
+            status?: "OPEN" | "CLOSED";
+            notes?: string;
+            /** Format: date-time */
+            createdAt?: string;
+        };
         ApiResponseNotificationResponse: {
             success?: boolean;
             message?: string;
@@ -1682,17 +2074,15 @@ export interface components {
             title?: string;
             message?: string;
             /** @enum {string} */
-            type?: "LEAVE" | "TIMESHEET" | "SALARY" | "DOCUMENT" | "GENERAL" | "OFFBOARDING";
+            type?: "LEAVE" | "TIMESHEET" | "SALARY" | "DOCUMENT" | "GENERAL" | "ATTENDANCE" | "OFFBOARDING";
             isRead?: boolean;
             relatedEntityType?: string;
             relatedEntityId?: string;
             /** Format: date-time */
             createdAt?: string;
         };
-        ApiResponseListNotificationPreferenceResponse: {
-            success?: boolean;
-            message?: string;
-            data?: components["schemas"]["NotificationPreferenceResponse"][];
+        NotificationPreferenceRequest: {
+            emailEnabled: boolean;
         };
         ApiResponseNotificationPreferenceResponse: {
             success?: boolean;
@@ -1704,8 +2094,9 @@ export interface components {
             notificationType?: "LEAVE" | "TIMESHEET" | "SALARY" | "DOCUMENT" | "GENERAL" | "ATTENDANCE" | "OFFBOARDING";
             emailEnabled?: boolean;
         };
-        NotificationPreferenceRequest: {
-            emailEnabled: boolean;
+        DocumentAccessLevelRequest: {
+            /** @enum {string} */
+            accessLevel: "STANDARD" | "CONFIDENTIAL" | "PAYROLL_ONLY";
         };
         UpdateMeRequest: {
             firstName?: string;
@@ -1746,6 +2137,9 @@ export interface components {
             team?: string;
             startDate?: string;
         };
+        ClockOutRequest: {
+            notes?: string;
+        };
         ApiResponseListTimesheetResponse: {
             success?: boolean;
             message?: string;
@@ -1755,6 +2149,52 @@ export interface components {
             success?: boolean;
             message?: string;
             data?: components["schemas"]["Team"][];
+        };
+        Pageable: {
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            size?: number;
+            sort?: string[];
+        };
+        ApiResponsePageTaxBracketResponse: {
+            success?: boolean;
+            message?: string;
+            data?: components["schemas"]["PageObject"];
+        };
+        PageObject: {
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
+            pageable?: components["schemas"]["PageableObject"];
+            /** Format: int32 */
+            numberOfElements?: number;
+            first?: boolean;
+            last?: boolean;
+            /** Format: int32 */
+            size?: number;
+            content?: components["schemas"]["TaxBracketResponse"][];
+            /** Format: int32 */
+            number?: number;
+            sort?: components["schemas"]["SortObject"];
+            empty?: boolean;
+        };
+        PageableObject: {
+            paged?: boolean;
+            /** Format: int32 */
+            pageNumber?: number;
+            /** Format: int32 */
+            pageSize?: number;
+            unpaged?: boolean;
+            /** Format: int64 */
+            offset?: number;
+            sort?: components["schemas"]["SortObject"];
+        };
+        SortObject: {
+            sorted?: boolean;
+            unsorted?: boolean;
+            empty?: boolean;
         };
         ApiResponseListSalaryRecordResponse: {
             success?: boolean;
@@ -1786,6 +2226,43 @@ export interface components {
             message?: string;
             data?: components["schemas"]["PerformanceCycle"][];
         };
+        ApiResponsePageOrganizationNodeResponse: {
+            success?: boolean;
+            message?: string;
+            data?: components["schemas"]["PageObject"];
+        };
+        OrganizationNodeResponse: {
+            id?: string;
+            displayName?: string;
+            jobTitle?: string;
+            /** Format: int64 */
+            departmentId?: number;
+            departmentName?: string;
+            /** Format: int64 */
+            teamId?: number;
+            teamName?: string;
+            manager?: components["schemas"]["OrganizationPersonSummary"];
+            /** @enum {string} */
+            employmentStatus?: "ACTIVE" | "INACTIVE" | "SUSPENDED" | "TERMINATED";
+            /** Format: int32 */
+            childCount?: number;
+            missingHierarchy?: boolean;
+        };
+        OrganizationPersonSummary: {
+            id?: string;
+            displayName?: string;
+            jobTitle?: string;
+        };
+        ApiResponseOrganizationNodeResponse: {
+            success?: boolean;
+            message?: string;
+            data?: components["schemas"]["OrganizationNodeResponse"];
+        };
+        ApiResponseListNotificationPreferenceResponse: {
+            success?: boolean;
+            message?: string;
+            data?: components["schemas"]["NotificationPreferenceResponse"][];
+        };
         ApiResponseListNotificationResponse: {
             success?: boolean;
             message?: string;
@@ -1795,6 +2272,11 @@ export interface components {
             success?: boolean;
             message?: string;
             data?: components["schemas"]["LeaveRequestResponse"][];
+        };
+        ApiResponsePageLeavePolicyResponse: {
+            success?: boolean;
+            message?: string;
+            data?: components["schemas"]["PageObject"];
         };
         ApiResponseListLeaveBalanceResponse: {
             success?: boolean;
@@ -1814,51 +2296,15 @@ export interface components {
             /** Format: date */
             cycleEndDate?: string;
         };
-        Pageable: {
-            /** Format: int32 */
-            page?: number;
-            /** Format: int32 */
-            size?: number;
-            sort?: string[];
+        ApiResponseListFeedbackResponse: {
+            success?: boolean;
+            message?: string;
+            data?: components["schemas"]["FeedbackResponse"][];
         };
         ApiResponsePageEmployeeResponse: {
             success?: boolean;
             message?: string;
             data?: components["schemas"]["PageObject"];
-        };
-        PageObject: {
-            /** Format: int64 */
-            totalElements?: number;
-            /** Format: int32 */
-            totalPages?: number;
-            /** Format: int32 */
-            size?: number;
-            content?: components["schemas"]["EmployeeResponse"][];
-            /** Format: int32 */
-            number?: number;
-            sort?: components["schemas"]["SortObject"];
-            pageable?: components["schemas"]["PageableObject"];
-            /** Format: int32 */
-            numberOfElements?: number;
-            first?: boolean;
-            last?: boolean;
-            empty?: boolean;
-        };
-        PageableObject: {
-            /** Format: int64 */
-            offset?: number;
-            sort?: components["schemas"]["SortObject"];
-            unpaged?: boolean;
-            paged?: boolean;
-            /** Format: int32 */
-            pageSize?: number;
-            /** Format: int32 */
-            pageNumber?: number;
-        };
-        SortObject: {
-            empty?: boolean;
-            unsorted?: boolean;
-            sorted?: boolean;
         };
         ApiResponseListDocumentResponse: {
             success?: boolean;
@@ -1869,6 +2315,20 @@ export interface components {
             success?: boolean;
             message?: string;
             data?: components["schemas"]["Department"][];
+        };
+        ApiResponseListDepartmentBreakdownEntry: {
+            success?: boolean;
+            message?: string;
+            data?: components["schemas"]["DepartmentBreakdownEntry"][];
+        };
+        DepartmentBreakdownEntry: {
+            departmentName?: string;
+            /** Format: int64 */
+            pendingLeave?: number;
+            /** Format: int64 */
+            pendingTimesheets?: number;
+            /** Format: int64 */
+            pendingDocuments?: number;
         };
         ApiResponseListBenefitType: {
             success?: boolean;
@@ -1906,6 +2366,25 @@ export interface components {
             status?: "ACTIVE" | "INACTIVE" | "PENDING" | "APPROVED" | "REJECTED";
         };
         ApiResponsePageAuditLogResponse: {
+            success?: boolean;
+            message?: string;
+            data?: components["schemas"]["PageObject"];
+        };
+        ApiResponseRetentionDryRunResponse: {
+            success?: boolean;
+            message?: string;
+            data?: components["schemas"]["RetentionDryRunResponse"];
+        };
+        RetentionDryRunResponse: {
+            /** Format: int32 */
+            retentionDays?: number;
+            /** Format: date-time */
+            cutoff?: string;
+            /** Format: int64 */
+            eligibleRecords?: number;
+            destructive?: boolean;
+        };
+        ApiResponsePageAttendanceResponse: {
             success?: boolean;
             message?: string;
             data?: components["schemas"]["PageObject"];
@@ -1967,6 +2446,58 @@ export interface operations {
             };
         };
     };
+    update_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaxBracketRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseTaxBracketResponse"];
+                };
+            };
+        };
+    };
+    update_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LeavePolicyRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseLeavePolicyResponse"];
+                };
+            };
+        };
+    };
     getById: {
         parameters: {
             query?: never;
@@ -1989,7 +2520,7 @@ export interface operations {
             };
         };
     };
-    update_1: {
+    update_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -2037,7 +2568,7 @@ export interface operations {
             };
         };
     };
-    update_2: {
+    update_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -2199,6 +2730,53 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ApiResponseTeam"];
+                };
+            };
+        };
+    };
+    getAll_2: {
+        parameters: {
+            query: {
+                taxYear?: number;
+                pageable: components["schemas"]["Pageable"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponsePageTaxBracketResponse"];
+                };
+            };
+        };
+    };
+    create_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaxBracketRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseTaxBracketResponse"];
                 };
             };
         };
@@ -2387,82 +2965,7 @@ export interface operations {
             };
         };
     };
-    getAll_6: {
-        parameters: {
-            query?: {
-                taxYear?: number;
-                page?: number;
-                size?: number;
-                sort?: string[];
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ApiResponsePageTaxBracketResponse"];
-                };
-            };
-        };
-    };
-    createTaxBracket: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["TaxBracketRequest"];
-            };
-        };
-        responses: {
-            /** @description Created */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ApiResponseTaxBracketResponse"];
-                };
-            };
-        };
-    };
-    updateTaxBracket: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["TaxBracketRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ApiResponseTaxBracketResponse"];
-                };
-            };
-        };
-    };
-    getAll_2: {
+    getAll_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -2506,7 +3009,77 @@ export interface operations {
             };
         };
     };
-    getAll_3: {
+    getActive: {
+        parameters: {
+            query: {
+                pageable: components["schemas"]["Pageable"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponsePageLeavePolicyResponse"];
+                };
+            };
+        };
+    };
+    create_3: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LeavePolicyRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseLeavePolicyResponse"];
+                };
+            };
+        };
+    };
+    create_4: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FeedbackRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseFeedbackResponse"];
+                };
+            };
+        };
+    };
+    getAll_4: {
         parameters: {
             query: {
                 departmentId?: number;
@@ -2531,7 +3104,7 @@ export interface operations {
             };
         };
     };
-    create_2: {
+    create_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -2614,6 +3187,7 @@ export interface operations {
         parameters: {
             query: {
                 type: "ID" | "CONTRACT" | "CERTIFICATE" | "PAYSLIP" | "OTHER";
+                expiryDate?: string;
             };
             header?: never;
             path?: never;
@@ -2639,7 +3213,7 @@ export interface operations {
             };
         };
     };
-    getAll_4: {
+    getAll_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -2659,7 +3233,7 @@ export interface operations {
             };
         };
     };
-    create_3: {
+    create_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -2851,6 +3425,26 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ApiResponseVoid"];
+                };
+            };
+        };
+    };
+    clockIn: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Already clocked in */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseAttendanceResponse"];
                 };
             };
         };
@@ -3069,6 +3663,32 @@ export interface operations {
             };
         };
     };
+    updatePreference: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                type: "LEAVE" | "TIMESHEET" | "SALARY" | "DOCUMENT" | "GENERAL" | "ATTENDANCE" | "OFFBOARDING";
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NotificationPreferenceRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseNotificationPreferenceResponse"];
+                };
+            };
+        };
+    };
     reject_1: {
         parameters: {
             query?: never;
@@ -3115,6 +3735,50 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ApiResponseLeaveRequestResponse"];
+                };
+            };
+        };
+    };
+    retire: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseLeavePolicyResponse"];
+                };
+            };
+        };
+    };
+    activate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseLeavePolicyResponse"];
                 };
             };
         };
@@ -3179,6 +3843,32 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseDocumentResponse"];
+                };
+            };
+        };
+    };
+    updateAccessLevel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DocumentAccessLevelRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -3275,6 +3965,30 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ApiResponseMeResponse"];
+                };
+            };
+        };
+    };
+    clockOut: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ClockOutRequest"];
+            };
+        };
+        responses: {
+            /** @description No open clock-in to close */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseAttendanceResponse"];
                 };
             };
         };
@@ -3423,6 +4137,79 @@ export interface operations {
             };
         };
     };
+    getTree: {
+        parameters: {
+            query: {
+                departmentId?: number;
+                teamId?: number;
+                status?: "ACTIVE" | "INACTIVE" | "SUSPENDED" | "TERMINATED";
+                pageable: components["schemas"]["Pageable"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponsePageOrganizationNodeResponse"];
+                };
+            };
+        };
+    };
+    search: {
+        parameters: {
+            query: {
+                q?: string;
+                departmentId?: number;
+                teamId?: number;
+                status?: "ACTIVE" | "INACTIVE" | "SUSPENDED" | "TERMINATED";
+                pageable: components["schemas"]["Pageable"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponsePageOrganizationNodeResponse"];
+                };
+            };
+        };
+    };
+    getNode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                employeeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseOrganizationNodeResponse"];
+                };
+            };
+        };
+    };
     getPreferences: {
         parameters: {
             query?: never;
@@ -3439,32 +4226,6 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ApiResponseListNotificationPreferenceResponse"];
-                };
-            };
-        };
-    };
-    updatePreference: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                type: "LEAVE" | "TIMESHEET" | "SALARY" | "DOCUMENT" | "GENERAL" | "ATTENDANCE" | "OFFBOARDING";
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["NotificationPreferenceRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ApiResponseNotificationPreferenceResponse"];
                 };
             };
         };
@@ -3505,6 +4266,28 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ApiResponseListLeaveRequestResponse"];
+                };
+            };
+        };
+    };
+    getAll_6: {
+        parameters: {
+            query: {
+                pageable: components["schemas"]["Pageable"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponsePageLeavePolicyResponse"];
                 };
             };
         };
@@ -3597,6 +4380,46 @@ export interface operations {
             };
         };
     };
+    received: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseListFeedbackResponse"];
+                };
+            };
+        };
+    };
+    authored: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseListFeedbackResponse"];
+                };
+            };
+        };
+    };
     getPhoto: {
         parameters: {
             query?: never;
@@ -3619,7 +4442,7 @@ export interface operations {
             };
         };
     };
-    getAll_5: {
+    getAll_7: {
         parameters: {
             query?: never;
             header?: never;
@@ -3701,6 +4524,26 @@ export interface operations {
             };
         };
     };
+    getDepartmentBreakdown: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseListDepartmentBreakdownEntry"];
+                };
+            };
+        };
+    };
     getAllTypes: {
         parameters: {
             query?: never;
@@ -3741,10 +4584,12 @@ export interface operations {
             };
         };
     };
-    getAll_6: {
+    getAll_8: {
         parameters: {
             query: {
                 entityType?: string;
+                action?: string;
+                actorId?: string;
                 employeeId?: string;
                 from?: string;
                 to?: string;
@@ -3763,6 +4608,103 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ApiResponsePageAuditLogResponse"];
+                };
+            };
+        };
+    };
+    retentionDryRun: {
+        parameters: {
+            query?: {
+                retentionDays?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseRetentionDryRunResponse"];
+                };
+            };
+        };
+    };
+    export: {
+        parameters: {
+            query?: {
+                entityType?: string;
+                action?: string;
+                actorId?: string;
+                employeeId?: string;
+                from?: string;
+                to?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
+                };
+            };
+        };
+    };
+    getAll_9: {
+        parameters: {
+            query: {
+                employeeId?: string;
+                from?: string;
+                to?: string;
+                pageable: components["schemas"]["Pageable"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponsePageAttendanceResponse"];
+                };
+            };
+        };
+    };
+    getMy_5: {
+        parameters: {
+            query: {
+                pageable: components["schemas"]["Pageable"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponsePageAttendanceResponse"];
                 };
             };
         };

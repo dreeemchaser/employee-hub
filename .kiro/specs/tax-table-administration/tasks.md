@@ -8,4 +8,4 @@
 - [x] Add HR dashboard tax-table editor.
 - [x] Add service tests for valid creation, overlap rejection, and updates.
 - [x] Run backend tests with JDK 21 and the HR dashboard production build.
-- [ ] Refresh generated OpenAPI artifacts and TypeScript contracts.
+- [x] Refresh generated OpenAPI artifacts and TypeScript contracts.

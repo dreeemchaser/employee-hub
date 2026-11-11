@@ -6,4 +6,4 @@
 - [x] Add employee portal filter and busy-day indicators.
 - [x] Run backend tests with JDK 21.
 - [x] Run the employee frontend production build.
-- [ ] Refresh generated OpenAPI artifacts after the endpoint signature change.
+- [x] Refresh generated OpenAPI artifacts after the endpoint signature change.

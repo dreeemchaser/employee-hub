@@ -93,6 +93,89 @@
         }
       }
     },
+    "/tax-brackets/{id}": {
+      "put": {
+        "tags": [
+          "Tax Brackets"
+        ],
+        "summary": "Update a tax bracket",
+        "operationId": "update_1",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaxBracketRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseTaxBracketResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/leave/policies/{id}": {
+      "put": {
+        "tags": [
+          "Leave Policies"
+        ],
+        "summary": "Update a draft leave policy version",
+        "operationId": "update_2",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LeavePolicyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseLeavePolicyResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/employees/{id}": {
       "get": {
         "tags": [
@@ -128,7 +211,7 @@
           "Employees"
         ],
         "summary": "Update an employee",
-        "operationId": "update_1",
+        "operationId": "update_3",
         "parameters": [
           {
             "name": "id",
@@ -198,7 +281,7 @@
           "Departments"
         ],
         "summary": "Update a department",
-        "operationId": "update_2",
+        "operationId": "update_4",
         "parameters": [
           {
             "name": "id",
@@ -420,6 +503,75 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponseTeam"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tax-brackets": {
+      "get": {
+        "tags": [
+          "Tax Brackets"
+        ],
+        "summary": "List tax brackets, optionally filtered by tax year",
+        "operationId": "getAll_2",
+        "parameters": [
+          {
+            "name": "taxYear",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "pageable",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponsePageTaxBracketResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Tax Brackets"
+        ],
+        "summary": "Create a tax bracket",
+        "operationId": "create_2",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaxBracketRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseTaxBracketResponse"
                 }
               }
             }
@@ -651,112 +803,13 @@
         }
       }
     },
-    "/tax-brackets": {
-      "get": {
-        "tags": ["Tax Brackets"],
-        "summary": "List tax brackets, optionally filtered by tax year",
-        "operationId": "getAll_6",
-        "parameters": [
-          {
-            "name": "taxYear",
-            "in": "query",
-            "required": false,
-            "schema": { "type": "integer", "format": "int32" }
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "required": false,
-            "schema": { "type": "integer", "format": "int32", "default": 0 }
-          },
-          {
-            "name": "size",
-            "in": "query",
-            "required": false,
-            "schema": { "type": "integer", "format": "int32", "default": 20 }
-          },
-          {
-            "name": "sort",
-            "in": "query",
-            "required": false,
-            "schema": { "type": "array", "items": { "type": "string" } }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": { "$ref": "#/components/schemas/ApiResponsePageTaxBracketResponse" }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": ["Tax Brackets"],
-        "summary": "Create a tax bracket",
-        "operationId": "createTaxBracket",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/TaxBracketRequest" }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Created",
-            "content": {
-              "*/*": {
-                "schema": { "$ref": "#/components/schemas/ApiResponseTaxBracketResponse" }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/tax-brackets/{id}": {
-      "put": {
-        "tags": ["Tax Brackets"],
-        "summary": "Update a tax bracket",
-        "operationId": "updateTaxBracket",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "integer", "format": "int64" }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/TaxBracketRequest" }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": { "$ref": "#/components/schemas/ApiResponseTaxBracketResponse" }
-              }
-            }
-          }
-        }
-      }
-    },
     "/leave/requests": {
       "get": {
         "tags": [
           "Leave Management"
         ],
         "summary": "Get all leave requests (HR/Manager filtered)",
-        "operationId": "getAll_2",
+        "operationId": "getAll_3",
         "responses": {
           "200": {
             "description": "OK",
@@ -800,13 +853,104 @@
         }
       }
     },
+    "/leave/policies": {
+      "get": {
+        "tags": [
+          "Leave Policies"
+        ],
+        "summary": "Get active leave policies",
+        "operationId": "getActive",
+        "parameters": [
+          {
+            "name": "pageable",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponsePageLeavePolicyResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Leave Policies"
+        ],
+        "summary": "Create a draft leave policy version",
+        "operationId": "create_3",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LeavePolicyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseLeavePolicyResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/feedback": {
+      "post": {
+        "tags": [
+          "Feedback"
+        ],
+        "summary": "Submit feedback for an employee",
+        "operationId": "create_4",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeedbackRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseFeedbackResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/employees": {
       "get": {
         "tags": [
           "Employees"
         ],
         "summary": "Get all employees (paginated, filterable)",
-        "operationId": "getAll_3",
+        "operationId": "getAll_4",
         "parameters": [
           {
             "name": "departmentId",
@@ -867,7 +1011,7 @@
           "Employees"
         ],
         "summary": "Create a new employee",
-        "operationId": "create_2",
+        "operationId": "create_5",
         "requestBody": {
           "content": {
             "application/json": {
@@ -987,7 +1131,7 @@
         "tags": [
           "Documents"
         ],
-        "summary": "Upload a document",
+        "summary": "Upload a document, optionally with an expiry date",
         "operationId": "upload",
         "parameters": [
           {
@@ -1003,6 +1147,15 @@
                 "PAYSLIP",
                 "OTHER"
               ]
+            }
+          },
+          {
+            "name": "expiryDate",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
             }
           }
         ],
@@ -1044,7 +1197,7 @@
           "Departments"
         ],
         "summary": "Get all departments",
-        "operationId": "getAll_4",
+        "operationId": "getAll_5",
         "responses": {
           "200": {
             "description": "OK",
@@ -1063,7 +1216,7 @@
           "Departments"
         ],
         "summary": "Create a department",
-        "operationId": "create_3",
+        "operationId": "create_6",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1305,6 +1458,27 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/attendance/clock-in": {
+      "post": {
+        "tags": [
+          "Attendance"
+        ],
+        "summary": "Clock in for today",
+        "operationId": "clockIn",
+        "responses": {
+          "409": {
+            "description": "Already clocked in",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseAttendanceResponse"
                 }
               }
             }
@@ -1620,6 +1794,56 @@
         }
       }
     },
+    "/notifications/preferences/{type}": {
+      "patch": {
+        "tags": [
+          "Notifications"
+        ],
+        "summary": "Update email preference for a notification type",
+        "operationId": "updatePreference",
+        "parameters": [
+          {
+            "name": "type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "LEAVE",
+                "TIMESHEET",
+                "SALARY",
+                "DOCUMENT",
+                "GENERAL",
+                "ATTENDANCE",
+                "OFFBOARDING"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotificationPreferenceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseNotificationPreferenceResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/leave/requests/{id}/reject": {
       "patch": {
         "tags": [
@@ -1688,6 +1912,68 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponseLeaveRequestResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/leave/policies/{id}/retire": {
+      "patch": {
+        "tags": [
+          "Leave Policies"
+        ],
+        "summary": "Retire a leave policy version",
+        "operationId": "retire",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseLeavePolicyResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/leave/policies/{id}/activate": {
+      "patch": {
+        "tags": [
+          "Leave Policies"
+        ],
+        "summary": "Activate a leave policy version",
+        "operationId": "activate",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseLeavePolicyResponse"
                 }
               }
             }
@@ -1787,6 +2073,47 @@
             }
           }
         ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseDocumentResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/documents/{id}/access-level": {
+      "patch": {
+        "tags": [
+          "Documents"
+        ],
+        "summary": "Change document visibility (HR only)",
+        "operationId": "updateAccessLevel",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DocumentAccessLevelRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK",
@@ -1906,6 +2233,36 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponseMeResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/attendance/clock-out": {
+      "patch": {
+        "tags": [
+          "Attendance"
+        ],
+        "summary": "Clock out of the current open session",
+        "operationId": "clockOut",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClockOutRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "409": {
+            "description": "No open clock-in to close",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseAttendanceResponse"
                 }
               }
             }
@@ -2080,6 +2437,171 @@
         }
       }
     },
+    "/organization/tree": {
+      "get": {
+        "tags": [
+          "Organization"
+        ],
+        "summary": "Get the caller's permitted organization roots",
+        "operationId": "getTree",
+        "parameters": [
+          {
+            "name": "departmentId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "teamId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "INACTIVE",
+                "SUSPENDED",
+                "TERMINATED"
+              ]
+            }
+          },
+          {
+            "name": "pageable",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponsePageOrganizationNodeResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/organization/search": {
+      "get": {
+        "tags": [
+          "Organization"
+        ],
+        "summary": "Search permitted organization nodes",
+        "operationId": "search",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "departmentId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "teamId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "INACTIVE",
+                "SUSPENDED",
+                "TERMINATED"
+              ]
+            }
+          },
+          {
+            "name": "pageable",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponsePageOrganizationNodeResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/organization/nodes/{employeeId}": {
+      "get": {
+        "tags": [
+          "Organization"
+        ],
+        "summary": "Get a permitted organization node and direct reports",
+        "operationId": "getNode",
+        "parameters": [
+          {
+            "name": "employeeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseOrganizationNodeResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/notifications/preferences": {
       "get": {
         "tags": [
@@ -2094,56 +2616,6 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponseListNotificationPreferenceResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/notifications/preferences/{type}": {
-      "patch": {
-        "tags": [
-          "Notifications"
-        ],
-        "summary": "Update email preference for a notification type",
-        "operationId": "updatePreference",
-        "parameters": [
-          {
-            "name": "type",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "enum": [
-                "LEAVE",
-                "TIMESHEET",
-                "SALARY",
-                "DOCUMENT",
-                "GENERAL",
-                "ATTENDANCE",
-                "OFFBOARDING"
-              ]
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/NotificationPreferenceRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiResponseNotificationPreferenceResponse"
                 }
               }
             }
@@ -2186,6 +2658,37 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponseListLeaveRequestResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/leave/policies/admin": {
+      "get": {
+        "tags": [
+          "Leave Policies"
+        ],
+        "summary": "Get all leave policy versions",
+        "operationId": "getAll_6",
+        "parameters": [
+          {
+            "name": "pageable",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponsePageLeavePolicyResponse"
                 }
               }
             }
@@ -2306,6 +2809,48 @@
         }
       }
     },
+    "/feedback/received": {
+      "get": {
+        "tags": [
+          "Feedback"
+        ],
+        "summary": "Get feedback received by the current employee",
+        "operationId": "received",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseListFeedbackResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/feedback/authored": {
+      "get": {
+        "tags": [
+          "Feedback"
+        ],
+        "summary": "Get feedback authored by the current employee",
+        "operationId": "authored",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseListFeedbackResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/employees/photo/{filename}": {
       "get": {
         "tags": [
@@ -2344,7 +2889,7 @@
           "Documents"
         ],
         "summary": "Get all documents (HR_ADMIN only)",
-        "operationId": "getAll_5",
+        "operationId": "getAll_7",
         "responses": {
           "200": {
             "description": "OK",
@@ -2433,6 +2978,27 @@
         }
       }
     },
+    "/dashboard/department-breakdown": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "summary": "Get pending leave/timesheet/document counts grouped by department (HR/Admin)",
+        "operationId": "getDepartmentBreakdown",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseListDepartmentBreakdownEntry"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/benefits": {
       "get": {
         "tags": [
@@ -2481,10 +3047,26 @@
           "Audit Logs"
         ],
         "summary": "Get audit logs (HR_ADMIN/SUPER_ADMIN), filterable by entity type, employee, date range",
-        "operationId": "getAll_6",
+        "operationId": "getAll_8",
         "parameters": [
           {
             "name": "entityType",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "action",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "actorId",
             "in": "query",
             "required": false,
             "schema": {
@@ -2533,6 +3115,211 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponsePageAuditLogResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/audit-logs/retention/dry-run": {
+      "get": {
+        "tags": [
+          "Audit Logs"
+        ],
+        "summary": "Report audit records eligible for retention without deleting them",
+        "operationId": "retentionDryRun",
+        "parameters": [
+          {
+            "name": "retentionDays",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 365
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseRetentionDryRunResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/audit-logs/export": {
+      "get": {
+        "tags": [
+          "Audit Logs"
+        ],
+        "summary": "Export a bounded audit log CSV",
+        "operationId": "export",
+        "parameters": [
+          {
+            "name": "entityType",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "action",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "actorId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "employeeId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1000
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string",
+                  "format": "byte"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/attendance": {
+      "get": {
+        "tags": [
+          "Attendance"
+        ],
+        "summary": "Get attendance records (Manager scoped to direct reports, HR/Admin see all)",
+        "operationId": "getAll_9",
+        "parameters": [
+          {
+            "name": "employeeId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "pageable",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponsePageAttendanceResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/attendance/my": {
+      "get": {
+        "tags": [
+          "Attendance"
+        ],
+        "summary": "Get current employee's attendance history",
+        "operationId": "getMy_5",
+        "parameters": [
+          {
+            "name": "pageable",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponsePageAttendanceResponse"
                 }
               }
             }
@@ -2658,6 +3445,195 @@
           },
           "data": {
             "$ref": "#/components/schemas/Team"
+          }
+        }
+      },
+      "TaxBracketRequest": {
+        "type": "object",
+        "properties": {
+          "taxYear": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 2000
+          },
+          "minIncome": {
+            "type": "number",
+            "minimum": 0
+          },
+          "maxIncome": {
+            "type": "number",
+            "minimum": 0
+          },
+          "baseTax": {
+            "type": "number",
+            "minimum": 0
+          },
+          "marginalRate": {
+            "type": "number",
+            "maximum": 100,
+            "minimum": 0
+          },
+          "rebate": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "baseTax",
+          "marginalRate",
+          "minIncome",
+          "rebate",
+          "taxYear"
+        ]
+      },
+      "ApiResponseTaxBracketResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/TaxBracketResponse"
+          }
+        }
+      },
+      "TaxBracketResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "taxYear": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "minIncome": {
+            "type": "number"
+          },
+          "maxIncome": {
+            "type": "number"
+          },
+          "baseTax": {
+            "type": "number"
+          },
+          "marginalRate": {
+            "type": "number"
+          },
+          "rebate": {
+            "type": "number"
+          }
+        }
+      },
+      "LeavePolicyRequest": {
+        "type": "object",
+        "properties": {
+          "leaveTypeId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "paid": {
+            "type": "boolean"
+          },
+          "defaultEntitlement": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "requiresDocumentation": {
+            "type": "boolean"
+          },
+          "noticePeriodDays": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date"
+          },
+          "effectiveTo": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        "required": [
+          "defaultEntitlement",
+          "effectiveFrom",
+          "leaveTypeId",
+          "name",
+          "noticePeriodDays",
+          "paid",
+          "requiresDocumentation"
+        ]
+      },
+      "ApiResponseLeavePolicyResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/LeavePolicyResponse"
+          }
+        }
+      },
+      "LeavePolicyResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "leaveTypeId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string"
+          },
+          "versionNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "paid": {
+            "type": "boolean"
+          },
+          "defaultEntitlement": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "requiresDocumentation": {
+            "type": "boolean"
+          },
+          "noticePeriodDays": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date"
+          },
+          "effectiveTo": {
+            "type": "string",
+            "format": "date"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "ACTIVE",
+              "RETIRED"
+            ]
           }
         }
       },
@@ -2931,65 +3907,6 @@
             "type": "string"
           }
         }
-      },
-      "ApiResponsePageTaxBracketResponse": {
-        "type": "object",
-        "properties": {
-          "success": { "type": "boolean" },
-          "message": { "type": "string" },
-          "data": { "$ref": "#/components/schemas/PageTaxBracketResponse" }
-        }
-      },
-      "PageTaxBracketResponse": {
-        "type": "object",
-        "properties": {
-          "content": {
-            "type": "array",
-            "items": { "$ref": "#/components/schemas/TaxBracketResponse" }
-          },
-          "pageable": { "$ref": "#/components/schemas/PageableObject" },
-          "totalElements": { "type": "integer", "format": "int64" },
-          "totalPages": { "type": "integer", "format": "int32" },
-          "last": { "type": "boolean" },
-          "size": { "type": "integer", "format": "int32" },
-          "number": { "type": "integer", "format": "int32" },
-          "sort": { "$ref": "#/components/schemas/SortObject" },
-          "numberOfElements": { "type": "integer", "format": "int32" },
-          "first": { "type": "boolean" },
-          "empty": { "type": "boolean" }
-        }
-      },
-      "ApiResponseTaxBracketResponse": {
-        "type": "object",
-        "properties": {
-          "success": { "type": "boolean" },
-          "message": { "type": "string" },
-          "data": { "$ref": "#/components/schemas/TaxBracketResponse" }
-        }
-      },
-      "TaxBracketResponse": {
-        "type": "object",
-        "properties": {
-          "id": { "type": "integer", "format": "int64" },
-          "taxYear": { "type": "integer", "format": "int32" },
-          "minIncome": { "type": "number" },
-          "maxIncome": { "type": "number", "nullable": true },
-          "baseTax": { "type": "number" },
-          "marginalRate": { "type": "number" },
-          "rebate": { "type": "number" }
-        }
-      },
-      "TaxBracketRequest": {
-        "type": "object",
-        "properties": {
-          "taxYear": { "type": "integer", "format": "int32", "minimum": 2000 },
-          "minIncome": { "type": "number", "minimum": 0 },
-          "maxIncome": { "type": "number", "minimum": 0, "nullable": true },
-          "baseTax": { "type": "number", "minimum": 0 },
-          "marginalRate": { "type": "number", "maximum": 100, "minimum": 0 },
-          "rebate": { "type": "number", "minimum": 0 }
-        },
-        "required": ["taxYear", "minIncome", "baseTax", "marginalRate", "rebate"]
       },
       "TimesheetResponse": {
         "type": "object",
@@ -3635,6 +4552,89 @@
           }
         }
       },
+      "FeedbackRequest": {
+        "type": "object",
+        "properties": {
+          "subjectId": {
+            "type": "string"
+          },
+          "comment": {
+            "type": "string",
+            "minLength": 1
+          },
+          "rating": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 5,
+            "minimum": 1
+          },
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "PRIVATE",
+              "SUBJECT",
+              "ANONYMOUS",
+              "HR"
+            ]
+          }
+        },
+        "required": [
+          "comment",
+          "subjectId",
+          "visibility"
+        ]
+      },
+      "ApiResponseFeedbackResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/FeedbackResponse"
+          }
+        }
+      },
+      "FeedbackResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "subjectId": {
+            "type": "string"
+          },
+          "subjectName": {
+            "type": "string"
+          },
+          "authorName": {
+            "type": "string"
+          },
+          "comment": {
+            "type": "string"
+          },
+          "rating": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "PRIVATE",
+              "SUBJECT",
+              "ANONYMOUS",
+              "HR"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "OffboardEmployeeRequest": {
         "type": "object",
         "properties": {
@@ -3708,9 +4708,24 @@
               "REJECTED"
             ]
           },
+          "accessLevel": {
+            "type": "string",
+            "enum": [
+              "STANDARD",
+              "CONFIDENTIAL",
+              "PAYROLL_ONLY"
+            ]
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "expiryDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "expired": {
+            "type": "boolean"
           }
         }
       },
@@ -3870,6 +4885,57 @@
           }
         }
       },
+      "ApiResponseAttendanceResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/AttendanceResponse"
+          }
+        }
+      },
+      "AttendanceResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "employee": {
+            "$ref": "#/components/schemas/EmployeeSummary"
+          },
+          "workDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "clockInAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "clockOutAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "OPEN",
+              "CLOSED"
+            ]
+          },
+          "notes": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "ApiResponseNotificationResponse": {
         "type": "object",
         "properties": {
@@ -3907,6 +4973,7 @@
               "SALARY",
               "DOCUMENT",
               "GENERAL",
+              "ATTENDANCE",
               "OFFBOARDING"
             ]
           },
@@ -3925,22 +4992,16 @@
           }
         }
       },
-      "ApiResponseListNotificationPreferenceResponse": {
+      "NotificationPreferenceRequest": {
         "type": "object",
         "properties": {
-          "success": {
+          "emailEnabled": {
             "type": "boolean"
-          },
-          "message": {
-            "type": "string"
-          },
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/NotificationPreferenceResponse"
-            }
           }
-        }
+        },
+        "required": [
+          "emailEnabled"
+        ]
       },
       "ApiResponseNotificationPreferenceResponse": {
         "type": "object",
@@ -3976,15 +5037,20 @@
           }
         }
       },
-      "NotificationPreferenceRequest": {
+      "DocumentAccessLevelRequest": {
         "type": "object",
         "properties": {
-          "emailEnabled": {
-            "type": "boolean"
+          "accessLevel": {
+            "type": "string",
+            "enum": [
+              "STANDARD",
+              "CONFIDENTIAL",
+              "PAYROLL_ONLY"
+            ]
           }
         },
         "required": [
-          "emailEnabled"
+          "accessLevel"
         ]
       },
       "UpdateMeRequest": {
@@ -4105,6 +5171,16 @@
           }
         }
       },
+      "ClockOutRequest": {
+        "type": "object",
+        "properties": {
+          "notes": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0
+          }
+        }
+      },
       "ApiResponseListTimesheetResponse": {
         "type": "object",
         "properties": {
@@ -4136,6 +5212,127 @@
             "items": {
               "$ref": "#/components/schemas/Team"
             }
+          }
+        }
+      },
+      "Pageable": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 1
+          },
+          "sort": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "ApiResponsePageTaxBracketResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/PageObject"
+          }
+        }
+      },
+      "PageObject": {
+        "type": "object",
+        "properties": {
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxBracketResponse"
+            }
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "empty": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PageableObject": {
+        "type": "object",
+        "properties": {
+          "paged": {
+            "type": "boolean"
+          },
+          "pageNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "unpaged": {
+            "type": "boolean"
+          },
+          "offset": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          }
+        }
+      },
+      "SortObject": {
+        "type": "object",
+        "properties": {
+          "sorted": {
+            "type": "boolean"
+          },
+          "unsorted": {
+            "type": "boolean"
+          },
+          "empty": {
+            "type": "boolean"
           }
         }
       },
@@ -4241,6 +5438,112 @@
           }
         }
       },
+      "ApiResponsePageOrganizationNodeResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/PageObject"
+          }
+        }
+      },
+      "OrganizationNodeResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "jobTitle": {
+            "type": "string"
+          },
+          "departmentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "departmentName": {
+            "type": "string"
+          },
+          "teamId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "teamName": {
+            "type": "string"
+          },
+          "manager": {
+            "$ref": "#/components/schemas/OrganizationPersonSummary"
+          },
+          "employmentStatus": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE",
+              "SUSPENDED",
+              "TERMINATED"
+            ]
+          },
+          "childCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "missingHierarchy": {
+            "type": "boolean"
+          }
+        }
+      },
+      "OrganizationPersonSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "jobTitle": {
+            "type": "string"
+          }
+        }
+      },
+      "ApiResponseOrganizationNodeResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/OrganizationNodeResponse"
+          }
+        }
+      },
+      "ApiResponseListNotificationPreferenceResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationPreferenceResponse"
+            }
+          }
+        }
+      },
       "ApiResponseListNotificationResponse": {
         "type": "object",
         "properties": {
@@ -4272,6 +5575,20 @@
             "items": {
               "$ref": "#/components/schemas/LeaveRequestResponse"
             }
+          }
+        }
+      },
+      "ApiResponsePageLeavePolicyResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/PageObject"
           }
         }
       },
@@ -4324,23 +5641,19 @@
           }
         }
       },
-      "Pageable": {
+      "ApiResponseListFeedbackResponse": {
         "type": "object",
         "properties": {
-          "page": {
-            "type": "integer",
-            "format": "int32",
-            "minimum": 0
+          "success": {
+            "type": "boolean"
           },
-          "size": {
-            "type": "integer",
-            "format": "int32",
-            "minimum": 1
+          "message": {
+            "type": "string"
           },
-          "sort": {
+          "data": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/FeedbackResponse"
             }
           }
         }
@@ -4356,92 +5669,6 @@
           },
           "data": {
             "$ref": "#/components/schemas/PageObject"
-          }
-        }
-      },
-      "PageObject": {
-        "type": "object",
-        "properties": {
-          "totalElements": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "totalPages": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/EmployeeResponse"
-            }
-          },
-          "number": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
-          },
-          "numberOfElements": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "first": {
-            "type": "boolean"
-          },
-          "last": {
-            "type": "boolean"
-          },
-          "empty": {
-            "type": "boolean"
-          }
-        }
-      },
-      "PageableObject": {
-        "type": "object",
-        "properties": {
-          "offset": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
-          "unpaged": {
-            "type": "boolean"
-          },
-          "paged": {
-            "type": "boolean"
-          },
-          "pageSize": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageNumber": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
-      "SortObject": {
-        "type": "object",
-        "properties": {
-          "empty": {
-            "type": "boolean"
-          },
-          "unsorted": {
-            "type": "boolean"
-          },
-          "sorted": {
-            "type": "boolean"
           }
         }
       },
@@ -4476,6 +5703,43 @@
             "items": {
               "$ref": "#/components/schemas/Department"
             }
+          }
+        }
+      },
+      "ApiResponseListDepartmentBreakdownEntry": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DepartmentBreakdownEntry"
+            }
+          }
+        }
+      },
+      "DepartmentBreakdownEntry": {
+        "type": "object",
+        "properties": {
+          "departmentName": {
+            "type": "string"
+          },
+          "pendingLeave": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "pendingTimesheets": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "pendingDocuments": {
+            "type": "integer",
+            "format": "int64"
           }
         }
       },
@@ -4583,6 +5847,54 @@
         }
       },
       "ApiResponsePageAuditLogResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/PageObject"
+          }
+        }
+      },
+      "ApiResponseRetentionDryRunResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/RetentionDryRunResponse"
+          }
+        }
+      },
+      "RetentionDryRunResponse": {
+        "type": "object",
+        "properties": {
+          "retentionDays": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cutoff": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "eligibleRecords": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "destructive": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ApiResponsePageAttendanceResponse": {
         "type": "object",
         "properties": {
           "success": {
